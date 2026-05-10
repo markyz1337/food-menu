@@ -1,10 +1,12 @@
 <!DOCTYPE html>
+
 <html lang="ro">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>GastroGlass HUD Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -13,163 +15,236 @@
             --glass-border: rgba(255, 255, 255, 0.1);
         }
 
-        body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background: #020205;
-            color: #ffffff;
-            min-height: 100vh;
-            overflow-x: hidden;
-            -webkit-tap-highlight-color: transparent;
-        }
 
-        #view-title {
-            color: #ffffff !important;
-            text-shadow: 0 4px 12px rgba(0,0,0,0.5);
-            display: block;
-            opacity: 1;
-        }
+    body {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        background: #020205;
+        color: #ffffff;
+        min-height: 100vh;
+        overflow-x: hidden;
+        -webkit-tap-highlight-color: transparent;
+    }
 
-        .orb {
-            position: fixed;
-            width: 500px; height: 500px;
-            background: radial-gradient(circle, rgba(192, 132, 252, 0.1) 0%, transparent 70%);
-            z-index: -1; filter: blur(80px);
-            animation: float 20s infinite alternate;
-        }
+    #view-title {
+        color: #ffffff !important;
+        text-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        display: block;
+        opacity: 1;
+    }
 
-        @keyframes float { from { transform: translate(-10%, -10%); } to { transform: translate(30%, 20%); } }
+    .orb {
+        position: fixed;
+        width: 500px; height: 500px;
+        background: radial-gradient(circle, rgba(192, 132, 252, 0.1) 0%, transparent 70%);
+        z-index: -1; filter: blur(80px);
+        animation: float 20s infinite alternate;
+    }
 
-        .glass-card {
-            background: var(--glass);
-            backdrop-filter: blur(25px);
-            -webkit-backdrop-filter: blur(25px);
-            border: 1px solid var(--glass-border);
-            border-radius: 28px;
-        }
+    @keyframes float { from { transform: translate(-10%, -10%); } to { transform: translate(30%, 20%); } }
 
-        .inactive { opacity: 0.3; transform: scale(0.97); filter: grayscale(1); }
+    .glass-card {
+        background: var(--glass);
+        backdrop-filter: blur(25px);
+        -webkit-backdrop-filter: blur(25px);
+        border: 1px solid var(--glass-border);
+        border-radius: 28px;
+    }
 
-        .hud-status {
-            position: fixed;
-            right: 20px;
-            bottom: 110px;
-            padding: 10px 17px;
-            background: rgba(15, 15, 20, 0.8);
-            backdrop-filter: blur(25px);
-            border: 1px solid rgba(192, 132, 252, 0.4);
-            border-radius: 26px;
-            z-index: 900;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
-            border-left: 4px solid var(--primary);
-        }
+    .inactive { opacity: 0.3; transform: scale(0.97); filter: grayscale(1); }
+
+    .hud-status {
+        position: fixed;
+        right: 20px;
+        bottom: 110px;
+        padding: 10px 17px;
+        background: rgba(15, 15, 20, 0.8);
+        backdrop-filter: blur(25px);
+        border: 1px solid rgba(192, 132, 252, 0.4);
+        border-radius: 26px;
+        z-index: 900;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+        border-left: 4px solid var(--primary);
+    }
+
 
 .bottom-sheet {
-    position: fixed; 
-    bottom: -100%; 
-    left: 0; 
-    width: 100%;
-    height: 100%; /* Forțează înălțimea la 100% din ecran */
-    background: rgba(10, 10, 15, 0.98);
-    backdrop-filter: blur(40px);
-    -webkit-backdrop-filter: blur(40px);
-    border-top: 1px solid var(--glass-border);
-    z-index: 2000;
-    border-radius: 0; /* Eliminăm colțurile rotunjite pentru aspect Full Screen */
-    transition: bottom 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+position: fixed;
+bottom: -100%;
+left: 0;
+width: 100%;
+height: 100%; /* Forțează înălțimea la 100% din ecran */
+background: rgba(10, 10, 15, 0.98);
+backdrop-filter: blur(40px);
+-webkit-backdrop-filter: blur(40px);
+border-top: 1px solid var(–glass-border);
+z-index: 2000;
+border-radius: 0; /* Eliminăm colțurile rotunjite pentru aspect Full Screen */
+transition: bottom 0.4s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
-        .bottom-sheet.active { bottom: 0; }
 
-        .num-key:active { background: var(--primary); transform: scale(0.9); }
+    .bottom-sheet.active { bottom: 0; }
 
-        .tab-bar {
-            position: fixed; bottom: 0; width: 100%;
-            background: rgba(5, 5, 8, 0.95);
-            backdrop-filter: blur(20px);
-            display: flex; justify-content: space-around;
-            padding: 15px 10px 35px;
-            border-top: 1px solid var(--glass-border);
-            z-index: 1000;
-        }
+    .num-key:active { background: var(--primary); transform: scale(0.9); }
 
-        .nav-btn { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: #555; }
-        .nav-btn.active { color: var(--primary); }
+    .tab-bar {
+        position: fixed; bottom: 0; width: 100%;
+        background: rgba(5, 5, 8, 0.95);
+        backdrop-filter: blur(20px);
+        display: flex; justify-content: space-around;
+        padding: 15px 10px 35px;
+        border-top: 1px solid var(--glass-border);
+        z-index: 1000;
+    }
 
-        /* Stil pentru inputul de căutare în catalog */
-        .search-pill {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 15px;
-            padding: 12px 20px;
-            width: 100%;
-            color: white;
-            font-size: 14px;
-            outline: none;
-            transition: all 0.3s;
-        }
-        .search-pill:focus { border-color: var(--primary); background: rgba(255,255,255,0.08); }
-    
-    
-    
-   /* Bottom sheet pentru catalog (rămâne mare) */
+    .nav-btn { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: #555; }
+    .nav-btn.active { color: var(--primary); }
+
+    /* Stil pentru inputul de căutare în catalog */
+    .search-pill {
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 15px;
+        padding: 12px 20px;
+        width: 100%;
+        color: white;
+        font-size: 14px;
+        outline: none;
+        transition: all 0.3s;
+    }
+    .search-pill:focus { border-color: var(--primary); background: rgba(255,255,255,0.08); }
+
+
+/* Bottom sheet pentru catalog (rămâne mare) */
 .bottom-sheet.full { height: 100%; bottom: -100%; }
 
 /* Bottom sheet pentru cifre (devine mic și elegant) */
 #number-picker {
-    height: auto;
-    bottom: -50%;
-    border-radius: 32px 32px 0 0;
-    padding-bottom: env(safe-area-inset-bottom); /* Respectă zona de gesturi pe iPhone */
-    background: rgba(15, 15, 25, 0.95);
-    border-top: 2px solid var(--primary);
+height: auto;
+bottom: -50%;
+border-radius: 32px 32px 0 0;
+padding-bottom: env(safe-area-inset-bottom); /* Respectă zona de gesturi pe iPhone */
+background: rgba(15, 15, 25, 0.95);
+border-top: 2px solid var(–primary);
 }
 
 #number-picker.active {
-    bottom: 0;
+bottom: 0;
 }
 
 /* Grila de numere mai compactă */
 .num-grid {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 10px;
-    padding: 0 20px 30px 20px;
+display: grid;
+grid-template-columns: repeat(5, 1fr);
+gap: 10px;
+padding: 0 20px 30px 20px;
 }
 
 .num-key {
-    height: 55px; /* Puțin mai mic */
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    transition: all 0.2s;
+height: 55px; /* Puțin mai mic */
+background: rgba(255, 255, 255, 0.03);
+border: 1px solid rgba(255, 255, 255, 0.05);
+transition: all 0.2s;
 }
-    
-    
-    
-    /* Asigură-te că lista are padding la final să nu fie acoperită de butonul plutitor */
+
+
+/* Asigură-te că lista are padding la final să nu fie acoperită de butonul plutitor */
+
+
 #product-options {
-    padding-bottom: 80px; 
-    scrollbar-width: none; /* Ascunde scrollbar-ul pe Firefox */
+padding-bottom: 80px;
+scrollbar-width: none; /* Ascunde scrollbar-ul pe Firefox */
 }
 
 #product-options::-webkit-scrollbar {
-    display: none; /* Ascunde scrollbar-ul pe Chrome/Safari */
+display: none; /* Ascunde scrollbar-ul pe Chrome/Safari */
 }
 
 /* Stil pentru butonul plutitor de jos */
 .bottom-sheet .absolute.bottom-6 button {
-    box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+box-shadow: 0 10px 30px rgba(0,0,0,0.8);
 }
-    
-    .bottom-sheet.active { 
-    bottom: 0 !important; 
+
+
+.bottom-sheet.active { 
+bottom: 0 !important; 
+
+
 }
-    
-    </style>
+
+/* === LOCK BUTTON === */
+#lock-btn {
+width: 38px;
+height: 38px;
+display: flex;
+align-items: center;
+justify-content: center;
+background: rgba(255,255,255,0.05);
+border: 1px solid rgba(255,255,255,0.1);
+border-radius: 50%;
+cursor: pointer;
+transition: all 0.3s ease;
+flex-shrink: 0;
+}
+#lock-btn:active { transform: scale(0.9); }
+#lock-btn.unlocked {
+background: rgba(192, 132, 252, 0.15);
+border-color: rgba(192, 132, 252, 0.4);
+}
+
+/* Elemente vizibile doar când e deblocat */
+.locked-only {
+display: none !important;
+}
+body.unlocked .locked-only {
+display: flex !important;
+}
+/* pentru elemente block */
+.locked-only-block {
+display: none !important;
+}
+body.unlocked .locked-only-block {
+display: block !important;
+}
+
+/* Cantitate ingredient - vizibilă mereu, dar clickabilă doar deblocat */
+.qty-btn-locked {
+pointer-events: none;
+opacity: 0.6;
+}
+body.unlocked .qty-btn-locked {
+pointer-events: auto;
+opacity: 1;
+}
+
+/* Ore/masă - vizibil mereu, clickabil doar deblocat */
+.ore-locked {
+pointer-events: none;
+cursor: default;
+}
+body.unlocked .ore-locked {
+pointer-events: auto;
+cursor: pointer;
+}
+
+/* Preț catalog - read-only când blocat */
+.pret-input-locked {
+pointer-events: none;
+}
+body.unlocked .pret-input-locked {
+pointer-events: auto;
+}
+
+
+</style>
+
+
 </head>
 
 <body class="pb-44">
 
 <!-- Bottom Sheet pentru Lista de Cumpărături -->
+
 <div id="shopping-sheet" class="bottom-sheet full overflow-hidden flex flex-col">
     <div class="p-6 border-b border-white/10 flex justify-between items-center bg-black/50">
         <div>
@@ -178,59 +253,77 @@
         </div>
         <button onclick="closeSheets()" class="w-10 h-10 flex items-center justify-center bg-white/5 rounded-full text-white font-bold">✕</button>
     </div>
-    
-    <div id="shopping-list-content" class="flex-grow overflow-y-auto p-6 space-y-3 pb-32">
-        <!-- Aici vor fi injectate produsele consolidate -->
+
+
+<div id="shopping-list-content" class="flex-grow overflow-y-auto p-6 space-y-3 pb-32">
+    <!-- Aici vor fi injectate produsele consolidate -->
+</div>
+
+
+</div>
+
+
+<div class="orb"></div>
+
+<div class="p-6 max-w-lg mx-auto">
+    <header class="mb-10 pt-4">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 id="view-title" class="text-4xl font-extrabold tracking-tighter">Planificator</h1>
+                <p class="text-[10px] font-bold text-gray-500 tracking-[3px] uppercase mt-1">Configurator Mese</p>
+            </div>
+            <!-- LOCK BUTTON -->
+            <button id="lock-btn" onclick="toggleLock()" title="Blochează / Deblochează editarea">
+                <!-- Icon lacăt BLOCAT -->
+                <svg id="icon-locked" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #6b7280;">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+                <!-- Icon lacăt DEBLOCAT -->
+                <svg id="icon-unlocked" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #c084fc; display:none;">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 9.9-1"></path>
+                </svg>
+            </button>
+        </div>
+    </header>
+
+
+    <!-- Search Bar Universal (pentru Home/Meniuri) -->
+    <div id="search-container" class="mb-6">
+        <div class="relative flex items-center">
+            <input type="text" id="main-search" oninput="updateSearch(this.value)" placeholder="Caută în meniu..." 
+                   class="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 pr-12 text-sm font-semibold text-white placeholder:text-gray-600 focus:outline-none focus:border-purple-500/50 transition-all">
+            
+            <button id="clear-search" onclick="clearSearch()" 
+                    class="hidden absolute right-4 w-8 h-8 flex items-center justify-center bg-white/10 hover:bg-white/20 rounded-full transition-all">
+                <span class="text-gray-400 text-xs font-bold">✕</span>
+            </button>
+        </div>
+    </div>
+
+    <div id="page-home" class="space-y-6">
+        <div id="recipes-list" class="space-y-6"></div>
+        <!-- Buton "Adaugă Meniu Nou" - vizibil doar deblocat -->
+        <button onclick="addRecipe()" class="locked-only-block w-full py-5 glass-card border-dashed border-2 border-white/10 text-gray-400 font-black text-xs tracking-widest uppercase">+ Adaugă Meniu Nou</button>
+    </div>
+
+    <div id="page-catalog" class="hidden space-y-4">
+        <!-- Search Bar pentru Catalog -->
+        <div class="px-2 mb-4">
+            <input type="text" id="catalog-search" oninput="renderCatalog()" placeholder="Caută în catalog..." 
+                   class="search-pill">
+        </div>
+
+        <div class="flex justify-between items-center px-2 mb-4">
+            <h3 class="text-xs font-black text-gray-400 uppercase tracking-widest">Baza de Date Produse</h3>
+            <!-- Buton "+ Produs" vizibil doar deblocat -->
+            <button onclick="addNewProductToCatalog()" class="locked-only text-xs font-bold text-purple-400 bg-purple-500/10 px-3 py-1 rounded-full">+ Produs</button>
+        </div>
+        <div id="catalog-list" class="space-y-3"></div>
     </div>
 </div>
 
-    <div class="orb"></div>
-
-    <div class="p-6 max-w-lg mx-auto">
-        <header class="mb-10 pt-4">
-            <h1 id="view-title" class="text-4xl font-extrabold tracking-tighter">Planificator</h1>
-            <p class="text-[10px] font-bold text-gray-500 tracking-[3px] uppercase mt-1">Configurator Mese</p>
-        </header>
-
-
-
-
-
-
-
-
-        <!-- Search Bar Universal (pentru Home/Meniuri) -->
-        <div id="search-container" class="mb-6">
-            <div class="relative flex items-center">
-                <input type="text" id="main-search" oninput="updateSearch(this.value)" placeholder="Caută în meniu..." 
-                       class="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 pr-12 text-sm font-semibold text-white placeholder:text-gray-600 focus:outline-none focus:border-purple-500/50 transition-all">
-                
-                <button id="clear-search" onclick="clearSearch()" 
-                        class="hidden absolute right-4 w-8 h-8 flex items-center justify-center bg-white/10 hover:bg-white/20 rounded-full transition-all">
-                    <span class="text-gray-400 text-xs font-bold">✕</span>
-                </button>
-            </div>
-        </div>
-
-        <div id="page-home" class="space-y-6">
-            <div id="recipes-list" class="space-y-6"></div>
-            <button onclick="addRecipe()" class="w-full py-5 glass-card border-dashed border-2 border-white/10 text-gray-400 font-black text-xs tracking-widest uppercase">+ Adaugă Meniu Nou</button>
-        </div>
-
-        <div id="page-catalog" class="hidden space-y-4">
-            <!-- Search Bar pentru Catalog -->
-            <div class="px-2 mb-4">
-                <input type="text" id="catalog-search" oninput="renderCatalog()" placeholder="Caută în catalog..." 
-                       class="search-pill">
-            </div>
-
-            <div class="flex justify-between items-center px-2 mb-4">
-                <h3 class="text-xs font-black text-gray-400 uppercase tracking-widest">Baza de Date Produse</h3>
-                <button onclick="addNewProductToCatalog()" class="text-xs font-bold text-purple-400 bg-purple-500/10 px-3 py-1 rounded-full">+ Produs</button>
-            </div>
-            <div id="catalog-list" class="space-y-3"></div>
-        </div>
-    </div>
 
 <div class="hud-status" onclick="openShoppingList()" style="cursor: pointer;">
         <div class="flex items-center gap-5">
@@ -249,22 +342,22 @@
 <div id="number-picker" class="bottom-sheet">
     <!-- Mâner de glisare vizual -->
     <div class="w-12 h-1.5 bg-white/10 mx-auto rounded-full mt-3 mb-6"></div>
-    
-    <div class="px-6 mb-4 flex justify-between items-center">
-        <h3 class="text-[10px] font-black uppercase tracking-[2px] text-purple-400">Cantitate / Durată</h3>
-        <button onclick="closeSheets()" class="text-gray-500 text-xs font-bold">ÎNCHIDE</button>
-    </div>
 
-    <div class="num-grid">
-        <script>
-            for(let i=1; i<=10; i++) 
-                document.write(`<button onclick="setNum(${i})" class="num-key text-white hover:bg-purple-500/20 active:scale-95">${i}</button>`);
-        </script>
-    </div>
+
+<div class="px-6 mb-4 flex justify-between items-center">
+    <h3 class="text-[10px] font-black uppercase tracking-[2px] text-purple-400">Cantitate / Durată</h3>
+    <button onclick="closeSheets()" class="text-gray-500 text-xs font-bold">ÎNCHIDE</button>
+</div>
+
+<div class="num-grid">
+    <script>
+        for(let i=1; i<=10; i++) 
+            document.write(`<button onclick="setNum(${i})" class="num-key text-white hover:bg-purple-500/20 active:scale-95">${i}</button>`);
+    </script>
 </div>
 
 
-
+</div>
 
 <div id="product-picker" class="bottom-sheet">
     <div class="p-4 h-full flex flex-col">
@@ -273,33 +366,49 @@
             <h3 class="text-[10px] font-black uppercase tracking-widest text-gray-500">Alege din Catalog</h3>
             <button onclick="closeSheets()" class="w-10 h-10 flex items-center justify-center bg-white/5 rounded-full text-white font-bold">✕</button>
         </div>
-        
-        <!-- Zona de căutare -->
-        <div class="mb-4">
-            <input type="text" id="picker-search" oninput="renderPickerOptions()" placeholder="Caută produs..." 
-                   class="search-pill">
-        </div>
 
-        <!-- Lista care acum are mult mai mult loc -->
-        <div id="product-options" class="space-y-2 overflow-y-auto flex-grow pb-20"></div>
-        
-        <!-- Buton de închidere discret, poziționat absolut la bază (opțional) -->
-        <div class="absolute bottom-6 left-0 w-full px-8 pointer-events-none">
-            <button onclick="closeSheets()" class="pointer-events-auto w-full py-4 bg-purple-600/90 backdrop-blur-md text-white rounded-2xl font-bold text-xs uppercase tracking-widest shadow-2xl">
-                Închide
-            </button>
-        </div>
+
+    <!-- Zona de căutare -->
+    <div class="mb-4">
+        <input type="text" id="picker-search" oninput="renderPickerOptions()" placeholder="Caută produs..." 
+               class="search-pill">
+    </div>
+
+    <!-- Lista care acum are mult mai mult loc -->
+    <div id="product-options" class="space-y-2 overflow-y-auto flex-grow pb-20"></div>
+    
+    <!-- Buton de închidere discret, poziționat absolut la bază (opțional) -->
+    <div class="absolute bottom-6 left-0 w-full px-8 pointer-events-none">
+        <button onclick="closeSheets()" class="pointer-events-auto w-full py-4 bg-purple-600/90 backdrop-blur-md text-white rounded-2xl font-bold text-xs uppercase tracking-widest shadow-2xl">
+            Închide
+        </button>
     </div>
 </div>
 
-    <nav class="tab-bar">
-        <button onclick="switchTab('home')" id="nav-home" class="nav-btn active">Meniuri</button>
-        <button onclick="switchTab('catalog')" id="nav-catalog" class="nav-btn">Catalog</button>
-    </nav>
 
-    <script>
+</div>
+
+
+<nav class="tab-bar">
+    <button onclick="switchTab('home')" id="nav-home" class="nav-btn active">Meniuri</button>
+    <button onclick="switchTab('catalog')" id="nav-catalog" class="nav-btn">Catalog</button>
+</nav>
+
+<script>
+const USE_SUPABASE = true;
+const SUPABASE_URL = 'https://fndjrfieitieqzafhyzz.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_bHDKjiKAVHqW199ICw7i2g_O3olYMAr';
+
+let supabase = null;
+if (USE_SUPABASE) {
+    supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+}
+
 const CURS = 5.09;
-let searchTerm = ""; 
+let searchTerm = "";
+let isUnlocked = false;
+let activeCtx = null;
+let lastEditedId = null;
 
 let catalog = [
     { id: 'c1', nume: 'Icre roșii', pretLei: 761.00, unit: 'Kg' },
@@ -354,7 +463,7 @@ let catalog = [
     { id: 'c50', nume: 'Orez', pretLei: 7.55, unit: 'Kg' },
     { id: 'c51', nume: 'Lapte (3.5%)', pretLei: 5.99, unit: 'L' },
     { id: 'c52', nume: 'Mere', pretLei: 3.99, unit: 'Kg' },
-    { id: 'c53', nume: 'Zahăr', pretLei: 3.79, pretLei: 3.79, unit: 'Kg' },
+    { id: 'c53', nume: 'Zahăr', pretLei: 3.79, unit: 'Kg' },
     { id: 'c54', nume: 'Morcovi', pretLei: 2.99, unit: 'Kg' },
     { id: 'c55', nume: 'Varză', pretLei: 2.89, unit: 'Kg' },
     { id: 'c56', nume: 'Cartofi', pretLei: 2.79, unit: 'Kg' },
@@ -364,91 +473,103 @@ let catalog = [
 ];
 
 let rețete = [
-    { 
-        id: 1, 
-        selectat: true, 
-        nume: '🍳 Mic Dejun Proteic', 
-        ore: 4, 
-        portii: 2, 
-        ingrediente: [{ idProd: 'c59', qty: 4 }],
-        tags: 'oua, proteina, rapid' 
+    {
+        id: 1,
+        selectat: true,
+        nume: '🍳 Mic Dejun Proteic',
+        ore: 4,
+        portii: 2,
+        ingrediente: [{ idProd: 'c59', qty: 1 }],
+        tags: 'oua, proteina, rapid'
     }
 ];
 
-let activeCtx = null;
 
+async function loadFromSupabase() {
+    if (!USE_SUPABASE) return;
 
-function openShoppingList() {
-    const listContent = document.getElementById('shopping-list-content');
-    const summaryCount = document.getElementById('shopping-summary-count');
-    listContent.innerHTML = '';
-
-    // 1. Colectăm toate ingredientele din rețetele selectate
-    let cumparaturi = {};
-
-    rețete.forEach(r => {
-        if (r.selectat) {
-            r.ingrediente.forEach(ing => {
-                if (!ing.idProd) return;
-                
-                // Calculăm cantitatea totală (qty ingredient * nr de porții ale rețetei)
-                const qtyTotala = ing.qty * r.portii;
-                
-                if (cumparaturi[ing.idProd]) {
-                    cumparaturi[ing.idProd] += qtyTotala;
-                } else {
-                    cumparaturi[ing.idProd] = qtyTotala;
-                }
-            });
+    try {
+        // Încarcă Catalog
+        const { data: catData, error: catErr } = await supabase.from('catalog').select('*');
+        if (catData) {
+            catalog = catData.map(item => ({
+                id: item.id,
+                nume: item.nume,
+                pretLei: item.pret_lei,
+                unit: item.unit
+            }));
         }
-    });
 
-    const keys = Object.keys(cumparaturi);
-    summaryCount.innerText = `${keys.length} PRODUSE UNICE`;
-
-    if (keys.length === 0) {
-        listContent.innerHTML = '<p class="text-center text-gray-500 py-10 font-bold uppercase text-xs tracking-widest">Nicio rețetă selectată</p>';
-    } else {
-        keys.forEach(idProd => {
-            const produs = catalog.find(p => p.id === idProd);
-            const cantitate = cumparaturi[idProd];
-            const pretTotalProdus = (produs.pretLei * cantitate);
-            const pretEur = (pretTotalProdus / CURS).toFixed(2);
-
-            listContent.innerHTML += `
-                <div class="glass-card p-4 flex justify-between items-center border-l-4 border-purple-500">
-                    <div>
-                        <p class="font-bold text-white text-sm">${produs.nume}</p>
-                        <p class="text-[10px] font-black text-gray-500 uppercase">${cantitate} ${produs.unit} × ${produs.pretLei} lei</p>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-sm font-black text-white">${pretTotalProdus.toFixed(2)} LEI</p>
-                        <p class="text-[10px] font-bold text-purple-400">${pretEur} €</p>
-                    </div>
-                </div>
-            `;
-        });
+        // Încarcă Rețete
+        const { data: retData, error: retErr } = await supabase.from('retete').select('*');
+        if (retData) {
+            rețete = retData.map(item => ({
+                id: item.id,
+                nume: item.nume,
+                ore: item.ore,
+                portii: item.portii,
+                tags: item.tags,
+                selectat: item.selectat,
+                ingrediente: item.ingrediente || []
+            }));
+        }
+        render();
+    } catch (err) {
+        console.error("Eroare Supabase:", err);
     }
+}
 
-    document.getElementById('shopping-sheet').classList.add('active');
+async function syncToSupabase(table, id, updateData) {
+    if (!USE_SUPABASE || !isUnlocked) return;
+    
+    const { error } = await supabase
+        .from(table)
+        .update(updateData)
+        .eq('id', id);
+    
+    if (error) console.error(`Eroare sync ${table}:`, error);
 }
 
 
+// --- FUNCȚII LOGICĂ ---
+
+function toggleLock() {
+    isUnlocked = !isUnlocked;
+    document.body.classList.toggle('unlocked', isUnlocked);
+    const btn = document.getElementById('lock-btn');
+    btn.classList.toggle('unlocked', isUnlocked);
+    document.getElementById('icon-locked').style.display = isUnlocked ? 'none' : 'block';
+    document.getElementById('icon-unlocked').style.display = isUnlocked ? 'block' : 'none';
+    
+    // Dacă tocmai am blocat și avem Supabase activ, putem forța o salvare finală aici
+    render();
+}
+
+// Exemplu: Când schimbi numele unei rețete
+async function updateRecipeName(idx, val) {
+    rețete[idx].nume = val;
+    if (USE_SUPABASE) {
+        await syncToSupabase('retete', rețete[idx].id, { nume: val });
+    }
+}
+
+// Modifică window.onload
+window.onload = async () => {
+    if (USE_SUPABASE) {
+        await loadFromSupabase();
+    }
+    render();
+};
+
 function normalizeText(text) {
     if (!text) return "";
-    return text.toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/ț/g, "t").replace(/ș/g, "s")
-        .replace(/ă/g, "a").replace(/â/g, "a")
-        .replace(/î/g, "i");
+    return text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .replace(/ț/g, "t").replace(/ș/g, "s").replace(/ă/g, "a").replace(/â/g, "a").replace(/î/g, "i");
 }
 
 function updateSearch(val) {
     searchTerm = normalizeText(val);
-    const clearBtn = document.getElementById('clear-search');
-    if (val.length > 0) clearBtn.classList.remove('hidden');
-    else clearBtn.classList.add('hidden');
+    document.getElementById('clear-search').classList.toggle('hidden', val.length === 0);
     render();
 }
 
@@ -464,12 +585,13 @@ function switchTab(tab) {
     document.getElementById('page-catalog').classList.toggle('hidden', tab !== 'catalog');
     const searchBar = document.getElementById('search-container');
     if(searchBar) searchBar.classList.toggle('hidden', tab !== 'home');
-
     document.getElementById('nav-home').className = tab === 'home' ? 'nav-btn active' : 'nav-btn';
     document.getElementById('nav-catalog').className = tab === 'catalog' ? 'nav-btn active' : 'nav-btn';
     document.getElementById('view-title').innerText = tab === 'home' ? 'Planificator' : 'Catalog';
     render();
 }
+
+// --- RENDER (AFIȘARE) ---
 
 function render() {
     const list = document.getElementById('recipes-list');
@@ -477,249 +599,141 @@ function render() {
     list.innerHTML = '';
     let tEur = 0, tOre = 0;
 
-    // Calcul global pentru HUD
     rețete.forEach(r => {
-        if (r.selectat) {
-            let costLei = 0;
-            r.ingrediente.forEach(ing => {
-                const p = catalog.find(x => x.id === ing.idProd);
-                if (p) costLei += (p.pretLei * ing.qty);
-            });
-            tEur += (costLei / CURS) * r.portii;
-            tOre += (r.ore * r.portii);
-        }
+        let costLeiMasa = 0;
+        r.ingrediente.forEach(ing => {
+            const p = catalog.find(x => x.id === ing.idProd);
+            if (p) costLeiMasa += (p.pretLei * ing.qty);
+        });
+        r.costEurCalculat = (costLeiMasa / CURS) * r.portii;
+        r.totalOreCalculat = r.ore * r.portii;
+        r.eficienta = r.costEurCalculat > 0 ? (r.totalOreCalculat / r.costEurCalculat) : 0;
+        if (r.selectat) { tEur += r.costEurCalculat; tOre += r.totalOreCalculat; }
     });
 
-    // Filtrare bazată pe search
-    const reteteFiltrate = rețete.filter(r => {
-        const nNume = normalizeText(r.nume);
-        const nTags = normalizeText(r.tags || "");
-        return nNume.includes(searchTerm) || nTags.includes(searchTerm);
-    });
+    const reteteFiltrate = rețete
+        .filter(r => normalizeText(r.nume).includes(searchTerm) || normalizeText(r.tags || "").includes(searchTerm))
+        .sort((a, b) => b.eficienta - a.eficienta);
 
     reteteFiltrate.forEach((reteta) => {
-        // Găsim indexul original în array-ul rețete pentru a păstra referința corectă la editare
         const rIdx = rețete.findIndex(r => r.id === reteta.id);
-        
-        let costLeiMasa = 0;
-        reteta.ingrediente.forEach(ing => {
-            const p = catalog.find(x => x.id === ing.idProd);
-            if(p) costLeiMasa += (p.pretLei * ing.qty);
-        });
-        const costEurMasa = (costLeiMasa / CURS) * reteta.portii;
-
         list.innerHTML += `
-            <div class="glass-card p-6 relative ${reteta.selectat ? '' : 'inactive'}">
-                <!-- Header Card -->
+            <div id="recipe-${reteta.id}" class="glass-card p-6 relative transition-all duration-500 ${reteta.selectat ? '' : 'inactive'}">
                 <div class="flex items-center gap-4 mb-1">
-                    <input type="checkbox" ${reteta.selectat ? 'checked' : ''} 
-                           onchange="rețete[${rIdx}].selectat=this.checked; render()" 
-                           class="w-6 h-6 accent-purple-500">
-                    <input class="font-extrabold text-xl flex-grow text-white bg-transparent outline-none border-none" 
-                           value="${reteta.nume}" 
-                           onchange="rețete[${rIdx}].nume=this.value">
+                    <input type="checkbox" ${reteta.selectat ? 'checked' : ''} onchange="rețete[${rIdx}].selectat=this.checked; render()" class="w-6 h-6 accent-purple-500">
+                    <input class="font-extrabold text-xl flex-grow text-white bg-transparent outline-none border-none ${isUnlocked ? '' : 'pointer-events-none'}" 
+                           value="${reteta.nume}" ${isUnlocked ? '' : 'readonly'} onchange="rețete[${rIdx}].nume=this.value">
                 </div>
-                
-                <!-- Tags -->
                 <div class="flex items-center gap-2 mb-6 ml-10">
                     <span class="text-purple-500 font-bold text-[10px]">#</span>
-                    <input class="text-[10px] font-bold text-gray-500 bg-transparent border-none outline-none w-full uppercase tracking-widest" 
-                           placeholder="taguri..."
-                           value="${reteta.tags || ''}" 
-                           onchange="rețete[${rIdx}].tags=this.value; render()">
+                    <input class="text-[10px] font-bold text-gray-500 bg-transparent border-none outline-none w-full uppercase tracking-widest ${isUnlocked ? '' : 'pointer-events-none'}" 
+                           value="${reteta.tags || ''}" ${isUnlocked ? '' : 'readonly'} onchange="rețete[${rIdx}].tags=this.value; render()">
                 </div>
-
-                <!-- Lista Ingrediente -->
                 <div class="space-y-3 mb-6">
                     ${reteta.ingrediente.map((ing, iIdx) => {
                         const p = catalog.find(x => x.id === ing.idProd);
                         return `
                         <div class="flex items-center gap-2 bg-white/5 p-2 pr-3 rounded-2xl border border-white/5">
-                            <button onclick="openProductPicker(${rIdx}, ${iIdx})" class="flex-grow text-left text-sm font-semibold text-gray-200 truncate pl-2">
+                            <button onclick="${isUnlocked ? `openProductPicker(${rIdx}, ${iIdx})` : ''}" class="flex-grow text-left text-sm font-semibold text-gray-200 truncate pl-2">
                                 ${p ? p.nume : 'Alege Produs...'}
                             </button>
-                            <button onclick="openNumPicker(${rIdx}, 'ingQty', ${iIdx})" class="bg-purple-500/20 text-purple-300 px-3 py-1.5 rounded-xl text-xs font-black min-w-[65px]">
+                            <button onclick="${isUnlocked ? `openNumPicker(${rIdx}, 'ingQty', ${iIdx})` : ''}" class="bg-purple-500/20 text-purple-300 px-3 py-1.5 rounded-xl text-xs font-black min-w-[65px]">
                                 ${ing.qty} ${p ? p.unit : ''}
                             </button>
-                            
-                            <!-- Buton Ștergere Ingredient cu Confirmare -->
-                            <button onclick="confirmDeleteIngredient(${rIdx}, ${iIdx})" 
-                                    class="w-7 h-7 flex items-center justify-center bg-red-500/20 hover:bg-red-500/40 text-red-500 rounded-full transition-all active:scale-90">
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                                </svg>
-                            </button>
+                            ${isUnlocked ? `<button onclick="confirmDeleteIngredient(${rIdx}, ${iIdx})" class="w-7 h-7 flex items-center justify-center bg-red-500/20 text-red-500 rounded-full">✕</button>` : ''}
                         </div>`;
                     }).join('')}
-                    
-                    <button onclick="rețete[${rIdx}].ingrediente.push({idProd:null, qty:1}); render()" class="text-[9px] font-black text-purple-400 uppercase tracking-widest pt-2 hover:text-purple-300 transition-colors">+ ADĂUGARE INGREDIENT</button>
+                    ${isUnlocked ? `<button onclick="rețete[${rIdx}].ingrediente.push({idProd:null, qty:1}); render()" class="text-[9px] font-black text-purple-400 uppercase tracking-widest pt-2">+ ADĂUGARE INGREDIENT</button>` : ''}
                 </div>
-
-                <!-- Footer Card Info -->
                 <div class="grid grid-cols-3 gap-2 border-t border-white/5 pt-6 items-center text-center">
-                    <div onclick="openNumPicker(${rIdx}, 'ore')" class="text-left cursor-pointer">
+                    <div onclick="${isUnlocked ? `openNumPicker(${rIdx}, 'ore')` : ''}" class="text-left ${isUnlocked ? 'cursor-pointer' : ''}">
                         <p class="text-[8px] font-black text-gray-500 uppercase tracking-widest mb-1">Ore/Masă</p>
                         <p class="text-lg font-bold text-white">${reteta.ore}h</p>
                     </div>
                     <div class="bg-purple-500/10 py-2 rounded-2xl border border-purple-500/20">
                         <p class="text-[8px] font-black text-emerald-400 uppercase tracking-widest mb-0.5">Preț Total</p>
-                        <p class="text-xl font-black text-white leading-none">${costEurMasa.toFixed(2)}€</p>
+                        <p class="text-xl font-black text-white leading-none">${reteta.costEurCalculat.toFixed(2)}€</p>
                     </div>
                     <div onclick="openNumPicker(${rIdx}, 'portii')" class="text-right cursor-pointer">
                         <p class="text-[8px] font-black text-gray-500 uppercase tracking-widest mb-1">Nr. Porții</p>
                         <p class="text-lg font-bold text-white">${reteta.portii}</p>
                     </div>
                 </div>
-                
-                <!-- Buton Ștergere Meniu cu Confirmare -->
-                <button onclick="confirmDeleteRecipe(${rIdx})" class="absolute -top-2 -right-2 w-8 h-8 bg-red-500/20 text-red-500 border border-red-500/30 rounded-full flex items-center justify-center font-bold shadow-lg">✕</button>
+                ${isUnlocked ? `<button onclick="confirmDeleteRecipe(${rIdx})" class="absolute -top-2 -right-2 w-8 h-8 bg-red-500/20 text-red-500 border border-red-500/30 rounded-full flex items-center justify-center">✕</button>` : ''}
             </div>`;
     });
 
-    // Actualizare HUD
+    if (lastEditedId) {
+        setTimeout(() => {
+            const el = document.getElementById(`recipe-${lastEditedId}`);
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            lastEditedId = null;
+        }, 150);
+    }
+
     const zile = Math.floor(tOre / 12);
     const oreRest = tOre % 12;
-    let randZile = oreRest === 0 ? `${zile} zile` : `${zile} → ${zile + 1} zile`;
-
     document.getElementById('hud-eur').innerText = tEur.toFixed(2) + '€';
-    document.getElementById('hud-hours').innerHTML = `
-        <div class="flex flex-col items-start leading-none gap-0">
-            <span class="text-base font-extrabold tracking-tight text-white">${randZile}</span>
-            <span class="text-[10px] font-black text-purple-400/80 uppercase tracking-wider">${oreRest}h / 12h</span>
-        </div>
-    `;
+    document.getElementById('hud-hours').innerHTML = `<div class="flex flex-col items-start leading-none"><span class="text-base font-extrabold text-white">${oreRest === 0 ? zile + ' zile' : zile + ' → ' + (zile + 1) + ' zile'}</span><span class="text-[10px] font-black text-purple-400/80 uppercase">${oreRest}h / 12h</span></div>`;
+    
     renderCatalog();
 }
 
 function renderCatalog() {
     const cat = document.getElementById('catalog-list');
     if (!cat) return;
-    
     const catSearch = normalizeText(document.getElementById('catalog-search')?.value || "");
     cat.innerHTML = '';
-    
-    const catalogFiltrat = catalog.filter(p => normalizeText(p.nume).includes(catSearch));
-
-    catalogFiltrat.forEach((prod) => {
+    catalog.filter(p => normalizeText(p.nume).includes(catSearch)).sort((a, b) => a.pretLei - b.pretLei).forEach((prod) => {
         const cIdx = catalog.findIndex(x => x.id === prod.id);
-        
-        cat.innerHTML += `
-            <div class="glass-card p-5 flex justify-between items-center">
-                <div class="flex-grow">
-                    <input class="font-bold text-sm block text-white bg-transparent outline-none border-none w-full" 
-                           value="${prod.nume}" 
-                           onchange="catalog[${cIdx}].nume=this.value; render()">
-                    <input class="text-[10px] font-black text-gray-600 uppercase bg-transparent outline-none border-none w-full" 
-                           value="${prod.unit}" 
-                           onchange="catalog[${cIdx}].unit=this.value; render()">
-                </div>
-                
-                <div class="flex items-center gap-3">
-                    <div class="bg-white/5 px-3 py-2 rounded-xl flex items-center gap-2 border border-white/5">
-                        <input type="number" step="0.01" class="w-16 text-right font-black text-emerald-400 bg-transparent outline-none" 
-                               value="${prod.pretLei}" 
-                               onchange="catalog[${cIdx}].pretLei=parseFloat(this.value); render()">
-                        <span class="text-[9px] font-bold text-gray-500">LEI</span>
-                    </div>
-                    
-                    <!-- Buton Ștergere Catalog Stilizat cu Cerc -->
-                    <button onclick="confirmDeleteCatalogItem(${cIdx})" 
-                            class="w-8 h-8 flex items-center justify-center bg-red-500/10 hover:bg-red-500/30 text-red-500 border border-red-500/20 rounded-full transition-all active:scale-90">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                            <line x1="18" y1="6" x2="6" y2="18"></line>
-                            <line x1="6" y1="6" x2="18" y2="18"></line>
-                        </svg>
-                    </button>
-                </div>
-            </div>`;
+        cat.innerHTML += `<div class="glass-card p-5 flex justify-between items-center"><div class="flex-grow"><input class="font-bold text-sm block text-white bg-transparent outline-none w-full ${isUnlocked ? '' : 'pointer-events-none'}" value="${prod.nume}" ${isUnlocked ? '' : 'readonly'} onchange="catalog[${cIdx}].nume=this.value; render()"><input class="text-[10px] font-black text-gray-600 uppercase bg-transparent outline-none w-full ${isUnlocked ? '' : 'pointer-events-none'}" value="${prod.unit}" ${isUnlocked ? '' : 'readonly'} onchange="catalog[${cIdx}].unit=this.value; render()"></div><div class="flex items-center gap-3"><div class="bg-white/5 px-3 py-2 rounded-xl flex items-center gap-2 border border-white/5"><input type="number" step="0.01" class="w-16 text-right font-black text-emerald-400 bg-transparent outline-none ${isUnlocked ? '' : 'pointer-events-none'}" value="${prod.pretLei}" onchange="catalog[${cIdx}].pretLei=parseFloat(this.value); render()"><span class="text-[9px] font-bold text-gray-500">LEI</span></div>${isUnlocked ? `<button onclick="confirmDeleteCatalogItem(${cIdx})" class="w-8 h-8 text-red-500">✕</button>` : ''}</div></div>`;
     });
 }
 
-function openProductPicker(rIdx, iIdx) {
-    activeCtx = { rIdx, iIdx };
-    document.getElementById('picker-search').value = ""; // Reset search
-    renderPickerOptions();
-    document.getElementById('product-picker').classList.add('active');
+// --- PICKERS & MODALS ---
+
+function openShoppingList() {
+    const listContent = document.getElementById('shopping-list-content');
+    const summaryCount = document.getElementById('shopping-summary-count');
+    listContent.innerHTML = '';
+    let cumparaturi = {};
+    rețete.forEach(r => { if (r.selectat) { r.ingrediente.forEach(ing => { if (!ing.idProd) return; const qtyTotala = ing.qty * r.portii; cumparaturi[ing.idProd] = (cumparaturi[ing.idProd] || 0) + qtyTotala; }); } });
+    const keys = Object.keys(cumparaturi);
+    summaryCount.innerText = `${keys.length} PRODUSE UNICE`;
+    if (keys.length === 0) listContent.innerHTML = '<p class="text-center text-gray-500 py-10 font-bold uppercase text-xs">Nicio rețetă selectată</p>';
+    else {
+        keys.forEach(idProd => {
+            const produs = catalog.find(p => p.id === idProd);
+            const cantitate = cumparaturi[idProd];
+            const pretTotalProdus = (produs.pretLei * cantitate);
+            listContent.innerHTML += `<div class="glass-card p-4 flex justify-between items-center border-l-4 border-purple-500"><div><p class="font-bold text-white text-sm">${produs.nume}</p><p class="text-[10px] font-black text-gray-500 uppercase">${cantitate} ${produs.unit} × ${produs.pretLei} lei</p></div><div class="text-right"><p class="text-sm font-black text-white">${pretTotalProdus.toFixed(2)} LEI</p><p class="text-[10px] font-bold text-purple-400">${(pretTotalProdus/CURS).toFixed(2)} €</p></div></div>`;
+        });
+    }
+    document.getElementById('shopping-sheet').classList.add('active');
 }
 
+function openProductPicker(rIdx, iIdx) { activeCtx = { rIdx, iIdx }; document.getElementById('picker-search').value = ""; renderPickerOptions(); document.getElementById('product-picker').classList.add('active'); }
 function renderPickerOptions() {
     const container = document.getElementById('product-options');
     const searchVal = normalizeText(document.getElementById('picker-search').value);
     container.innerHTML = '';
-    
-    const filtrat = catalog.filter(p => normalizeText(p.nume).includes(searchVal));
-
-    filtrat.forEach(prod => {
-        container.innerHTML += `
-            <button onclick="selectProduct('${prod.id}')" class="w-full p-5 glass-card mb-2 text-left flex justify-between items-center active:bg-purple-500/20">
-                <span class="font-bold text-white text-sm">${prod.nume}</span>
-                <span class="text-[10px] font-bold text-purple-400">${prod.pretLei} lei/${prod.unit}</span>
-            </button>`;
+    catalog.filter(p => normalizeText(p.nume).includes(searchVal)).sort((a, b) => a.pretLei - b.pretLei).forEach(prod => {
+        container.innerHTML += `<button onclick="selectProduct('${prod.id}')" class="w-full p-5 glass-card mb-2 text-left flex justify-between items-center active:bg-purple-500/20"><span class="font-bold text-white text-sm">${prod.nume}</span><span class="text-[10px] font-bold text-purple-400">${prod.pretLei} lei/${prod.unit}</span></button>`;
     });
 }
 
-function selectProduct(id) {
-    rețete[activeCtx.rIdx].ingrediente[activeCtx.iIdx].idProd = id;
-    closeSheets(); render();
-}
-
-
-function confirmDeleteRecipe(idx) {
-    const nume = rețete[idx].nume || "acest meniu";
-    if (confirm(`Ești sigur că vrei să ștergi "${nume}"?`)) {
-        rețete.splice(idx, 1);
-        render();
-    }
-}
-
-function confirmDeleteIngredient(rIdx, iIdx) {
-    // Opțional: confirmă doar dacă ingredientul are deja un produs selectat
-    const ing = rețete[rIdx].ingrediente[iIdx];
-    const produs = catalog.find(p => p.id === ing.idProd);
-    
-    if (produs) {
-        if (confirm(`Ștergi ${produs.nume} din listă?`)) {
-            rețete[rIdx].ingrediente.splice(iIdx, 1);
-            render();
-        }
-    } else {
-        // Dacă e un rând gol, îl ștergem fără confirmare
-        rețete[rIdx].ingrediente.splice(iIdx, 1);
-        render();
-    }
-}
-
-function confirmDeleteCatalogItem(idx) {
-    const nume = catalog[idx].nume;
-    if (confirm(`ATENȚIE: Ștergerea produsului "${nume}" din catalog îl va elimina din toate calculele. Continui?`)) {
-        catalog.splice(idx, 1);
-        render();
-    }
-}
-
-
-function setNum(val) {
-    if(activeCtx.type === 'ore') rețete[activeCtx.rIdx].ore = val;
-    if(activeCtx.type === 'portii') rețete[activeCtx.rIdx].portii = val;
-    if(activeCtx.type === 'ingQty') rețete[activeCtx.rIdx].ingrediente[activeCtx.iIdx].qty = val;
-    closeSheets(); render();
-}
-
-function openNumPicker(rIdx, type, iIdx = null) {
-    activeCtx = { rIdx, type, iIdx };
-    document.getElementById('number-picker').classList.add('active');
-}
-
+function selectProduct(id) { rețete[activeCtx.rIdx].ingrediente[activeCtx.iIdx].idProd = id; lastEditedId = rețete[activeCtx.rIdx].id; closeSheets(); render(); }
+function openNumPicker(rIdx, type, iIdx = null) { activeCtx = { rIdx, type, iIdx }; document.getElementById('number-picker').classList.add('active'); }
+function setNum(val) { if(activeCtx.type === 'ore') rețete[activeCtx.rIdx].ore = val; if(activeCtx.type === 'portii') rețete[activeCtx.rIdx].portii = val; if(activeCtx.type === 'ingQty') rețete[activeCtx.rIdx].ingrediente[activeCtx.iIdx].qty = val; lastEditedId = rețete[activeCtx.rIdx].id; closeSheets(); render(); }
 function closeSheets() { document.querySelectorAll('.bottom-sheet').forEach(s => s.classList.remove('active')); }
+function confirmDeleteRecipe(idx) { if (confirm(`Ștergi "${rețete[idx].nume}"?`)) { rețete.splice(idx, 1); render(); } }
+function confirmDeleteIngredient(rIdx, iIdx) { rețete[rIdx].ingrediente.splice(iIdx, 1); render(); }
+function confirmDeleteCatalogItem(idx) { if (confirm(`Ștergi "${catalog[idx].nume}" din tot catalogul?`)) { catalog.splice(idx, 1); render(); } }
 function addNewProductToCatalog() { catalog.unshift({ id: 'c' + Date.now(), nume: 'Produs Nou', pretLei: 0, unit: 'Kg' }); render(); }
 function addRecipe() { rețete.push({ id: Date.now(), selectat: true, nume: 'Meniu Nou', ore: 1, portii: 1, ingrediente: [], tags: '' }); render(); }
 
 window.onload = render;
+</script>
 
-
-
-
-    </script>
 </body>
 </html>
