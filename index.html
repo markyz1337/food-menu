@@ -534,9 +534,10 @@ async function db_upsertCatalogItem(prod) {
         nume: prod.nume,
         pret_lei: prod.pretLei,
         unit: prod.unit
-    });
+    }, { onConflict: 'id' });
     if (error) console.error('Eroare salvare produs:', error);
 }
+
 
 async function db_deleteCatalogItem(id) {
     if (!USE_SUPABASE) return;
@@ -554,19 +555,25 @@ async function db_upsertReteta(reteta) {
         selectat: reteta.selectat,
         ingrediente: reteta.ingrediente
     };
-    // Dacă ID-ul e generat de Supabase (BIGINT IDENTITY), nu-l trimitem la INSERT
     if (typeof reteta.id === 'number' && reteta.id > 1000000000) {
-        // ID generat local (timestamp) -- INSERT fără id, Supabase generează unul nou
-        const { data, error } = await supabaseClient.from('retete').insert(payload).select().single();
+        // ID temporar local → INSERT nou
+        const { data, error } = await supabaseClient
+            .from('retete')
+            .insert(payload)
+            .select()
+            .single();
         if (error) { console.error('Eroare inserare rețetă:', error); return; }
-        // Actualizăm ID-ul local cu cel de la Supabase
-        reteta.id = data.id;
+        reteta.id = data.id; // înlocuim ID-ul local cu cel real din DB
     } else {
-        // ID existent de la Supabase -- UPDATE
-        const { error } = await supabaseClient.from('retete').update(payload).eq('id', reteta.id);
+        // ID real Supabase → UPDATE
+        const { error } = await supabaseClient
+            .from('retete')
+            .update(payload)
+            .eq('id', reteta.id);
         if (error) console.error('Eroare update rețetă:', error);
     }
 }
+
 
 async function db_deleteReteta(id) {
     if (!USE_SUPABASE) return;
