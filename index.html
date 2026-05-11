@@ -6,7 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>GastroGlass HUD Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -394,22 +395,30 @@ pointer-events: auto;
     <button onclick="switchTab('catalog')" id="nav-catalog" class="nav-btn">Catalog</button>
 </nav>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const USE_SUPABASE = true;
-const SUPABASE_URL = 'https://fndjrfieitieqzafhyzz.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_bHDKjiKAVHqW199ICw7i2g_O3olYMAr';
 
-let supabase = null;
-if (USE_SUPABASE) {
-    supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-}
+// ============================================================
+// CONFIGURARE SUPABASE
+// Setează USE_SUPABASE = false pentru a folosi datele locale (simulare)
+// Setează USE_SUPABASE = true pentru a conecta la Supabase real
+// ============================================================
+const USE_SUPABASE = true; // <-- SCHIMBĂ AICI
+
+const SUPABASE_URL = 'https://fndjrfieitieqzafhyzz.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_bHDKjiKAVHqW199ICw7i2g_O3olYMAr';
+
+const supabaseClient = USE_SUPABASE
+    ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+    : null;
+
+// ============================================================
 
 const CURS = 5.09;
 let searchTerm = "";
 let isUnlocked = false;
-let activeCtx = null;
-let lastEditedId = null;
 
+// Date locale pentru simulare (folosite când USE_SUPABASE = false)
 let catalog = [
     { id: 'c1', nume: 'Icre roșii', pretLei: 761.00, unit: 'Kg' },
     { id: 'c2', nume: 'Pătrunjel', pretLei: 148.75, unit: 'Kg' },
@@ -479,97 +488,193 @@ let rețete = [
         nume: '🍳 Mic Dejun Proteic',
         ore: 4,
         portii: 2,
-        ingrediente: [{ idProd: 'c59', qty: 1 }],
+        ingrediente: [{ idProd: 'c59', qty: 4 }],
         tags: 'oua, proteina, rapid'
     }
 ];
 
+let activeCtx = null;
+let lastEditedId = null;
 
-async function loadFromSupabase() {
+// ============================================================
+// LAYER SUPABASE -- toate operațiile DB sunt izolate aici
+// ============================================================
+
+async function db_loadCatalog() {
+    if (!USE_SUPABASE) return; // folosim datele locale
+    const { data, error } = await supabaseClient.from('catalog').select('*');
+    if (error) { console.error('Eroare catalog:', error); return; }
+    catalog = data.map(r => ({
+        id: r.id,
+        nume: r.nume,
+        pretLei: parseFloat(r.pret_lei),
+        unit: r.unit
+    }));
+}
+
+async function db_loadRetete() {
+    if (!USE_SUPABASE) return; // folosim datele locale
+    const { data, error } = await supabaseClient.from('retete').select('*');
+    if (error) { console.error('Eroare retete:', error); return; }
+    rețete = data.map(r => ({
+        id: r.id,
+        nume: r.nume,
+        ore: r.ore,
+        portii: r.portii,
+        tags: r.tags || '',
+        selectat: r.selectat,
+        ingrediente: r.ingrediente || []
+    }));
+}
+
+async function db_upsertCatalogItem(prod) {
     if (!USE_SUPABASE) return;
+    const { error } = await supabaseClient.from('catalog').upsert({
+        id: prod.id,
+        nume: prod.nume,
+        pret_lei: prod.pretLei,
+        unit: prod.unit
+    });
+    if (error) console.error('Eroare salvare produs:', error);
+}
 
-    try {
-        // Încarcă Catalog
-        const { data: catData, error: catErr } = await supabase.from('catalog').select('*');
-        if (catData) {
-            catalog = catData.map(item => ({
-                id: item.id,
-                nume: item.nume,
-                pretLei: item.pret_lei,
-                unit: item.unit
-            }));
-        }
+async function db_deleteCatalogItem(id) {
+    if (!USE_SUPABASE) return;
+    const { error } = await supabaseClient.from('catalog').delete().eq('id', id);
+    if (error) console.error('Eroare ștergere produs:', error);
+}
 
-        // Încarcă Rețete
-        const { data: retData, error: retErr } = await supabase.from('retete').select('*');
-        if (retData) {
-            rețete = retData.map(item => ({
-                id: item.id,
-                nume: item.nume,
-                ore: item.ore,
-                portii: item.portii,
-                tags: item.tags,
-                selectat: item.selectat,
-                ingrediente: item.ingrediente || []
-            }));
-        }
-        render();
-    } catch (err) {
-        console.error("Eroare Supabase:", err);
+async function db_upsertReteta(reteta) {
+    if (!USE_SUPABASE) return;
+    const payload = {
+        nume: reteta.nume,
+        ore: reteta.ore,
+        portii: reteta.portii,
+        tags: reteta.tags || '',
+        selectat: reteta.selectat,
+        ingrediente: reteta.ingrediente
+    };
+    // Dacă ID-ul e generat de Supabase (BIGINT IDENTITY), nu-l trimitem la INSERT
+    if (typeof reteta.id === 'number' && reteta.id > 1000000000) {
+        // ID generat local (timestamp) -- INSERT fără id, Supabase generează unul nou
+        const { data, error } = await supabaseClient.from('retete').insert(payload).select().single();
+        if (error) { console.error('Eroare inserare rețetă:', error); return; }
+        // Actualizăm ID-ul local cu cel de la Supabase
+        reteta.id = data.id;
+    } else {
+        // ID existent de la Supabase -- UPDATE
+        const { error } = await supabaseClient.from('retete').update(payload).eq('id', reteta.id);
+        if (error) console.error('Eroare update rețetă:', error);
     }
 }
 
-async function syncToSupabase(table, id, updateData) {
-    if (!USE_SUPABASE || !isUnlocked) return;
-    
-    const { error } = await supabase
-        .from(table)
-        .update(updateData)
-        .eq('id', id);
-    
-    if (error) console.error(`Eroare sync ${table}:`, error);
+async function db_deleteReteta(id) {
+    if (!USE_SUPABASE) return;
+    // ID-urile locale (timestamp mare) nu există în DB, ignorăm
+    if (typeof id === 'number' && id > 1000000000 && !USE_SUPABASE) return;
+    const { error } = await supabaseClient.from('retete').delete().eq('id', id);
+    if (error) console.error('Eroare ștergere rețetă:', error);
 }
 
-
-// --- FUNCȚII LOGICĂ ---
+// ============================================================
+// LOCK / UNLOCK
+// ============================================================
 
 function toggleLock() {
     isUnlocked = !isUnlocked;
-    document.body.classList.toggle('unlocked', isUnlocked);
+    const body = document.body;
     const btn = document.getElementById('lock-btn');
-    btn.classList.toggle('unlocked', isUnlocked);
-    document.getElementById('icon-locked').style.display = isUnlocked ? 'none' : 'block';
-    document.getElementById('icon-unlocked').style.display = isUnlocked ? 'block' : 'none';
-    
-    // Dacă tocmai am blocat și avem Supabase activ, putem forța o salvare finală aici
+    const iconLocked = document.getElementById('icon-locked');
+    const iconUnlocked = document.getElementById('icon-unlocked');
+
+    if (isUnlocked) {
+        body.classList.add('unlocked');
+        btn.classList.add('unlocked');
+        iconLocked.style.display = 'none';
+        iconUnlocked.style.display = 'block';
+    } else {
+        body.classList.remove('unlocked');
+        btn.classList.remove('unlocked');
+        iconLocked.style.display = 'block';
+        iconUnlocked.style.display = 'none';
+    }
     render();
 }
 
-// Exemplu: Când schimbi numele unei rețete
-async function updateRecipeName(idx, val) {
-    rețete[idx].nume = val;
-    if (USE_SUPABASE) {
-        await syncToSupabase('retete', rețete[idx].id, { nume: val });
+// ============================================================
+// SHOPPING LIST
+// ============================================================
+
+function openShoppingList() {
+    const listContent = document.getElementById('shopping-list-content');
+    const summaryCount = document.getElementById('shopping-summary-count');
+    listContent.innerHTML = '';
+
+    let cumparaturi = {};
+    rețete.forEach(r => {
+        if (r.selectat) {
+            r.ingrediente.forEach(ing => {
+                if (!ing.idProd) return;
+                const qtyTotala = ing.qty * r.portii;
+                if (cumparaturi[ing.idProd]) {
+                    cumparaturi[ing.idProd] += qtyTotala;
+                } else {
+                    cumparaturi[ing.idProd] = qtyTotala;
+                }
+            });
+        }
+    });
+
+    const keys = Object.keys(cumparaturi);
+    summaryCount.innerText = `${keys.length} PRODUSE UNICE`;
+
+    if (keys.length === 0) {
+        listContent.innerHTML = '<p class="text-center text-gray-500 py-10 font-bold uppercase text-xs tracking-widest">Nicio rețetă selectată</p>';
+    } else {
+        keys.forEach(idProd => {
+            const produs = catalog.find(p => p.id === idProd);
+            if (!produs) return;
+            const cantitate = cumparaturi[idProd];
+            const pretTotalProdus = (produs.pretLei * cantitate);
+            const pretEur = (pretTotalProdus / CURS).toFixed(2);
+
+            listContent.innerHTML += `
+                <div class="glass-card p-4 flex justify-between items-center border-l-4 border-purple-500">
+                    <div>
+                        <p class="font-bold text-white text-sm">${produs.nume}</p>
+                        <p class="text-[10px] font-black text-gray-500 uppercase">${cantitate} ${produs.unit} × ${produs.pretLei} lei</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-sm font-black text-white">${pretTotalProdus.toFixed(2)} LEI</p>
+                        <p class="text-[10px] font-bold text-purple-400">${pretEur} €</p>
+                    </div>
+                </div>
+            `;
+        });
     }
+
+    document.getElementById('shopping-sheet').classList.add('active');
 }
 
-// Modifică window.onload
-window.onload = async () => {
-    if (USE_SUPABASE) {
-        await loadFromSupabase();
-    }
-    render();
-};
+// ============================================================
+// UTILITĂȚI
+// ============================================================
 
 function normalizeText(text) {
     if (!text) return "";
-    return text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-        .replace(/ț/g, "t").replace(/ș/g, "s").replace(/ă/g, "a").replace(/â/g, "a").replace(/î/g, "i");
+    return text.toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/ț/g, "t").replace(/ș/g, "s")
+        .replace(/ă/g, "a").replace(/â/g, "a")
+        .replace(/î/g, "i");
 }
 
 function updateSearch(val) {
     searchTerm = normalizeText(val);
-    document.getElementById('clear-search').classList.toggle('hidden', val.length === 0);
+    const clearBtn = document.getElementById('clear-search');
+    if (val.length > 0) clearBtn.classList.remove('hidden');
+    else clearBtn.classList.add('hidden');
     render();
 }
 
@@ -584,14 +689,17 @@ function switchTab(tab) {
     document.getElementById('page-home').classList.toggle('hidden', tab !== 'home');
     document.getElementById('page-catalog').classList.toggle('hidden', tab !== 'catalog');
     const searchBar = document.getElementById('search-container');
-    if(searchBar) searchBar.classList.toggle('hidden', tab !== 'home');
+    if (searchBar) searchBar.classList.toggle('hidden', tab !== 'home');
+
     document.getElementById('nav-home').className = tab === 'home' ? 'nav-btn active' : 'nav-btn';
     document.getElementById('nav-catalog').className = tab === 'catalog' ? 'nav-btn active' : 'nav-btn';
     document.getElementById('view-title').innerText = tab === 'home' ? 'Planificator' : 'Catalog';
     render();
 }
 
-// --- RENDER (AFIȘARE) ---
+// ============================================================
+// RENDER PRINCIPAL
+// ============================================================
 
 function render() {
     const list = document.getElementById('recipes-list');
@@ -605,48 +713,82 @@ function render() {
             const p = catalog.find(x => x.id === ing.idProd);
             if (p) costLeiMasa += (p.pretLei * ing.qty);
         });
+
         r.costEurCalculat = (costLeiMasa / CURS) * r.portii;
         r.totalOreCalculat = r.ore * r.portii;
         r.eficienta = r.costEurCalculat > 0 ? (r.totalOreCalculat / r.costEurCalculat) : 0;
-        if (r.selectat) { tEur += r.costEurCalculat; tOre += r.totalOreCalculat; }
+
+        if (r.selectat) {
+            tEur += r.costEurCalculat;
+            tOre += r.totalOreCalculat;
+        }
     });
 
     const reteteFiltrate = rețete
-        .filter(r => normalizeText(r.nume).includes(searchTerm) || normalizeText(r.tags || "").includes(searchTerm))
+        .filter(r => {
+            const nNume = normalizeText(r.nume);
+            const nTags = normalizeText(r.tags || "");
+            return nNume.includes(searchTerm) || nTags.includes(searchTerm);
+        })
         .sort((a, b) => b.eficienta - a.eficienta);
 
     reteteFiltrate.forEach((reteta) => {
         const rIdx = rețete.findIndex(r => r.id === reteta.id);
+        const oreCls = isUnlocked ? 'cursor-pointer' : 'ore-locked cursor-default';
+        const textLockCls = isUnlocked ? '' : 'pointer-events-none';
+
         list.innerHTML += `
             <div id="recipe-${reteta.id}" class="glass-card p-6 relative transition-all duration-500 ${reteta.selectat ? '' : 'inactive'}">
                 <div class="flex items-center gap-4 mb-1">
-                    <input type="checkbox" ${reteta.selectat ? 'checked' : ''} onchange="rețete[${rIdx}].selectat=this.checked; render()" class="w-6 h-6 accent-purple-500">
-                    <input class="font-extrabold text-xl flex-grow text-white bg-transparent outline-none border-none ${isUnlocked ? '' : 'pointer-events-none'}" 
-                           value="${reteta.nume}" ${isUnlocked ? '' : 'readonly'} onchange="rețete[${rIdx}].nume=this.value">
+                    <input type="checkbox" ${reteta.selectat ? 'checked' : ''} 
+                           onchange="toggleSelectReteta(${rIdx}, this.checked)" 
+                           class="w-6 h-6 accent-purple-500">
+                    <input class="font-extrabold text-xl flex-grow text-white bg-transparent outline-none border-none ${textLockCls}" 
+                           value="${reteta.nume}" 
+                           ${isUnlocked ? '' : 'readonly'}
+                           onchange="updateRetetaField(${rIdx}, 'nume', this.value)">
                 </div>
+                
                 <div class="flex items-center gap-2 mb-6 ml-10">
                     <span class="text-purple-500 font-bold text-[10px]">#</span>
-                    <input class="text-[10px] font-bold text-gray-500 bg-transparent border-none outline-none w-full uppercase tracking-widest ${isUnlocked ? '' : 'pointer-events-none'}" 
-                           value="${reteta.tags || ''}" ${isUnlocked ? '' : 'readonly'} onchange="rețete[${rIdx}].tags=this.value; render()">
+                    <input class="text-[10px] font-bold text-gray-500 bg-transparent border-none outline-none w-full uppercase tracking-widest ${textLockCls}" 
+                           placeholder="taguri..."
+                           value="${reteta.tags || ''}" 
+                           ${isUnlocked ? '' : 'readonly'}
+                           onchange="updateRetetaField(${rIdx}, 'tags', this.value)">
                 </div>
+
                 <div class="space-y-3 mb-6">
                     ${reteta.ingrediente.map((ing, iIdx) => {
                         const p = catalog.find(x => x.id === ing.idProd);
                         return `
                         <div class="flex items-center gap-2 bg-white/5 p-2 pr-3 rounded-2xl border border-white/5">
-                            <button onclick="${isUnlocked ? `openProductPicker(${rIdx}, ${iIdx})` : ''}" class="flex-grow text-left text-sm font-semibold text-gray-200 truncate pl-2">
+                            ${isUnlocked ? `
+                            <button onclick="openProductPicker(${rIdx}, ${iIdx})" class="flex-grow text-left text-sm font-semibold text-gray-200 truncate pl-2">
                                 ${p ? p.nume : 'Alege Produs...'}
-                            </button>
-                            <button onclick="${isUnlocked ? `openNumPicker(${rIdx}, 'ingQty', ${iIdx})` : ''}" class="bg-purple-500/20 text-purple-300 px-3 py-1.5 rounded-xl text-xs font-black min-w-[65px]">
+                            </button>` : `
+                            <span class="flex-grow text-left text-sm font-semibold text-gray-200 truncate pl-2">
+                                ${p ? p.nume : 'Alege Produs...'}
+                            </span>`}
+                            <button onclick="${isUnlocked ? `openNumPicker(${rIdx}, 'ingQty', ${iIdx})` : ''}" 
+                                    class="bg-purple-500/20 text-purple-300 px-3 py-1.5 rounded-xl text-xs font-black min-w-[65px] ${isUnlocked ? '' : 'opacity-60 cursor-default'}">
                                 ${ing.qty} ${p ? p.unit : ''}
                             </button>
-                            ${isUnlocked ? `<button onclick="confirmDeleteIngredient(${rIdx}, ${iIdx})" class="w-7 h-7 flex items-center justify-center bg-red-500/20 text-red-500 rounded-full">✕</button>` : ''}
+                            ${isUnlocked ? `
+                            <button onclick="confirmDeleteIngredient(${rIdx}, ${iIdx})" 
+                                    class="w-7 h-7 flex items-center justify-center bg-red-500/20 hover:bg-red-500/40 text-red-500 rounded-full transition-all active:scale-90">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                                </svg>
+                            </button>` : ''}
                         </div>`;
                     }).join('')}
-                    ${isUnlocked ? `<button onclick="rețete[${rIdx}].ingrediente.push({idProd:null, qty:1}); render()" class="text-[9px] font-black text-purple-400 uppercase tracking-widest pt-2">+ ADĂUGARE INGREDIENT</button>` : ''}
+                    ${isUnlocked ? `<button onclick="addIngredient(${rIdx})" class="text-[9px] font-black text-purple-400 uppercase tracking-widest pt-2 hover:text-purple-300 transition-colors">+ ADĂUGARE INGREDIENT</button>` : ''}
                 </div>
+
                 <div class="grid grid-cols-3 gap-2 border-t border-white/5 pt-6 items-center text-center">
-                    <div onclick="${isUnlocked ? `openNumPicker(${rIdx}, 'ore')` : ''}" class="text-left ${isUnlocked ? 'cursor-pointer' : ''}">
+                    <div onclick="${isUnlocked ? `openNumPicker(${rIdx}, 'ore')` : ''}" class="text-left ${oreCls}">
                         <p class="text-[8px] font-black text-gray-500 uppercase tracking-widest mb-1">Ore/Masă</p>
                         <p class="text-lg font-bold text-white">${reteta.ore}h</p>
                     </div>
@@ -659,81 +801,239 @@ function render() {
                         <p class="text-lg font-bold text-white">${reteta.portii}</p>
                     </div>
                 </div>
-                ${isUnlocked ? `<button onclick="confirmDeleteRecipe(${rIdx})" class="absolute -top-2 -right-2 w-8 h-8 bg-red-500/20 text-red-500 border border-red-500/30 rounded-full flex items-center justify-center">✕</button>` : ''}
+                ${isUnlocked ? `<button onclick="confirmDeleteRecipe(${rIdx})" class="absolute -top-2 -right-2 w-8 h-8 bg-red-500/20 text-red-500 border border-red-500/30 rounded-full flex items-center justify-center font-bold shadow-lg">✕</button>` : ''}
             </div>`;
     });
 
     if (lastEditedId) {
         setTimeout(() => {
-            const el = document.getElementById(`recipe-${lastEditedId}`);
-            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            const element = document.getElementById(`recipe-${lastEditedId}`);
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                element.style.borderColor = 'rgba(192, 132, 252, 0.6)';
+                setTimeout(() => { element.style.borderColor = ''; }, 1000);
+            }
             lastEditedId = null;
         }, 150);
     }
 
     const zile = Math.floor(tOre / 12);
     const oreRest = tOre % 12;
+    let randZile = oreRest === 0 ? `${zile} zile` : `${zile} → ${zile + 1} zile`;
+
     document.getElementById('hud-eur').innerText = tEur.toFixed(2) + '€';
-    document.getElementById('hud-hours').innerHTML = `<div class="flex flex-col items-start leading-none"><span class="text-base font-extrabold text-white">${oreRest === 0 ? zile + ' zile' : zile + ' → ' + (zile + 1) + ' zile'}</span><span class="text-[10px] font-black text-purple-400/80 uppercase">${oreRest}h / 12h</span></div>`;
-    
+    document.getElementById('hud-hours').innerHTML = `
+        <div class="flex flex-col items-start leading-none gap-0">
+            <span class="text-base font-extrabold tracking-tight text-white">${randZile}</span>
+            <span class="text-[10px] font-black text-purple-400/80 uppercase tracking-wider">${oreRest}h / 12h</span>
+        </div>
+    `;
+
     renderCatalog();
 }
 
 function renderCatalog() {
     const cat = document.getElementById('catalog-list');
     if (!cat) return;
+
     const catSearch = normalizeText(document.getElementById('catalog-search')?.value || "");
     cat.innerHTML = '';
-    catalog.filter(p => normalizeText(p.nume).includes(catSearch)).sort((a, b) => a.pretLei - b.pretLei).forEach((prod) => {
+
+    const catalogFiltrat = catalog
+        .filter(p => normalizeText(p.nume).includes(catSearch))
+        .sort((a, b) => a.pretLei - b.pretLei);
+
+    const textLockCls = isUnlocked ? '' : 'pointer-events-none';
+
+    catalogFiltrat.forEach((prod) => {
         const cIdx = catalog.findIndex(x => x.id === prod.id);
-        cat.innerHTML += `<div class="glass-card p-5 flex justify-between items-center"><div class="flex-grow"><input class="font-bold text-sm block text-white bg-transparent outline-none w-full ${isUnlocked ? '' : 'pointer-events-none'}" value="${prod.nume}" ${isUnlocked ? '' : 'readonly'} onchange="catalog[${cIdx}].nume=this.value; render()"><input class="text-[10px] font-black text-gray-600 uppercase bg-transparent outline-none w-full ${isUnlocked ? '' : 'pointer-events-none'}" value="${prod.unit}" ${isUnlocked ? '' : 'readonly'} onchange="catalog[${cIdx}].unit=this.value; render()"></div><div class="flex items-center gap-3"><div class="bg-white/5 px-3 py-2 rounded-xl flex items-center gap-2 border border-white/5"><input type="number" step="0.01" class="w-16 text-right font-black text-emerald-400 bg-transparent outline-none ${isUnlocked ? '' : 'pointer-events-none'}" value="${prod.pretLei}" onchange="catalog[${cIdx}].pretLei=parseFloat(this.value); render()"><span class="text-[9px] font-bold text-gray-500">LEI</span></div>${isUnlocked ? `<button onclick="confirmDeleteCatalogItem(${cIdx})" class="w-8 h-8 text-red-500">✕</button>` : ''}</div></div>`;
+
+        cat.innerHTML += `
+            <div class="glass-card p-5 flex justify-between items-center">
+                <div class="flex-grow">
+                    <input class="font-bold text-sm block text-white bg-transparent outline-none border-none w-full ${textLockCls}" 
+                           value="${prod.nume}" 
+                           ${isUnlocked ? '' : 'readonly'}
+                           onchange="updateCatalogField(${cIdx}, 'nume', this.value)">
+                    <input class="text-[10px] font-black text-gray-600 uppercase bg-transparent outline-none border-none w-full ${textLockCls}" 
+                           value="${prod.unit}" 
+                           ${isUnlocked ? '' : 'readonly'}
+                           onchange="updateCatalogField(${cIdx}, 'unit', this.value)">
+                </div>
+                
+                <div class="flex items-center gap-3">
+                    <div class="bg-white/5 px-3 py-2 rounded-xl flex items-center gap-2 border border-white/5">
+                        <input type="number" step="0.01" 
+                               class="w-16 text-right font-black text-emerald-400 bg-transparent outline-none ${isUnlocked ? '' : 'pointer-events-none'}" 
+                               value="${prod.pretLei}" 
+                               ${isUnlocked ? '' : 'readonly'}
+                               onchange="updateCatalogField(${cIdx}, 'pretLei', parseFloat(this.value))">
+                        <span class="text-[9px] font-bold text-gray-500">LEI</span>
+                    </div>
+                    ${isUnlocked ? `<button onclick="confirmDeleteCatalogItem(${cIdx})" class="w-8 h-8 flex items-center justify-center bg-red-500/10 text-red-500 border border-red-500/20 rounded-full">✕</button>` : ''}
+                </div>
+            </div>`;
     });
 }
 
-// --- PICKERS & MODALS ---
+// ============================================================
+// FUNCȚII CRUD CU SYNC SUPABASE
+// ============================================================
 
-function openShoppingList() {
-    const listContent = document.getElementById('shopping-list-content');
-    const summaryCount = document.getElementById('shopping-summary-count');
-    listContent.innerHTML = '';
-    let cumparaturi = {};
-    rețete.forEach(r => { if (r.selectat) { r.ingrediente.forEach(ing => { if (!ing.idProd) return; const qtyTotala = ing.qty * r.portii; cumparaturi[ing.idProd] = (cumparaturi[ing.idProd] || 0) + qtyTotala; }); } });
-    const keys = Object.keys(cumparaturi);
-    summaryCount.innerText = `${keys.length} PRODUSE UNICE`;
-    if (keys.length === 0) listContent.innerHTML = '<p class="text-center text-gray-500 py-10 font-bold uppercase text-xs">Nicio rețetă selectată</p>';
-    else {
-        keys.forEach(idProd => {
-            const produs = catalog.find(p => p.id === idProd);
-            const cantitate = cumparaturi[idProd];
-            const pretTotalProdus = (produs.pretLei * cantitate);
-            listContent.innerHTML += `<div class="glass-card p-4 flex justify-between items-center border-l-4 border-purple-500"><div><p class="font-bold text-white text-sm">${produs.nume}</p><p class="text-[10px] font-black text-gray-500 uppercase">${cantitate} ${produs.unit} × ${produs.pretLei} lei</p></div><div class="text-right"><p class="text-sm font-black text-white">${pretTotalProdus.toFixed(2)} LEI</p><p class="text-[10px] font-bold text-purple-400">${(pretTotalProdus/CURS).toFixed(2)} €</p></div></div>`;
-        });
-    }
-    document.getElementById('shopping-sheet').classList.add('active');
+// --- Catalog ---
+
+async function updateCatalogField(cIdx, field, value) {
+    catalog[cIdx][field] = value;
+    await db_upsertCatalogItem(catalog[cIdx]);
+    render();
 }
 
-function openProductPicker(rIdx, iIdx) { activeCtx = { rIdx, iIdx }; document.getElementById('picker-search').value = ""; renderPickerOptions(); document.getElementById('product-picker').classList.add('active'); }
+async function addNewProductToCatalog() {
+    const newProd = { id: 'c' + Date.now(), nume: 'Produs Nou', pretLei: 0, unit: 'Kg' };
+    catalog.unshift(newProd);
+    await db_upsertCatalogItem(newProd);
+    render();
+}
+
+async function confirmDeleteCatalogItem(idx) {
+    const prod = catalog[idx];
+    if (confirm(`ATENȚIE: Ștergerea produsului "${prod.nume}" din catalog îl va elimina din toate calculele. Continui?`)) {
+        await db_deleteCatalogItem(prod.id);
+        catalog.splice(idx, 1);
+        render();
+    }
+}
+
+// --- Rețete ---
+
+async function toggleSelectReteta(rIdx, checked) {
+    rețete[rIdx].selectat = checked;
+    await db_upsertReteta(rețete[rIdx]);
+    render();
+}
+
+async function updateRetetaField(rIdx, field, value) {
+    rețete[rIdx][field] = value;
+    await db_upsertReteta(rețete[rIdx]);
+    render();
+}
+
+async function addIngredient(rIdx) {
+    rețete[rIdx].ingrediente.push({ idProd: null, qty: 1 });
+    await db_upsertReteta(rețete[rIdx]);
+    render();
+}
+
+async function addRecipe() {
+    const newReteta = {
+        id: Date.now(), // ID temporar local; înlocuit cu cel de la Supabase după insert
+        selectat: true,
+        nume: 'Meniu Nou',
+        ore: 1,
+        portii: 1,
+        ingrediente: [],
+        tags: ''
+    };
+    rețete.push(newReteta);
+    await db_upsertReteta(newReteta); // ID-ul local e înlocuit în obiect dacă USE_SUPABASE=true
+    render();
+}
+
+async function confirmDeleteRecipe(idx) {
+    const reteta = rețete[idx];
+    if (confirm(`Ești sigur că vrei să ștergi "${reteta.nume}"?`)) {
+        await db_deleteReteta(reteta.id);
+        rețete.splice(idx, 1);
+        render();
+    }
+}
+
+async function confirmDeleteIngredient(rIdx, iIdx) {
+    const ing = rețete[rIdx].ingrediente[iIdx];
+    const produs = catalog.find(p => p.id === ing.idProd);
+
+    if (produs) {
+        if (confirm(`Ștergi ${produs.nume} din listă?`)) {
+            rețete[rIdx].ingrediente.splice(iIdx, 1);
+            await db_upsertReteta(rețete[rIdx]);
+            render();
+        }
+    } else {
+        rețete[rIdx].ingrediente.splice(iIdx, 1);
+        await db_upsertReteta(rețete[rIdx]);
+        render();
+    }
+}
+
+// ============================================================
+// PICKER-E (număr + produs)
+// ============================================================
+
+function openProductPicker(rIdx, iIdx) {
+    activeCtx = { rIdx, iIdx };
+    document.getElementById('picker-search').value = "";
+    renderPickerOptions();
+    document.getElementById('product-picker').classList.add('active');
+}
+
 function renderPickerOptions() {
     const container = document.getElementById('product-options');
     const searchVal = normalizeText(document.getElementById('picker-search').value);
     container.innerHTML = '';
-    catalog.filter(p => normalizeText(p.nume).includes(searchVal)).sort((a, b) => a.pretLei - b.pretLei).forEach(prod => {
-        container.innerHTML += `<button onclick="selectProduct('${prod.id}')" class="w-full p-5 glass-card mb-2 text-left flex justify-between items-center active:bg-purple-500/20"><span class="font-bold text-white text-sm">${prod.nume}</span><span class="text-[10px] font-bold text-purple-400">${prod.pretLei} lei/${prod.unit}</span></button>`;
+
+    const filtrat = catalog
+        .filter(p => normalizeText(p.nume).includes(searchVal))
+        .sort((a, b) => a.pretLei - b.pretLei);
+
+    filtrat.forEach(prod => {
+        container.innerHTML += `
+            <button onclick="selectProduct('${prod.id}')" class="w-full p-5 glass-card mb-2 text-left flex justify-between items-center active:bg-purple-500/20">
+                <span class="font-bold text-white text-sm">${prod.nume}</span>
+                <span class="text-[10px] font-bold text-purple-400">${prod.pretLei} lei/${prod.unit}</span>
+            </button>`;
     });
 }
 
-function selectProduct(id) { rețete[activeCtx.rIdx].ingrediente[activeCtx.iIdx].idProd = id; lastEditedId = rețete[activeCtx.rIdx].id; closeSheets(); render(); }
-function openNumPicker(rIdx, type, iIdx = null) { activeCtx = { rIdx, type, iIdx }; document.getElementById('number-picker').classList.add('active'); }
-function setNum(val) { if(activeCtx.type === 'ore') rețete[activeCtx.rIdx].ore = val; if(activeCtx.type === 'portii') rețete[activeCtx.rIdx].portii = val; if(activeCtx.type === 'ingQty') rețete[activeCtx.rIdx].ingrediente[activeCtx.iIdx].qty = val; lastEditedId = rețete[activeCtx.rIdx].id; closeSheets(); render(); }
-function closeSheets() { document.querySelectorAll('.bottom-sheet').forEach(s => s.classList.remove('active')); }
-function confirmDeleteRecipe(idx) { if (confirm(`Ștergi "${rețete[idx].nume}"?`)) { rețete.splice(idx, 1); render(); } }
-function confirmDeleteIngredient(rIdx, iIdx) { rețete[rIdx].ingrediente.splice(iIdx, 1); render(); }
-function confirmDeleteCatalogItem(idx) { if (confirm(`Ștergi "${catalog[idx].nume}" din tot catalogul?`)) { catalog.splice(idx, 1); render(); } }
-function addNewProductToCatalog() { catalog.unshift({ id: 'c' + Date.now(), nume: 'Produs Nou', pretLei: 0, unit: 'Kg' }); render(); }
-function addRecipe() { rețete.push({ id: Date.now(), selectat: true, nume: 'Meniu Nou', ore: 1, portii: 1, ingrediente: [], tags: '' }); render(); }
+async function selectProduct(id) {
+    rețete[activeCtx.rIdx].ingrediente[activeCtx.iIdx].idProd = id;
+    lastEditedId = rețete[activeCtx.rIdx].id;
+    await db_upsertReteta(rețete[activeCtx.rIdx]);
+    closeSheets();
+    render();
+}
 
-window.onload = render;
+function openNumPicker(rIdx, type, iIdx = null) {
+    activeCtx = { rIdx, type, iIdx };
+    document.getElementById('number-picker').classList.add('active');
+}
+
+async function setNum(val) {
+    if (activeCtx.type === 'ore') rețete[activeCtx.rIdx].ore = val;
+    if (activeCtx.type === 'portii') rețete[activeCtx.rIdx].portii = val;
+    if (activeCtx.type === 'ingQty') rețete[activeCtx.rIdx].ingrediente[activeCtx.iIdx].qty = val;
+
+    lastEditedId = rețete[activeCtx.rIdx].id;
+    await db_upsertReteta(rețete[activeCtx.rIdx]);
+    closeSheets();
+    render();
+}
+
+function closeSheets() {
+    document.querySelectorAll('.bottom-sheet').forEach(s => s.classList.remove('active'));
+}
+
+// ============================================================
+// INIT
+// ============================================================
+
+window.onload = async function () {
+    await db_loadCatalog();
+    await db_loadRetete();
+    render();
+};
+
 </script>
+
 
 </body>
 </html>
