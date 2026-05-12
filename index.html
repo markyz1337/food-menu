@@ -51,7 +51,27 @@
         border-radius: 28px;
     }
 
-    .inactive { opacity: 0.3; transform: scale(0.97); filter: grayscale(1); }
+    .inactive { opacity: 0.95; transform: scale(0.99); filter: grayscale(1); }
+
+
+/* Forțăm header-ul rețetei să fie mereu vizibil și colorat */
+.glass-card.inactive .recipe-header {
+    opacity: 1 !important;
+    filter: none !important;
+}
+
+/* Opțional: păstrăm checkbox-ul clar */
+.glass-card.inactive input[type="checkbox"] {
+    opacity: 1;
+}
+
+/* Asigurăm că textul titlului rămâne alb */
+.glass-card.inactive .recipe-title-input {
+    color: white !important;
+    -webkit-text-fill-color: white !important;
+}
+
+
 
     .hud-status {
         position: fixed;
@@ -68,25 +88,77 @@
     }
 
 
+/* Stil unitar pentru toate foile de jos */
+/* Modifică/Adaugă aceste reguli în CSS-ul tău */
+
 .bottom-sheet {
-position: fixed;
-bottom: -100%;
-left: 0;
-width: 100%;
-height: 100%; /* Forțează înălțimea la 100% din ecran */
-background: rgba(10, 10, 15, 0.98);
-backdrop-filter: blur(40px);
--webkit-backdrop-filter: blur(40px);
-border-top: 1px solid var(–glass-border);
-z-index: 2000;
-border-radius: 0; /* Eliminăm colțurile rotunjite pentru aspect Full Screen */
-transition: bottom 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    /* Schimbă height: auto în: */
+    height: 75vh; 
+    background: rgba(10, 10, 15, 0.98);
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
+    border-top: 1px solid var(--glass-border);
+    z-index: 2000;
+    transform: translateY(110%); 
+    transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+    border-radius: 32px 32px 0 0;
+    display: flex; /* Ajută la alinierea scroll-ului */
+    flex-direction: column;
 }
 
+/* Stil pentru selectorul care ocupă TOT ecranul */
+.bottom-sheet.full { 
+    height: 100vh !important; /* Tot ecranul */
+    height: 100dvh !important; /* Dynamic Viewport Height pentru mobil (evită bug-ul cu bara de adrese) */
+    top: 0;
+    border-radius: 0; /* Scoatem colțurile rotunjite */
+    background: #020205; /* Fundal solid ca să nu se vadă ce e în spate */
+}
 
-    .bottom-sheet.active { bottom: 0; }
+/* Ajustăm containerul de scroll să respire sub butonul de închidere */
+#product-options {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 0 20px 120px 20px; /* Padding generos jos pentru butonul plutitor */
+}
 
-    .num-key:active { background: var(--primary); transform: scale(0.9); }
+.bottom-sheet.active { 
+    transform: translateY(0); 
+}
+
+/* Specificitate pentru Number Picker */
+#number-picker {
+    background: rgba(15, 15, 25, 0.95);
+    border-top: 2px solid var(--primary);
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
+.num-key {
+    height: 60px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    font-size: 1.25rem;
+    font-weight: 700;
+    transition: all 0.1s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Efect de apăsare (Haptic feedback vizual) */
+.num-key:active {
+    background: var(--primary);
+    color: black;
+    transform: scale(0.92);
+}
+.num-key, .nav-btn, button {
+    touch-action: manipulation;
+}
 
     .tab-bar {
         position: fixed; bottom: 0; width: 100%;
@@ -116,30 +188,14 @@ transition: bottom 0.4s cubic-bezier(0.32, 0.72, 0, 1);
     .search-pill:focus { border-color: var(--primary); background: rgba(255,255,255,0.08); }
 
 
-/* Bottom sheet pentru catalog (rămâne mare) */
-.bottom-sheet.full { height: 100%; bottom: -100%; }
 
-/* Bottom sheet pentru cifre (devine mic și elegant) */
-#number-picker {
-height: auto;
-bottom: -50%;
-border-radius: 32px 32px 0 0;
-padding-bottom: env(safe-area-inset-bottom); /* Respectă zona de gesturi pe iPhone */
-background: rgba(15, 15, 25, 0.95);
-border-top: 2px solid var(–primary);
-}
+
 
 #number-picker.active {
 bottom: 0;
 }
 
-/* Grila de numere mai compactă */
-.num-grid {
-display: grid;
-grid-template-columns: repeat(5, 1fr);
-gap: 10px;
-padding: 0 20px 30px 20px;
-}
+
 
 .num-key {
 height: 55px; /* Puțin mai mic */
@@ -340,52 +396,75 @@ pointer-events: auto;
         </div>
     </div>
 
+<!-- SECȚIUNEA NUMBER PICKER REPARATĂ COMPLET -->
 <div id="number-picker" class="bottom-sheet">
-    <!-- Mâner de glisare vizual -->
-    <div class="w-12 h-1.5 bg-white/10 mx-auto rounded-full mt-3 mb-6"></div>
-
-
-<div class="px-6 mb-4 flex justify-between items-center">
-    <h3 class="text-[10px] font-black uppercase tracking-[2px] text-purple-400">Cantitate / Durată</h3>
-    <button onclick="closeSheets()" class="text-gray-500 text-xs font-bold">ÎNCHIDE</button>
-</div>
-
-<div class="num-grid">
-    <script>
-        for(let i=1; i<=10; i++) 
-            document.write(`<button onclick="setNum(${i})" class="num-key text-white hover:bg-purple-500/20 active:scale-95">${i}</button>`);
-    </script>
-</div>
-
-
-</div>
-
-<div id="product-picker" class="bottom-sheet">
-    <div class="p-4 h-full flex flex-col">
-        <!-- Header compact cu buton de închidere inclus -->
-        <div class="flex justify-between items-center mb-4 px-2">
-            <h3 class="text-[10px] font-black uppercase tracking-widest text-gray-500">Alege din Catalog</h3>
-            <button onclick="closeSheets()" class="w-10 h-10 flex items-center justify-center bg-white/5 rounded-full text-white font-bold">✕</button>
-        </div>
-
-
-    <!-- Zona de căutare -->
-    <div class="mb-4">
-        <input type="text" id="picker-search" oninput="renderPickerOptions()" placeholder="Caută produs..." 
-               class="search-pill">
+    <div class="w-12 h-1.5 bg-white/10 mx-auto rounded-full mt-3 mb-4"></div>
+    
+    <div class="px-6 mb-2 flex justify-between items-center">
+        <h3 id="num-picker-title" class="text-[10px] font-black uppercase tracking-[2px] text-purple-400">Introduceți Cantitatea</h3>
+        <button onclick="closeSheets()" class="text-gray-500 text-xs font-bold uppercase">Închide</button>
     </div>
 
-    <!-- Lista care acum are mult mai mult loc -->
-    <div id="product-options" class="space-y-2 overflow-y-auto flex-grow pb-20"></div>
-    
-    <!-- Buton de închidere discret, poziționat absolut la bază (opțional) -->
-    <div class="absolute bottom-6 left-0 w-full px-8 pointer-events-none">
-        <button onclick="closeSheets()" class="pointer-events-auto w-full py-4 bg-purple-600/90 backdrop-blur-md text-white rounded-2xl font-bold text-xs uppercase tracking-widest shadow-2xl">
-            Închide
+    <!-- Ecran Afișare Valoare -->
+    <div class="px-6 mb-6">
+        <div class="bg-white/5 border border-white/10 rounded-2xl p-4 text-center">
+            <span id="num-display" class="text-4xl font-black text-white">0</span>
+            <span id="num-unit-display" class="text-sm font-bold text-gray-500 ml-2">unit</span>
+        </div>
+    </div>
+
+    <!-- Tastatură Numerică Corectă -->
+    <div class="grid grid-cols-3 gap-3 px-6 pb-12">
+        <button onclick="pressNum('1')" class="num-key h-14 rounded-xl text-xl font-bold text-white">1</button>
+        <button onclick="pressNum('2')" class="num-key h-14 rounded-xl text-xl font-bold text-white">2</button>
+        <button onclick="pressNum('3')" class="num-key h-14 rounded-xl text-xl font-bold text-white">3</button>
+        <button onclick="pressNum('4')" class="num-key h-14 rounded-xl text-xl font-bold text-white">4</button>
+        <button onclick="pressNum('5')" class="num-key h-14 rounded-xl text-xl font-bold text-white">5</button>
+        <button onclick="pressNum('6')" class="num-key h-14 rounded-xl text-xl font-bold text-white">6</button>
+        <button onclick="pressNum('7')" class="num-key h-14 rounded-xl text-xl font-bold text-white">7</button>
+        <button onclick="pressNum('8')" class="num-key h-14 rounded-xl text-xl font-bold text-white">8</button>
+        <button onclick="pressNum('9')" class="num-key h-14 rounded-xl text-xl font-bold text-white">9</button>
+        <button onclick="pressNum('.')" class="num-key h-14 rounded-xl text-xl font-bold text-white">.</button>
+        <button onclick="pressNum('0')" class="num-key h-14 rounded-xl text-xl font-bold text-white">0</button>
+        <button onclick="pressNum('back')" class="num-key h-14 rounded-xl text-xl font-bold text-red-400">←</button>
+        
+        <button onclick="confirmNum()" class="col-span-3 mt-2 py-4 bg-purple-600 text-white rounded-xl font-black uppercase tracking-widest active:scale-95 transition-all shadow-lg shadow-purple-500/20">
+            Confirmă Valoarea
         </button>
     </div>
 </div>
+<!-- SFÂRȘIT NUMBER PICKER -->
 
+
+<div id="product-picker" class="bottom-sheet full">
+    <!-- Header Fix -->
+    <div class="p-6 border-b border-white/10 flex justify-between items-center bg-black/50">
+        <div>
+            <h3 class="text-xl font-black tracking-tighter">SELECTEAZĂ PRODUS</h3>
+            <p class="text-[9px] font-bold text-purple-400 uppercase tracking-[2px]">Alege din catalogul de prețuri</p>
+        </div>
+        <button onclick="closeSheets()" class="w-10 h-10 flex items-center justify-center bg-white/5 rounded-full text-white font-bold">✕</button>
+    </div>
+
+    <!-- Căutare Fixă -->
+    <div class="p-4 bg-black/20">
+        <input type="text" id="picker-search" oninput="renderPickerOptions()" 
+               placeholder="Caută în catalog..." 
+               class="search-pill w-full">
+    </div>
+
+    <!-- Lista care face scroll (flex-grow o face să se întindă) -->
+    <div id="product-options" class="px-4 space-y-2">
+        <!-- Produsele se injectează aici -->
+    </div>
+    
+    <!-- Buton de confirmare/închidere plutitor la bază -->
+    <div class="absolute bottom-8 left-0 w-full px-6 pointer-events-none">
+        <button onclick="closeSheets()" class="pointer-events-auto w-full py-4 bg-purple-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-2xl shadow-purple-500/40">
+            Gata / Închide
+        </button>
+    </div>
+</div>
 
 </div>
 
@@ -495,6 +574,88 @@ let rețete = [
 
 let activeCtx = null;
 let lastEditedId = null;
+
+
+
+
+
+let currentNumInput = "0";
+
+function openNumPicker(rIdx, type, iIdx = null) {
+    activeCtx = { rIdx, type, iIdx };
+    currentNumInput = "0"; // Resetăm la fiecare deschidere
+    
+    // Setăm titlul și unitatea vizuală
+    const title = document.getElementById('num-picker-title');
+    const unitDisp = document.getElementById('num-unit-display');
+    
+    if(type === 'ingQty') {
+        const prodId = rețete[rIdx].ingrediente[iIdx].idProd;
+        const prod = catalog.find(p => p.id === prodId);
+        title.innerText = "Cantitate Ingredient";
+        unitDisp.innerText = prod ? prod.unit : 'unit';
+    } else if(type === 'ore') {
+        title.innerText = "Ore per Masă";
+        unitDisp.innerText = "h";
+    } else {
+        title.innerText = "Număr Porții";
+        unitDisp.innerText = "buc";
+    }
+
+    updateNumDisplay();
+    document.getElementById('number-picker').classList.add('active');
+}
+
+function pressNum(val) {
+    if (val === 'back') {
+        currentNumInput = currentNumInput.length > 1 ? currentNumInput.slice(0, -1) : "0";
+    } else if (val === '.') {
+        if (!currentNumInput.includes('.')) currentNumInput += '.';
+    } else {
+        if (currentNumInput === "0") currentNumInput = val;
+        else currentNumInput += val;
+    }
+    updateNumDisplay();
+}
+
+function updateNumDisplay() {
+    document.getElementById('num-display').innerText = currentNumInput;
+}
+
+async function confirmNum() {
+    const finalVal = parseFloat(currentNumInput) || 0;
+    const ctx = activeCtx; // Salvăm contextul curent
+    
+    if (!ctx) return;
+
+    // 1. Actualizare rapidă a datelor locale (în variabila rețete)
+    if (ctx.type === 'ore') {
+        rețete[ctx.rIdx].ore = finalVal;
+    } else if (ctx.type === 'portii') {
+        rețete[ctx.rIdx].portii = Math.round(finalVal);
+    } else if (ctx.type === 'ingQty') {
+        rețete[ctx.rIdx].ingrediente[ctx.iIdx].qty = finalVal;
+    }
+
+    // 2. Feedback Instantaneu: Închidem foaia și redesenăm UI-ul local
+    lastEditedId = rețete[ctx.rIdx].id;
+    closeSheets();
+    render(); 
+
+    // 3. Sincronizare în fundal: Trimitem către Supabase fără 'await' 
+    // Astfel, dacă serverul e lent, utilizatorul nu simte delay-ul.
+    if (USE_SUPABASE) {
+        db_upsertReteta(rețete[ctx.rIdx]).catch(err => {
+            console.error("Eroare la salvarea în fundal:", err);
+            // Opțional: Poți reîncărca datele dacă salvarea a eșuat critic
+        });
+    }
+
+    // 4. Resetăm input-ul pentru următoarea utilizare
+    currentNumInput = "0";
+}
+
+
 
 // ============================================================
 // LAYER SUPABASE -- toate operațiile DB sunt izolate aici
@@ -1002,10 +1163,15 @@ function renderPickerOptions() {
 
     filtrat.forEach(prod => {
         container.innerHTML += `
-            <button onclick="selectProduct('${prod.id}')" class="w-full p-5 glass-card mb-2 text-left flex justify-between items-center active:bg-purple-500/20">
-                <span class="font-bold text-white text-sm">${prod.nume}</span>
-                <span class="text-[10px] font-bold text-purple-400">${prod.pretLei} lei/${prod.unit}</span>
-            </button>`;
+            <div onclick="selectProduct('${prod.id}')" class="w-full p-4 glass-card mb-2 flex justify-between items-center active:scale-[0.98] transition-transform cursor-pointer">
+                <div>
+                    <span class="block font-bold text-white text-base">${prod.nume}</span>
+                    <span class="text-[10px] font-bold text-gray-500 uppercase">${prod.unit}</span>
+                </div>
+                <div class="text-right">
+                    <span class="text-sm font-black text-purple-400">${prod.pretLei.toFixed(2)} lei</span>
+                </div>
+            </div>`;
     });
 }
 
@@ -1017,10 +1183,6 @@ async function selectProduct(id) {
     render();
 }
 
-function openNumPicker(rIdx, type, iIdx = null) {
-    activeCtx = { rIdx, type, iIdx };
-    document.getElementById('number-picker').classList.add('active');
-}
 
 async function setNum(val) {
     if (activeCtx.type === 'ore') rețete[activeCtx.rIdx].ore = val;
