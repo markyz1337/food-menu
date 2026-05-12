@@ -756,8 +756,28 @@ async function db_deleteReteta(id) {
 // LOCK / UNLOCK
 // ============================================================
 
+
 function toggleLock() {
-    isUnlocked = !isUnlocked;
+    const PAROLA_CORECTA = "4579";
+    
+    // Dacă este deja deblocat, îl blocăm pur și simplu
+    if (isUnlocked) {
+        applyLockState(false);
+        return;
+    }
+
+    // Dacă este blocat, cerem parola
+    let inputParola = prompt("Introdu codul de acces pentru a edita:");
+    
+    if (inputParola === PAROLA_CORECTA) {
+        applyLockState(true);
+    } else if (inputParola !== null) {
+        alert("Cod incorect! Acces refuzat.");
+    }
+}
+
+function applyLockState(shouldUnlock) {
+    isUnlocked = shouldUnlock;
     const body = document.body;
     const btn = document.getElementById('lock-btn');
     const iconLocked = document.getElementById('icon-locked');
