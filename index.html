@@ -645,14 +645,22 @@ function toggleCollapseAll() {
 
 
 function handleCardClick(event, rIdx) {
-    // Dacă este deblocat, lăsăm interacțiunile normale să funcționeze (editare nume, inputs, etc.)
+    // 1. Dacă e deblocat, nu facem nimic (interacțiuni standard)
     if (isUnlocked) return;
 
-    // Prevenim declanșarea dacă utilizatorul a apăsat accidental pe checkbox-ul real 
-    // (pentru a nu declanșa evenimentul de două ori)
-    if (event.target.type === 'checkbox') return;
+    // 2. Identificăm elementul pe care s-a dat click
+    const target = event.target;
 
-    // Inversăm starea de selecție
+    // 3. Verificăm dacă click-ul a căzut pe zona de PORȚII
+    // Căutăm dacă elementul sau părinții lui au apelul openNumPicker cu 'portii'
+    const isPortiiZone = target.closest('[onclick*="openNumPicker"][onclick*="portii"]');
+    
+    // Dacă am apăsat pe porții sau direct pe checkbox, oprim funcția aici
+    if (isPortiiZone || target.type === 'checkbox') {
+        return;
+    }
+
+    // 4. Altfel, inversăm selecția cardului
     const newState = !rețete[rIdx].selectat;
     toggleSelectReteta(rIdx, newState);
 }
