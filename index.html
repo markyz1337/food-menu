@@ -76,12 +76,12 @@
     .hud-status {
         position: fixed;
         right: 20px;
-        bottom: 110px;
-        padding: 10px 17px;
+        bottom: 90px;
+        padding: 10px 22px;
         background: rgba(15, 15, 20, 0.8);
-        backdrop-filter: blur(25px);
+        backdrop-filter: blur(15px);
         border: 1px solid rgba(192, 132, 252, 0.4);
-        border-radius: 26px;
+        border-radius: 29px;
         z-index: 900;
         box-shadow: 0 15px 35px rgba(0,0,0,0.5);
         border-left: 4px solid var(--primary);
@@ -160,18 +160,64 @@
     touch-action: manipulation;
 }
 
+    /* Navigația stil Pill plutitor */
     .tab-bar {
-        position: fixed; bottom: 0; width: 100%;
-        background: rgba(5, 5, 8, 0.95);
+        position: fixed; 
+        bottom: 10px; /* Ridicat de la margine pentru efect "în aer" */
+        left: 50%;
+        transform: translateX(-50%); /* Centrare perfectă */
+        width: 90%;
+        max-width: 400px;
+        
+        background: rgba(15, 15, 20, 0.6); /* Transparență redusă pentru glassmorphism */
         backdrop-filter: blur(20px);
-        display: flex; justify-content: space-around;
-        padding: 15px 10px 35px;
-        border-top: 1px solid var(--glass-border);
+        -webkit-backdrop-filter: blur(20px);
+        
+        display: flex; 
+        justify-content: space-around;
+        padding: 8px; /* Spațiu interior pentru butoane */
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 40px; /* Colțuri foarte rotunjite - forma de pastilă */
         z-index: 1000;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.4);
     }
 
-    .nav-btn { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: #555; }
-    .nav-btn.active { color: var(--primary); }
+    .nav-btn { 
+        flex: 1;
+        padding: 15px 0;
+        font-size: 12px; 
+        font-weight: 800; 
+        text-transform: uppercase; 
+        letter-spacing: 1.5px; 
+        color: rgba(255, 255, 255, 0.4); 
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border-radius: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .nav-btn.active { 
+        color: #ffffff; 
+        background: rgba(192, 132, 252, 0.2); /* Fundal discret pentru butonul activ */
+        box-shadow: inset 0 0 15px rgba(192, 132, 252, 0.1);
+    }
+
+    /* Ajustăm padding-ul de jos al paginii ca să nu fie acoperit ultimul element */
+    body.pb-44 {
+        padding-bottom: 120px;
+    }
+    
+/* Permite scroll-ul, dar trimite click-ul imediat spre element */
+.nav-btn, .num-key, .glass-card, button {
+    touch-action: manipulation;
+}
+
+/* Prevenirea blocajului de scroll pe TabBar */
+.tab-bar {
+    touch-action: none; /* Deoarece TabBar-ul e fix și nu trebuie să facă scroll */
+}
+
 
     /* Stil pentru inputul de căutare în catalog */
     .search-pill {
@@ -535,8 +581,12 @@ body.collapsed-active #collapse-btn svg {
 
 
 <nav class="tab-bar">
-    <button onclick="switchTab('home')" id="nav-home" class="nav-btn active">Meniuri</button>
-    <button onclick="switchTab('catalog')" id="nav-catalog" class="nav-btn">Catalog</button>
+    <button ontouchstart="switchTab('home')" onclick="switchTab('home')" id="nav-home" class="nav-btn active">
+        <span>Meniuri</span>
+    </button>
+    <button ontouchstart="switchTab('catalog')" onclick="switchTab('catalog')" id="nav-catalog" class="nav-btn">
+        <span>Catalog</span>
+    </button>
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
