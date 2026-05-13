@@ -438,18 +438,28 @@ body.collapsed-active #collapse-btn svg {
 
 
 <div class="hud-status" onclick="openShoppingList()" style="cursor: pointer;">
-        <div class="flex items-center gap-5">
-            <div>
-                <p class="text-[8px] font-black text-gray-500 uppercase mb-1">Cost Total</p>
-                <span id="hud-eur" class="text-2xl font-black tracking-tighter text-white">0.00€</span>
+    <div class="flex items-center gap-5">
+        <!-- Secțiune Cost (Stânga) -->
+        <div>
+            <p class="text-[8px] font-black text-gray-500 uppercase mb-1">Cost Total</p>
+            <div class="flex flex-col items-start leading-none">
+                <span id="hud-eur" class="text-base font-extrabold tracking-tight text-white">0.00€</span>
+                <span id="hud-per-day" class="text-[10px] font-black text-emerald-400 uppercase tracking-wider">0.00€ / zi</span>
             </div>
-            <div class="w-[1px] h-8 bg-white/10"></div>
-            <div>
-                <p class="text-[8px] font-black text-gray-500 uppercase mb-1">Autonomie</p>
-                <span id="hud-hours" class="text-2xl font-black text-purple-400 tracking-tighter">0z 0h</span>
+        </div>
+
+        <div class="w-[1px] h-8 bg-white/10"></div>
+
+        <!-- Secțiune Autonomie (Dreapta) -->
+        <div>
+            <p class="text-[8px] font-black text-gray-500 uppercase mb-1">Autonomie</p>
+            <div id="hud-hours" class="flex flex-col items-start leading-none">
+                <span class="text-base font-extrabold tracking-tight text-white">0 zile</span>
+                <span class="text-[10px] font-black text-purple-400/80 uppercase tracking-wider">0h / 12h</span>
             </div>
         </div>
     </div>
+</div>
 
 <!-- SECȚIUNEA NUMBER PICKER REPARATĂ COMPLET -->
 <div id="number-picker" class="bottom-sheet">
@@ -1150,16 +1160,24 @@ function render() {
     });
 
     // 4. ACTUALIZARE HUD
-    const zile = Math.floor(tOre / 12);
-    const oreRest = tOre % 12;
-    let randZile = oreRest === 0 ? `${zile} zile` : `${zile} → ${zile + 1} zile`;
+    const orePerZi = 12; // Definim constanta pentru o zi de meniu
+    const zile = Math.floor(tOre / orePerZi);
+    const oreRest = tOre % orePerZi;
+    
+    // Calculăm prețul pe zi bazat pe total ore / 12
+    const autonomieZileSpirit = tOre / orePerZi;
+    const pretPeZi = autonomieZileSpirit > 0 ? (tEur / autonomieZileSpirit) : 0;
 
+    let textZile = oreRest === 0 ? `${zile} zile` : `${zile} → ${zile + 1} zile`;
+
+    // Update Prețuri (Coloana Stângă)
     document.getElementById('hud-eur').innerText = tEur.toFixed(2) + '€';
+    document.getElementById('hud-per-day').innerText = pretPeZi.toFixed(2) + '€ / zi';
+
+    // Update Autonomie (Coloana Dreaptă)
     document.getElementById('hud-hours').innerHTML = `
-        <div class="flex flex-col items-start leading-none gap-0">
-            <span class="text-base font-extrabold tracking-tight text-white">${randZile}</span>
-            <span class="text-[10px] font-black text-purple-400/80 uppercase tracking-wider">${oreRest}h / 12h</span>
-        </div>
+        <span class="text-base font-extrabold tracking-tight text-white">${textZile}</span>
+        <span class="text-[10px] font-black text-purple-400/80 uppercase tracking-wider">${oreRest}h / ${orePerZi}h</span>
     `;
 
     // 5. ICONIȚĂ BULK SELECT
