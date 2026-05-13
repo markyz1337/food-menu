@@ -301,29 +301,28 @@ pointer-events: auto;
     overflow: hidden;
 }
 
-/* Stilul când cardul este colapsat */
-.collapsed .recipe-content-wrapper {
-    max-height: 0;
-    opacity: 0;
-    margin-bottom: 0 !important;
+/* Modifică această secțiune în CSS-ul tău */
+.recipe-content-wrapper {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    max-height: 0; /* Schimbat de la 2000px la 0 */
+    opacity: 0;    /* Schimbat de la 1 la 0 */
+    overflow: hidden;
 }
 
-/* Menținem subsolul cu statistici mereu vizibil și mai compact când e colapsat */
-.recipe-stats-footer {
-    transition: all 0.3s ease;
+/* Stilul când cardul este extins (inversăm logica pentru a fi restrâns default) */
+body.collapsed-active .recipe-content-wrapper {
+    max-height: 2000px;
+    opacity: 1;
 }
 
-.collapsed .recipe-stats-footer {
-    padding-top: 10px;
-    margin-top: 5px;
-}
-
-/* Rotiți săgeata butonului de collapse */
+/* Rotiți săgeata butonului corect */
 #collapse-btn svg {
     transition: transform 0.3s ease;
+    transform: rotate(180deg); /* Săgeata în jos când e restrâns */
 }
-.collapsed-active #collapse-btn svg {
-    transform: rotate(-180deg);
+
+body.collapsed-active #collapse-btn svg {
+    transform: rotate(0deg); /* Săgeata în sus când e extins */
 }
 
 </style>
@@ -394,6 +393,9 @@ pointer-events: auto;
 </header>
 
 
+
+
+
     <!-- Search Bar Universal (pentru Home/Meniuri) -->
     <div id="search-container" class="mb-6">
         <div class="relative flex items-center">
@@ -428,6 +430,11 @@ pointer-events: auto;
         <div id="catalog-list" class="space-y-3"></div>
     </div>
 </div>
+
+<!-- Input ascuns pentru a forța tastatura numerică a sistemului -->
+<input type="tel" id="hidden-password-input" 
+       style="position:absolute; opacity:0; pointer-events:none; top:0;" 
+       maxlength="4">
 
 
 <div class="hud-status" onclick="openShoppingList()" style="cursor: pointer;">
@@ -623,13 +630,17 @@ let rețete = [
 let activeCtx = null;
 let lastEditedId = null;
 
-
-let isCollapsed = true; // Pune-o sus lângă celelalte let-uri
+// Înlocuiește linia existentă cu aceasta:
+let isCollapsed = false; 
 
 function toggleCollapseAll() {
     isCollapsed = !isCollapsed;
+    
+    // Adăugăm/scoatem clasa pe BODY pentru a roti săgeata butonului
     document.body.classList.toggle('collapsed-active', isCollapsed);
-    render(); // Re-randăm pentru a aplica clasa .collapsed
+    
+    // Re-randăm pentru a aplica clasa .collapsed pe carduri
+    render(); 
 }
 
 
@@ -861,24 +872,30 @@ async function db_deleteReteta(id) {
 // LOCK / UNLOCK
 // ============================================================
 
-
 function toggleLock() {
     const PAROLA_CORECTA = "4579";
     
-    // Dacă este deja deblocat, îl blocăm pur și simplu
     if (isUnlocked) {
         applyLockState(false);
         return;
     }
 
-    // Dacă este blocat, cerem parola
-    let inputParola = prompt("Introdu codul de acces pentru a edita:");
-    
-    if (inputParola === PAROLA_CORECTA) {
-        applyLockState(true);
-    } else if (inputParola !== null) {
-        alert("Cod incorect! Acces refuzat.");
-    }
+    const hiddenInput = document.getElementById('hidden-password-input');
+    hiddenInput.value = ""; // Resetăm
+    hiddenInput.focus();    // Deschide tastatura mobilului
+
+    // Ascultăm input-ul de pe tastatura sistemului
+    hiddenInput.oninput = function() {
+        if (this.value.length === 4) {
+            if (this.value === PAROLA_CORECTA) {
+                applyLockState(true);
+                this.blur(); // Închide tastatura
+            } else {
+                alert("Cod incorect!");
+                this.value = ""; // Resetăm pentru reîncercare
+            }
+        }
+    };
 }
 
 function applyLockState(shouldUnlock) {
