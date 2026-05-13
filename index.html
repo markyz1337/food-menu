@@ -1137,32 +1137,33 @@ function clearSearch() {
 }
 
 function switchTab(tab) {
-    // 1. Salvează poziția curentă a tab-ului din care plecăm
+    // Dacă utilizatorul apasă pe tab-ul deja activ, nu face nimic
+    if (currentTab === tab) return;
+
+    // Salvează poziția curentă a scroll-ului
     scrollPositions[currentTab] = window.scrollY;
 
-    // 2. Schimbă vizibilitatea paginilor (codul tău existent)
+    // Schimbă vizibilitatea paginilor
     document.getElementById('page-home').classList.toggle('hidden', tab !== 'home');
     document.getElementById('page-catalog').classList.toggle('hidden', tab !== 'catalog');
     
     const searchBar = document.getElementById('search-container');
     if (searchBar) searchBar.classList.toggle('hidden', tab !== 'home');
 
-    document.getElementById('nav-home').className = tab === 'home' ? 'nav-btn active' : 'nav-btn';
-    document.getElementById('nav-catalog').className = tab === 'catalog' ? 'nav-btn active' : 'nav-btn';
+    // Actualizare clase butoane
+    document.getElementById('nav-home').classList.toggle('active', tab === 'home');
+    document.getElementById('nav-catalog').classList.toggle('active', tab === 'catalog');
+    
     document.getElementById('view-title').innerText = tab === 'home' ? 'Planificator' : 'Catalog';
 
-    // 3. Actualizează tab-ul curent
     currentTab = tab;
 
-    // 4. Renderizează conținutul (pentru a ne asigura că înălțimea paginii e corectă)
+    // Render și Scroll
     render();
-
-    // 5. Restaurează poziția scroll-ului pentru noul tab
-    // Folosim un mic timeout pentru a lăsa browserul să randeze elementele înainte de scroll
     setTimeout(() => {
         window.scrollTo({
-            top: scrollPositions[tab],
-            behavior: 'instant' // Folosim instant pentru a nu zăpăci utilizatorul
+            top: scrollPositions[tab] || 0,
+            behavior: 'instant'
         });
     }, 10);
 }
@@ -1269,15 +1270,15 @@ function render() {
                 <div class="recipe-stats-footer grid grid-cols-3 gap-2 border-t border-white/5 pt-3 items-center text-center">
                     <div onclick="${isUnlocked ? `openNumPicker(${rIdx}, 'ore')` : ''}" class="${oreCls} flex flex-col items-center">
                         <p class="text-[7px] font-black text-gray-500 uppercase tracking-widest">Ore</p>
-                        <p class="text-sm font-bold text-white">${reteta.ore}h</p>
+                        <p class="text-lm font-bold text-white">${reteta.ore}h</p>
                     </div>
                     <div class="bg-purple-500/10 py-1.5 rounded-xl border border-purple-500/20">
                         <p class="text-[7px] font-black text-emerald-400 uppercase tracking-widest">Preț Total</p>
-                        <p class="text-base font-black text-white leading-none">${reteta.costEurCalculat.toFixed(2)}€</p>
+                        <p class="text-lg font-black text-white leading-none">${reteta.costEurCalculat.toFixed(2)}€</p>
                     </div>
                     <div onclick="openNumPicker(${rIdx}, 'portii')" class="cursor-pointer flex flex-col items-center">
                         <p class="text-[7px] font-black text-gray-500 uppercase tracking-widest">Porții</p>
-                        <p class="text-sm font-bold text-white">${reteta.portii}</p>
+                        <p class="text-lm font-bold text-white">${reteta.portii}</p>
                     </div>
                 </div>
 
