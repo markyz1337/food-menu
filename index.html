@@ -89,7 +89,6 @@
 
 
 /* Stil unitar pentru toate foile de jos */
-/* Modifică/Adaugă aceste reguli în CSS-ul tău */
 
 .bottom-sheet {
     position: fixed;
@@ -483,26 +482,20 @@ body.collapsed-active #collapse-btn svg {
        maxlength="4">
 
 
-<div class="hud-status" onclick="openShoppingList()" style="cursor: pointer;">
-    <div class="flex items-center gap-5">
-        <!-- Secțiune Cost (Stânga) -->
-        <div>
-            <p class="text-[8px] font-black text-gray-500 uppercase mb-1">Cost Total</p>
-            <div class="flex flex-col items-start leading-none">
-                <span id="hud-eur" class="text-base font-extrabold tracking-tight text-white">0.00€</span>
-                <span id="hud-per-day" class="text-[10px] font-black text-emerald-400 uppercase tracking-wider">0.00€ / zi</span>
-            </div>
+<div class="hud-status" onclick="openShoppingList()" style="cursor: pointer; padding: 10px 18px;">
+    <div class="flex items-center gap-4">
+        <!-- Coloana Stânga: Bani -->
+        <div class="flex flex-col items-start leading-[1.1]">
+            <span id="hud-eur" class="text-base font-black tracking-tighter text-white">0.00€</span>
+            <span id="hud-per-day" class="text-[10px] font-black text-emerald-400 uppercase tracking-tighter">0.00€/zi</span>
         </div>
 
-        <div class="w-[1px] h-8 bg-white/10"></div>
+        <div class="w-[1px] h-7 bg-white/10"></div>
 
-        <!-- Secțiune Autonomie (Dreapta) -->
-        <div>
-            <p class="text-[8px] font-black text-gray-500 uppercase mb-1">Autonomie</p>
-            <div id="hud-hours" class="flex flex-col items-start leading-none">
-                <span class="text-base font-extrabold tracking-tight text-white">0 zile</span>
-                <span class="text-[10px] font-black text-purple-400/80 uppercase tracking-wider">0h / 12h</span>
-            </div>
+        <!-- Coloana Dreapta: Timp -->
+        <div id="hud-hours" class="flex flex-col items-start leading-[1.1]">
+            <span class="text-base font-black tracking-tighter text-white uppercase">0 zile</span>
+            <span class="text-[10px] font-black text-purple-400 uppercase tracking-tighter">0h / 12h</span>
         </div>
     </div>
 </div>
@@ -611,6 +604,11 @@ const supabaseClient = USE_SUPABASE
 const CURS = 5.09;
 let searchTerm = "";
 let isUnlocked = false;
+let scrollPositions = {
+    home: 0,
+    catalog: 0
+};
+let currentTab = 'home';
 
 // Date locale pentru simulare (folosite când USE_SUPABASE = false)
 let catalog = [
@@ -1080,15 +1078,34 @@ function clearSearch() {
 }
 
 function switchTab(tab) {
+    // 1. Salvează poziția curentă a tab-ului din care plecăm
+    scrollPositions[currentTab] = window.scrollY;
+
+    // 2. Schimbă vizibilitatea paginilor (codul tău existent)
     document.getElementById('page-home').classList.toggle('hidden', tab !== 'home');
     document.getElementById('page-catalog').classList.toggle('hidden', tab !== 'catalog');
+    
     const searchBar = document.getElementById('search-container');
     if (searchBar) searchBar.classList.toggle('hidden', tab !== 'home');
 
     document.getElementById('nav-home').className = tab === 'home' ? 'nav-btn active' : 'nav-btn';
     document.getElementById('nav-catalog').className = tab === 'catalog' ? 'nav-btn active' : 'nav-btn';
     document.getElementById('view-title').innerText = tab === 'home' ? 'Planificator' : 'Catalog';
+
+    // 3. Actualizează tab-ul curent
+    currentTab = tab;
+
+    // 4. Renderizează conținutul (pentru a ne asigura că înălțimea paginii e corectă)
     render();
+
+    // 5. Restaurează poziția scroll-ului pentru noul tab
+    // Folosim un mic timeout pentru a lăsa browserul să randeze elementele înainte de scroll
+    setTimeout(() => {
+        window.scrollTo({
+            top: scrollPositions[tab],
+            behavior: 'instant' // Folosim instant pentru a nu zăpăci utilizatorul
+        });
+    }, 10);
 }
 
 // ============================================================
@@ -1210,25 +1227,34 @@ function render() {
     });
 
     // 4. ACTUALIZARE HUD
-    const orePerZi = 12; // Definim constanta pentru o zi de meniu
+    // === LOGICA HUD ACTUALIZATĂ ===
+    const orePerZi = 12; 
     const zile = Math.floor(tOre / orePerZi);
     const oreRest = tOre % orePerZi;
     
-    // Calculăm prețul pe zi bazat pe total ore / 12
     const autonomieZileSpirit = tOre / orePerZi;
     const pretPeZi = autonomieZileSpirit > 0 ? (tEur / autonomieZileSpirit) : 0;
 
-    let textZile = oreRest === 0 ? `${zile} zile` : `${zile} → ${zile + 1} zile`;
-
-    // Update Prețuri (Coloana Stângă)
+    // Update Prețuri (Stânga)
     document.getElementById('hud-eur').innerText = tEur.toFixed(2) + '€';
-    document.getElementById('hud-per-day').innerText = pretPeZi.toFixed(2) + '€ / zi';
+    document.getElementById('hud-per-day').innerText = pretPeZi.toFixed(2) + '€/zi';
 
-    // Update Autonomie (Coloana Dreaptă)
-    document.getElementById('hud-hours').innerHTML = `
-        <span class="text-base font-extrabold tracking-tight text-white">${textZile}</span>
-        <span class="text-[10px] font-black text-purple-400/80 uppercase tracking-wider">${oreRest}h / ${orePerZi}h</span>
-    `;
+    // Update Autonomie (Dreapta) - Ascunde 0h/12h dacă este zi întreagă
+    let htmlAutonomie = `<span class="text-base font-black tracking-tighter text-white uppercase">${zile} ${zile === 1 ? 'zi' : 'zile'}</span>`;
+    
+    if (oreRest > 0) {
+        htmlAutonomie += `<span class="text-[10px] font-black text-purple-400 uppercase tracking-tighter leading-none">${oreRest}h / ${orePerZi}h</span>`;
+    }
+
+    const hudHoursContainer = document.getElementById('hud-hours');
+    hudHoursContainer.innerHTML = htmlAutonomie;
+    
+    // Ajustăm centrarea verticală dacă e doar un singur rând
+    if (oreRest === 0) {
+        hudHoursContainer.classList.add('justify-center');
+    } else {
+        hudHoursContainer.classList.remove('justify-center');
+    }
 
     // 5. ICONIȚĂ BULK SELECT
     const bulkBtn = document.getElementById('bulk-select-btn');
