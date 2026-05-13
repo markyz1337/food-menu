@@ -338,37 +338,68 @@ pointer-events: auto;
 }
 
 
-/* Containerul pentru ingrediente și taguri care se ascunde */
+
+
+/* Containerul este vizibil implicit (extins) */
 .recipe-content-wrapper {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     max-height: 2000px; 
     opacity: 1;
     overflow: hidden;
 }
 
-/* Modifică această secțiune în CSS-ul tău */
-.recipe-content-wrapper {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    max-height: 0; /* Schimbat de la 2000px la 0 */
-    opacity: 0;    /* Schimbat de la 1 la 0 */
-    overflow: hidden;
-}
-
-/* Stilul când cardul este extins (inversăm logica pentru a fi restrâns default) */
+/* Când activăm modul "restrâns" (collapsed), ascundem conținutul */
 body.collapsed-active .recipe-content-wrapper {
-    max-height: 2000px;
-    opacity: 1;
+    max-height: 0;
+    opacity: 0;
+    padding-top: 0;
+    padding-bottom: 0;
 }
 
-/* Rotiți săgeata butonului corect */
+/* Rotiți săgeata butonului invers față de înainte */
 #collapse-btn svg {
     transition: transform 0.3s ease;
-    transform: rotate(180deg); /* Săgeata în jos când e restrâns */
+    transform: rotate(0deg); /* Săgeata în sus (pentru a restrânge) */
 }
 
 body.collapsed-active #collapse-btn svg {
-    transform: rotate(0deg); /* Săgeata în sus când e extins */
+    transform: rotate(180deg); /* Săgeata în jos (pentru a extinde) */
 }
+
+
+
+
+.person-picker {
+    position: fixed;
+    right: 25px;
+    bottom: 155px; /* Poziționat deasupra HUD-ului */
+    background: rgba(15, 15, 20, 0.9);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(192, 132, 252, 0.4);
+    border-radius: 18px;
+    padding: 6px 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    z-index: 900;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+    transition: all 0.2s ease;
+}
+.person-picker:active { transform: scale(0.95); }
+#num-persoane-input {
+    background: transparent;
+    border: none;
+    color: white;
+    font-weight: 800;
+    font-size: 16px;
+    width: 15px;
+    text-align: center;
+    outline: none;
+}
+
+
+
+
 
 </style>
 
@@ -480,6 +511,22 @@ body.collapsed-active #collapse-btn svg {
 <input type="tel" id="hidden-password-input" 
        style="position:absolute; opacity:0; pointer-events:none; top:0;" 
        maxlength="4">
+
+
+
+
+<div class="person-picker" onclick="document.getElementById('num-persoane-input').focus()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c084fc" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+        <circle cx="12" cy="7" r="4"></circle>
+    </svg>
+<input type="tel" id="num-persoane-input" value="1" 
+       inputmode="numeric" 
+       onfocus="prepareInput(this)" 
+       onblur="resetDacaEGol(this)"
+       oninput="validarePersoane(this)"
+       maxlength="1">
+       </div>
 
 
 <div class="hud-status" onclick="openShoppingList()" style="cursor: pointer; padding: 10px 18px;">
@@ -688,17 +735,17 @@ let rețete = [
 let activeCtx = null;
 let lastEditedId = null;
 
-// Înlocuiește linia existentă cu aceasta:
+// Verifică să ai aceste valori în <script>
 let isCollapsed = false; 
 
 function toggleCollapseAll() {
     isCollapsed = !isCollapsed;
     
-    // Adăugăm/scoatem clasa pe BODY pentru a roti săgeata butonului
+    // Toggle clasa care acum înseamnă "restrângere" conform noului CSS
     document.body.classList.toggle('collapsed-active', isCollapsed);
     
-    // Re-randăm pentru a aplica clasa .collapsed pe carduri
-    render(); 
+    // Nu este nevoie de re-render total dacă folosim doar clase CSS pe body, 
+    // dar e bine să păstrăm consistența dacă ai logici dependente în render()
 }
 
 
@@ -721,6 +768,48 @@ function handleCardClick(event, rIdx) {
     // 4. Altfel, inversăm selecția cardului
     const newState = !rețete[rIdx].selectat;
     toggleSelectReteta(rIdx, newState);
+}
+
+
+
+
+let lastScrollPos = 0;
+
+function prepareInput(input) {
+    // Salvăm poziția actuală a paginii înainte să apară tastatura
+    lastScrollPos = window.scrollY;
+    input.value = '';
+    
+    // Un mic delay pentru a preveni browserul să facă scroll automat imediat
+    setTimeout(() => {
+        window.scrollTo(0, lastScrollPos);
+    }, 10);
+}
+
+function validarePersoane(input) {
+    let val = input.value.replace(/[^1-9]/g, '');
+    
+    if (val !== "") {
+        input.value = val;
+        input.blur(); 
+    }
+}
+
+async function resetDacaEGol(input) {
+    if (input.value.trim() === "" || input.value === "0") {
+        input.value = "1";
+    }
+    
+    // Salvare în Supabase
+    await db_saveNumPersoane(input.value);
+
+    setTimeout(() => {
+        window.scrollTo({
+            top: lastScrollPos,
+            behavior: 'smooth'
+        });
+        render(); 
+    }, 50);
 }
 
 
@@ -843,6 +932,30 @@ async function confirmNum() {
 // LAYER SUPABASE -- toate operațiile DB sunt izolate aici
 // ============================================================
 
+
+// Salvează numărul de persoane
+async function db_saveNumPersoane(val) {
+    if (!USE_SUPABASE) return;
+    const { error } = await supabaseClient
+        .from('setari')
+        .upsert({ id: 'num_persoane', valoare: val.toString() });
+    
+    if (error) console.error('Eroare salvare persoane:', error);
+}
+
+// Încarcă numărul de persoane
+async function db_loadNumPersoane() {
+    if (!USE_SUPABASE) return;
+    const { data, error } = await supabaseClient
+        .from('setari')
+        .select('valoare')
+        .eq('id', 'num_persoane')
+        .single();
+    
+    if (data) {
+        document.getElementById('num-persoane-input').value = data.valoare;
+    }
+}
 
 
 async function db_loadCatalog() {
@@ -1227,36 +1340,49 @@ function render() {
     });
 
     // 4. ACTUALIZARE HUD
-    // === LOGICA HUD ACTUALIZATĂ ===
-    const orePerZi = 12; 
-    const zile = Math.floor(tOre / orePerZi);
-    const oreRest = tOre % orePerZi;
+// === LOGICA HUD CORECTATĂ ===
+const inputPers = document.getElementById('num-persoane-input');
+let nrPers = parseInt(inputPers.value) || 1;
+
+// 1. Totalul de Euro rămâne neschimbat (E portofelul tău total)
+let tEurTotal = tEur; 
+
+// 2. Doar orele de autonomie se împart la numărul de persoane 
+// (Dacă sunt 2 oameni, mâncarea se consumă de 2 ori mai repede)
+let tOreAutonomie = tOre / nrPers;
+
+const orePerZi = 12; 
+const zileAutonomie = tOreAutonomie / orePerZi;
+
+// 3. Prețul pe zi (Costul de eficiență al meniului ales)
+// Acesta trebuie să rămână constant, raportat la cât "produce" meniul în timp
+const autonomieTotalaSpirit = tOre / orePerZi; 
+const pretPeZi = autonomieTotalaSpirit > 0 ? (tEurTotal / autonomieTotalaSpirit) : 0;
+
+// Update Vizual în HUD
+document.getElementById('hud-eur').innerText = tEurTotal.toFixed(2) + '€';
+document.getElementById('hud-per-day').innerText = pretPeZi.toFixed(2) + '€/zi';
+
+// Calcul zile/ore pentru afișare
+const zileIntregi = Math.floor(zileAutonomie);
+const oreRest = tOreAutonomie % orePerZi;
+
+let htmlAutonomie = `<span class="text-base font-black tracking-tighter text-white uppercase">${zileIntregi} ${zileIntregi === 1 ? 'zi' : 'zile'}</span>`;
+
+// Caută această parte în codul tău și înlocuiește-o:
+
+if (oreRest > 0) {
+    // Math.round elimină zecimalele și transformă 9.0 sau 9.4 în 9
+    let oreAfisate = Math.round(oreRest); 
     
-    const autonomieZileSpirit = tOre / orePerZi;
-    const pretPeZi = autonomieZileSpirit > 0 ? (tEur / autonomieZileSpirit) : 0;
+    htmlAutonomie += `<span class="text-[10px] font-black text-purple-400 uppercase tracking-tighter leading-none">${oreAfisate}H / ${orePerZi}H</span>`;
+}
 
-    // Update Prețuri (Stânga)
-    document.getElementById('hud-eur').innerText = tEur.toFixed(2) + '€';
-    document.getElementById('hud-per-day').innerText = pretPeZi.toFixed(2) + '€/zi';
-
-    // Update Autonomie (Dreapta) - Ascunde 0h/12h dacă este zi întreagă
-    let htmlAutonomie = `<span class="text-base font-black tracking-tighter text-white uppercase">${zile} ${zile === 1 ? 'zi' : 'zile'}</span>`;
+document.getElementById('hud-hours').innerHTML = htmlAutonomie;
     
-    if (oreRest > 0) {
-        htmlAutonomie += `<span class="text-[10px] font-black text-purple-400 uppercase tracking-tighter leading-none">${oreRest}h / ${orePerZi}h</span>`;
-    }
-
-    const hudHoursContainer = document.getElementById('hud-hours');
-    hudHoursContainer.innerHTML = htmlAutonomie;
     
-    // Ajustăm centrarea verticală dacă e doar un singur rând
-    if (oreRest === 0) {
-        hudHoursContainer.classList.add('justify-center');
-    } else {
-        hudHoursContainer.classList.remove('justify-center');
-    }
 
-    // 5. ICONIȚĂ BULK SELECT
+// 5. ICONIȚĂ BULK SELECT
     const bulkBtn = document.getElementById('bulk-select-btn');
     const bulkIcon = document.getElementById('bulk-select-icon');
     if(bulkBtn && bulkIcon) {
@@ -1489,6 +1615,7 @@ function closeSheets() {
 window.onload = async function () {
     await db_loadCatalog();
     await db_loadRetete();
+    await db_loadNumPersoane(); // <--- Adaugă această linie
     render();
 };
 
