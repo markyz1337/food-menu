@@ -1291,42 +1291,35 @@ function render() {
 const inputPers = document.getElementById('num-persoane-input');
 let nrPers = parseInt(inputPers.value) || 1;
 
-// 1. Totalul de Euro rămâne neschimbat (E portofelul tău total)
+// 1. Totalul de Euro selectat
 let tEurTotal = tEur; 
 
-// 2. Doar orele de autonomie se împart la numărul de persoane 
+// 2. Orele totale de autonomie se împart la numărul de persoane 
 // (Dacă sunt 2 oameni, mâncarea se consumă de 2 ori mai repede)
 let tOreAutonomie = tOre / nrPers;
 
-const orePerZi = 12; 
+const orePerZi = 12; // Standardul tău de ore/zi
 const zileAutonomie = tOreAutonomie / orePerZi;
 
-// 3. Prețul pe zi (Costul de eficiență al meniului ales)
-// Acesta trebuie să rămână constant, raportat la cât "produce" meniul în timp
-const autonomieTotalaSpirit = tOre / orePerZi; 
-const pretPeZi = autonomieTotalaSpirit > 0 ? (tEurTotal / autonomieTotalaSpirit) : 0;
+// 3. Prețul pe zi (Media de consum zilnic pentru TOATĂ echipa/familia)
+// Formula: (Total Euro / Ore Totale) * (Ore pe zi * Nr Persoane)
+const pretPeZi = tOre > 0 ? (tEurTotal / tOre) * (orePerZi * nrPers) : 0;
 
 // Update Vizual în HUD
 document.getElementById('hud-eur').innerText = tEurTotal.toFixed(2) + '€';
 document.getElementById('hud-per-day').innerText = pretPeZi.toFixed(2) + '€/zi';
 
-// Calcul zile/ore pentru afișare
+// Calcul zile/ore pentru afișare autonomie
 const zileIntregi = Math.floor(zileAutonomie);
-const oreRest = tOreAutonomie % orePerZi;
+const oreRest = Math.round(tOreAutonomie % orePerZi);
 
 let htmlAutonomie = `<span class="text-base font-black tracking-tighter text-white uppercase">${zileIntregi} ${zileIntregi === 1 ? 'zi' : 'zile'}</span>`;
 
-// Caută această parte în codul tău și înlocuiește-o:
-
 if (oreRest > 0) {
-    // Math.round elimină zecimalele și transformă 9.0 sau 9.4 în 9
-    let oreAfisate = Math.round(oreRest); 
-    
-    htmlAutonomie += `<span class="text-[10px] font-black text-purple-400 uppercase tracking-tighter leading-none">${oreAfisate}H / ${orePerZi}H</span>`;
+    htmlAutonomie += `<span class="text-[10px] font-black text-purple-400 uppercase tracking-tighter leading-none">${oreRest}H / ${orePerZi}H</span>`;
 }
 
-document.getElementById('hud-hours').innerHTML = htmlAutonomie;
-    
+document.getElementById('hud-hours').innerHTML = htmlAutonomie;    
     
 
 // 5. ICONIȚĂ BULK SELECT
