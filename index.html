@@ -633,6 +633,20 @@ function toggleCollapseAll() {
 }
 
 
+function handleCardClick(event, rIdx) {
+    // Dacă este deblocat, lăsăm interacțiunile normale să funcționeze (editare nume, inputs, etc.)
+    if (isUnlocked) return;
+
+    // Prevenim declanșarea dacă utilizatorul a apăsat accidental pe checkbox-ul real 
+    // (pentru a nu declanșa evenimentul de două ori)
+    if (event.target.type === 'checkbox') return;
+
+    // Inversăm starea de selecție
+    const newState = !rețete[rIdx].selectat;
+    toggleSelectReteta(rIdx, newState);
+}
+
+
 
 // Variabilă pentru a urmări starea globală (opțional)
 let allSelected = true;
@@ -710,12 +724,19 @@ function updateNumDisplay() {
 }
 
 async function confirmNum() {
-    const finalVal = parseFloat(currentNumInput) || 0;
-    const ctx = activeCtx; // Salvăm contextul curent
+    let finalVal = parseFloat(currentNumInput) || 0;
+    const ctx = activeCtx; 
     
     if (!ctx) return;
 
-    // 1. Actualizare rapidă a datelor locale (în variabila rețete)
+    // --- LOGICA NOUĂ: CORECȚIE PENTRU PORȚII ȘI ORE ---
+    // Dacă tipul este 'portii' sau 'ore' și valoarea e sub 1, forțăm la 1
+    if ((ctx.type === 'portii' || ctx.type === 'ore') && finalVal < 1) {
+        finalVal = 1;
+    }
+    // ------------------------------------------------
+
+    // 1. Actualizare rapidă a datelor locale
     if (ctx.type === 'ore') {
         rețete[ctx.rIdx].ore = finalVal;
     } else if (ctx.type === 'portii') {
@@ -724,21 +745,18 @@ async function confirmNum() {
         rețete[ctx.rIdx].ingrediente[ctx.iIdx].qty = finalVal;
     }
 
-    // 2. Feedback Instantaneu: Închidem foaia și redesenăm UI-ul local
+    // 2. Feedback Instantaneu
     lastEditedId = rețete[ctx.rIdx].id;
     closeSheets();
     render(); 
 
-    // 3. Sincronizare în fundal: Trimitem către Supabase fără 'await' 
-    // Astfel, dacă serverul e lent, utilizatorul nu simte delay-ul.
+    // 3. Sincronizare în fundal cu Supabase
     if (USE_SUPABASE) {
         db_upsertReteta(rețete[ctx.rIdx]).catch(err => {
             console.error("Eroare la salvarea în fundal:", err);
-            // Opțional: Poți reîncărca datele dacă salvarea a eșuat critic
         });
     }
 
-    // 4. Resetăm input-ul pentru următoarea utilizare
     currentNumInput = "0";
 }
 
@@ -1031,13 +1049,13 @@ function render() {
         const oreCls = isUnlocked ? 'cursor-pointer' : 'ore-locked cursor-default';
         const textLockCls = isUnlocked ? '' : 'pointer-events-none';
         
-        // Aplicăm clasa de collapse dacă variabila globală isCollapsed este true
         const collapsedClass = isCollapsed ? 'collapsed' : '';
 
         list.innerHTML += `
-            <div id="recipe-${reteta.id}" class="glass-card p-5 relative transition-all duration-300 ${reteta.selectat ? '' : 'inactive'} ${collapsedClass}">
+            <div id="recipe-${reteta.id}" 
+                 onclick="handleCardClick(event, ${rIdx})"
+                 class="glass-card p-5 relative transition-all duration-300 ${reteta.selectat ? '' : 'inactive'} ${collapsedClass}">
                 
-                <!-- HEADER (Mereu Vizibil) -->
                 <div class="flex items-center gap-4 mb-1">
                     <input type="checkbox" ${reteta.selectat ? 'checked' : ''} 
                            onchange="toggleSelectReteta(${rIdx}, this.checked)" 
@@ -1048,7 +1066,6 @@ function render() {
                            onchange="updateRetetaField(${rIdx}, 'nume', this.value)">
                 </div>
                 
-                <!-- WRAPPER CONTENT (Se ascunde la collapse) -->
                 <div class="recipe-content-wrapper">
                     <div class="flex items-center gap-2 mb-4 ml-10">
                         <span class="text-purple-500 font-bold text-[10px]">#</span>
@@ -1086,9 +1103,8 @@ function render() {
                         }).join('')}
                         ${isUnlocked ? `<button onclick="addIngredient(${rIdx})" class="text-[9px] font-black text-purple-400 uppercase tracking-widest pt-1">+ Ingredient</button>` : ''}
                     </div>
-                </div> <!-- Sfârșit Wrapper -->
+                </div>
 
-                <!-- STATS FOOTER (Rămâne vizibil și editabil când e restrâns) -->
                 <div class="recipe-stats-footer grid grid-cols-3 gap-2 border-t border-white/5 pt-3 items-center text-center">
                     <div onclick="${isUnlocked ? `openNumPicker(${rIdx}, 'ore')` : ''}" class="${oreCls} flex flex-col items-center">
                         <p class="text-[7px] font-black text-gray-500 uppercase tracking-widest">Ore</p>
@@ -1136,8 +1152,25 @@ function render() {
         }
     }
 
+    // 6. LOGICA DE SCROLL AUTOMAT
+    if (lastEditedId) {
+        // Folosim un setTimeout scurt pentru a ne asigura că DOM-ul este gata
+        setTimeout(() => {
+            const editedElement = document.getElementById(`recipe-${lastEditedId}`);
+            if (editedElement) {
+                editedElement.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center'
+                });
+                // Resetăm ID-ul ca să nu execute scroll la orice alt render viitor
+                lastEditedId = null;
+            }
+        }, 100);
+    }
+
     renderCatalog();
 }
+
 
 function renderCatalog() {
     const cat = document.getElementById('catalog-list');
