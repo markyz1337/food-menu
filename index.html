@@ -1082,23 +1082,31 @@ function openShoppingList() {
     listContent.innerHTML = '';
 
     let cumparaturi = {};
-    let detaliiMeniuri = {}; 
+    let detaliiCalcul = {}; 
 
     rețete.forEach(r => {
         if (r.selectat) {
             r.ingrediente.forEach(ing => {
                 if (!ing.idProd) return;
                 
-                const qtyPerMeniu = ing.qty * r.portii;
+                const qtyReteta = ing.qty; // Cantitatea per masă definită în card
+                const nrPortii = r.portii;  // Numărul de porții setat
+                const qtyTotalaMeniu = qtyReteta * nrPortii;
+                
                 const produs = catalog.find(p => p.id === ing.idProd);
                 const unit = produs ? produs.unit : '';
 
+                // FORMATUL CERUT: 
+                // Nume Rețetă:
+                // cantitate x porții = total unitate
+                const textLinie = `${r.nume}:\n${Number(qtyReteta.toFixed(3))} ${unit} x ${nrPortii} porții = ${Number(qtyTotalaMeniu.toFixed(3))} ${unit}`;
+
                 if (cumparaturi[ing.idProd]) {
-                    cumparaturi[ing.idProd] += qtyPerMeniu;
-                    detaliiMeniuri[ing.idProd].push(`${r.nume} (${Number(qtyPerMeniu.toFixed(3))} ${unit})`);
+                    cumparaturi[ing.idProd] += qtyTotalaMeniu;
+                    detaliiCalcul[ing.idProd].push(textLinie);
                 } else {
-                    cumparaturi[ing.idProd] = qtyPerMeniu;
-                    detaliiMeniuri[ing.idProd] = [`${r.nume} (${Number(qtyPerMeniu.toFixed(3))} ${unit})`];
+                    cumparaturi[ing.idProd] = qtyTotalaMeniu;
+                    detaliiCalcul[ing.idProd] = [textLinie];
                 }
             });
         }
@@ -1109,16 +1117,9 @@ function openShoppingList() {
         return { 
             id: id, 
             totalQty: cumparaturi[id],
-            listaMeniuri: detaliiMeniuri[id],
-            unitNormalized: produs ? produs.unit.trim().toLowerCase() : '',
+            calcule: detaliiCalcul[id],
             unitDisplay: produs ? produs.unit : ''
         };
-    });
-
-    sortableItems.sort((a, b) => {
-        if (a.unitNormalized > b.unitNormalized) return -1;
-        if (a.unitNormalized < b.unitNormalized) return 1;
-        return b.totalQty - a.totalQty;
     });
 
     summaryCount.innerText = `${sortableItems.length} PRODUSE UNICE`;
@@ -1130,40 +1131,30 @@ function openShoppingList() {
             const pReal = catalog.find(x => x.id === item.id);
             if (!pReal) return;
 
-            const cantitateRaw = item.totalQty;
-            const pretTotalLei = pReal.pretLei * cantitateRaw;
+            const pretTotalLei = pReal.pretLei * item.totalQty;
             const pretTotalEur = pretTotalLei / CURS;
             
-            const textDialog = `Produs: ${pReal.nume}\n--------------------------\n` + item.listaMeniuri.join('\n');
+            // Construim textul final pentru Alert
+            const textDialog = `PRODUS: ${pReal.nume}\n` + 
+                               `----------------------------\n\n` + 
+                               item.calcule.join('\n\n') + // Dublu Enter între rețete pentru claritate
+                               `\n\n----------------------------\n` +
+                               `TOTAL GENERAL: ${Number(item.totalQty.toFixed(3))} ${item.unitDisplay}`;
 
-            // 1. Badge-ul de Meniuri (Vizibil doar dacă count > 1, VERDE, CERC)
-            const countMeniuri = item.listaMeniuri.length;
-            const badgeMeniuriHTML = countMeniuri > 1 
-                ? `<span class="flex-shrink-0 w-5 h-5 flex items-center justify-center bg-emerald-500/20 text-emerald-400 rounded-full text-[10px] font-black border border-emerald-500/30 shadow-[0_0_8px_rgba(16,185,129,0.2)]">
-                    ${countMeniuri}
-                   </span>` 
-                : '';
+            const countMeniuri = item.calcule.length;
 
             listContent.innerHTML += `
                 <div class="glass-card p-4 flex justify-between items-center border-l-4 border-purple-500 gap-3 active:scale-[0.97] transition-transform" 
                      onclick="alert(\`${textDialog}\`)">
                     
                     <div class="min-w-0 flex-grow">
-                        <!-- Rândul 1: Badge Cantitate + Titlu + Badge Meniuri -->
                         <div class="flex items-center gap-2 mb-1">
-                            <!-- Badge Unitate (Cantitate + UM) -->
                             <span class="flex-shrink-0 bg-white/10 text-white px-2 py-0.5 rounded-md text-[11px] font-black border border-white/5 uppercase">
-                                ${Number(cantitateRaw.toFixed(3))} ${item.unitDisplay}
+                                ${Number(item.totalQty.toFixed(3))} ${item.unitDisplay}
                             </span>
-                            
-                            <p class="font-bold text-white text-sm truncate">
-                                ${pReal.nume}
-                            </p>
-
-                            ${badgeMeniuriHTML}
+                            <p class="font-bold text-white text-sm truncate">${pReal.nume}</p>
+                            ${countMeniuri > 1 ? `<span class="w-5 h-5 flex items-center justify-center bg-emerald-500/20 text-emerald-400 rounded-full text-[10px] font-black border border-emerald-500/30">${countMeniuri}</span>` : ''}
                         </div>
-
-                        <!-- Rândul 2: Preț per unitate -->
                         <div class="flex items-center gap-1 ml-1">
                             <p class="text-[10px] font-bold text-gray-500 uppercase tracking-tight">
                                 ${pReal.pretLei.toFixed(2)} LEI / ${item.unitDisplay}
@@ -1171,7 +1162,6 @@ function openShoppingList() {
                         </div>
                     </div>
 
-                    <!-- Dreapta: Total per produs -->
                     <div class="text-right flex-shrink-0">
                         <p class="text-base font-black text-white leading-none">${pretTotalLei.toFixed(2)} LEI</p>
                         <p class="text-[10px] font-bold text-purple-400 mt-1">${pretTotalEur.toFixed(2)} €</p>
