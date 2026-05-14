@@ -398,89 +398,6 @@ body.collapsed-active #collapse-btn svg {
 }
 
 
-/* Butonul Plutitor Auchan */
-#auchan-fab {
-    display: none; /* Ascuns implicit */
-    position: fixed;
-    right: 25px;
-    bottom: 30px;
-    width: 60px;
-    height: 60px;
-    background: #e30613;
-    border-radius: 20px;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 10px 30px rgba(227, 6, 19, 0.4);
-    z-index: 2100;
-    transition: all 0.3s ease;
-    border: 2px solid rgba(255,255,255,0.2);
-}
-#auchan-fab:active { transform: scale(0.85) rotate(-5deg); }
-
-/* Containerul Iframe */
-#iframe-overlay {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 90vh;
-    background: #fff;
-    z-index: 3000;
-    border-radius: 32px 32px 0 0;
-    transform: translateY(100%);
-    transition: transform 0.5s cubic-bezier(0.32, 0.72, 0, 1);
-    box-shadow: 0 -20px 60px rgba(0,0,0,0.6);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-}
-#iframe-overlay.active { transform: translateY(0); }
-#iframe-overlay.minimized { transform: translateY(calc(100% - 70px)); }
-
-.iframe-header {
-    height: 70px;
-    background: #1a1a1a;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 20px;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-}
-
-
-#proxy-container {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 85vh;
-    background: #fff;
-    z-index: 4000;
-    border-radius: 30px 30px 0 0;
-    transform: translateY(100%);
-    transition: transform 0.5s cubic-bezier(0.32, 0.72, 0, 1);
-    box-shadow: 0 -20px 60px rgba(0,0,0,0.8);
-    display: flex;
-    flex-direction: column;
-}
-
-#proxy-container.active { transform: translateY(0); }
-
-.proxy-header {
-    height: 60px;
-    background: #1a1a1a;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 20px;
-    color: white;
-}
-
-#proxy-frame {
-    width: 100%;
-    flex-grow: 1;
-    border: none;
-}
 
 
 
@@ -535,15 +452,6 @@ body.collapsed-active #collapse-btn svg {
         </button>
     </div>
 </div>
-
-
-<button id="auchan-fab" onclick="openAuchanIframe()">
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="9" cy="21" r="1"></circle>
-        <circle cx="20" cy="21" r="1"></circle>
-        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-    </svg>
-</button>
 
 </div>
 
@@ -749,39 +657,6 @@ body.collapsed-active #collapse-btn svg {
         <span>Catalog</span>
     </button>
 </nav>
-
-
-
-
-<div id="iframe-overlay">
-    <div class="iframe-header">
-        <div class="flex items-center gap-3">
-            <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-            <span class="text-[11px] font-black text-white uppercase tracking-[2px]">Auchan Market</span>
-        </div>
-        <div class="flex gap-4">
-            <button onclick="toggleMinimizeIframe()" class="px-4 py-2 bg-white/10 rounded-xl text-white text-[10px] font-bold uppercase">Minimizare</button>
-            <button onclick="closeIframe()" class="w-10 h-10 flex items-center justify-center bg-red-500/20 text-red-500 rounded-full font-bold">✕</button>
-        </div>
-    </div>
-    <iframe id="auchan-frame" src="" class="w-full h-full border-none bg-white"></iframe>
-</div>
-
-
-<div id="proxy-container">
-    <div class="proxy-header">
-        <div class="flex items-center gap-2">
-            <span class="text-[10px] font-black tracking-widest uppercase text-purple-400">Magazin Virtual</span>
-        </div>
-        <div class="flex gap-3">
-            <button onclick="minimizeProxy()" class="text-[10px] font-bold uppercase opacity-50">Minimizare</button>
-            <button onclick="closeProxy()" class="w-8 h-8 flex items-center justify-center bg-red-500/20 text-red-500 rounded-full">✕</button>
-        </div>
-    </div>
-    <!-- Folosim un object în loc de iframe pentru compatibilitate mai bună -->
-    <iframe id="proxy-frame" src=""></iframe>
-</div>
-
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -1305,7 +1180,7 @@ function openShoppingList() {
             `;
         });
     }
-document.getElementById('auchan-fab').style.display = 'flex';
+
     document.getElementById('shopping-sheet').classList.add('active');
 }
 
@@ -1377,35 +1252,7 @@ function openMenusManager() {
 
 
 
-const targetUrl = "https://www.auchan.ro/ulei%20de%20floarea%20soarelui?_q=Ulei%20de%20floarea%20soarelui&map=ft";
 
-function openAuchanIframe() {
-    const container = document.getElementById('proxy-container');
-    const frame = document.getElementById('proxy-frame');
-    
-    // Dacă iframe-ul simplu nu merge, folosim un serviciu de proxy:
-    // Atenție: Unele site-uri detectează și proxy-ul, dar e singura șansă "pe site"
-    frame.src = targetUrl; 
-    
-    container.classList.add('active');
-    container.classList.remove('minimized');
-}
-
-function minimizeProxy() {
-    const container = document.getElementById('proxy-container');
-    container.classList.toggle('minimized');
-    if(container.classList.contains('minimized')) {
-        container.style.transform = 'translateY(calc(100% - 60px))';
-    } else {
-        container.style.transform = 'translateY(0)';
-    }
-}
-
-function closeProxy() {
-    const container = document.getElementById('proxy-container');
-    container.classList.remove('active');
-    document.getElementById('proxy-frame').src = "";
-}
 
 
 // ============================================================
@@ -1848,9 +1695,6 @@ async function setNum(val) {
 
 function closeSheets() {
     document.querySelectorAll('.bottom-sheet').forEach(s => s.classList.remove('active'));
-    
-    // Ascunde butonul Auchan când se închide orice sheet
-    document.getElementById('auchan-fab').style.display = 'none';
 }
 
 // ============================================================
