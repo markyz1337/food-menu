@@ -448,6 +448,42 @@ body.collapsed-active #collapse-btn svg {
 }
 
 
+#proxy-container {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 85vh;
+    background: #fff;
+    z-index: 4000;
+    border-radius: 30px 30px 0 0;
+    transform: translateY(100%);
+    transition: transform 0.5s cubic-bezier(0.32, 0.72, 0, 1);
+    box-shadow: 0 -20px 60px rgba(0,0,0,0.8);
+    display: flex;
+    flex-direction: column;
+}
+
+#proxy-container.active { transform: translateY(0); }
+
+.proxy-header {
+    height: 60px;
+    background: #1a1a1a;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    color: white;
+}
+
+#proxy-frame {
+    width: 100%;
+    flex-grow: 1;
+    border: none;
+}
+
+
+
 </style>
 
 
@@ -732,7 +768,19 @@ body.collapsed-active #collapse-btn svg {
 </div>
 
 
-
+<div id="proxy-container">
+    <div class="proxy-header">
+        <div class="flex items-center gap-2">
+            <span class="text-[10px] font-black tracking-widest uppercase text-purple-400">Magazin Virtual</span>
+        </div>
+        <div class="flex gap-3">
+            <button onclick="minimizeProxy()" class="text-[10px] font-bold uppercase opacity-50">Minimizare</button>
+            <button onclick="closeProxy()" class="w-8 h-8 flex items-center justify-center bg-red-500/20 text-red-500 rounded-full">✕</button>
+        </div>
+    </div>
+    <!-- Folosim un object în loc de iframe pentru compatibilitate mai bună -->
+    <iframe id="proxy-frame" src=""></iframe>
+</div>
 
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1329,32 +1377,34 @@ function openMenusManager() {
 
 
 
-const AUCHAN_URL = "https://www.auchan.ro/";
+const targetUrl = "https://www.auchan.ro/ulei%20de%20floarea%20soarelui?_q=Ulei%20de%20floarea%20soarelui&map=ft";
 
 function openAuchanIframe() {
-    const frame = document.getElementById('auchan-frame');
-    const overlay = document.getElementById('iframe-overlay');
+    const container = document.getElementById('proxy-container');
+    const frame = document.getElementById('proxy-frame');
     
-    // Încarcă site-ul doar dacă nu e deja încărcat
-    if (!frame.src || frame.src === "about:blank" || frame.src === window.location.href) {
-        frame.src = AUCHAN_URL;
+    // Dacă iframe-ul simplu nu merge, folosim un serviciu de proxy:
+    // Atenție: Unele site-uri detectează și proxy-ul, dar e singura șansă "pe site"
+    frame.src = targetUrl; 
+    
+    container.classList.add('active');
+    container.classList.remove('minimized');
+}
+
+function minimizeProxy() {
+    const container = document.getElementById('proxy-container');
+    container.classList.toggle('minimized');
+    if(container.classList.contains('minimized')) {
+        container.style.transform = 'translateY(calc(100% - 60px))';
+    } else {
+        container.style.transform = 'translateY(0)';
     }
-    
-    overlay.classList.remove('minimized');
-    overlay.classList.add('active');
 }
 
-function toggleMinimizeIframe() {
-    const overlay = document.getElementById('iframe-overlay');
-    overlay.classList.toggle('minimized');
-}
-
-function closeIframe() {
-    const overlay = document.getElementById('iframe-overlay');
-    overlay.classList.remove('active');
-    overlay.classList.remove('minimized');
-    // Opțional: golește iframe-ul pentru a elibera memoria RAM
-    // document.getElementById('auchan-frame').src = "";
+function closeProxy() {
+    const container = document.getElementById('proxy-container');
+    container.classList.remove('active');
+    document.getElementById('proxy-frame').src = "";
 }
 
 
