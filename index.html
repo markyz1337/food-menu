@@ -410,20 +410,48 @@ body.collapsed-active #collapse-btn svg {
 
 <!-- Bottom Sheet pentru Lista de Cumpărături -->
 
+<!-- 1. SHEET LISTA CUMPĂRĂTURI -->
 <div id="shopping-sheet" class="bottom-sheet full overflow-hidden flex flex-col">
     <div class="p-6 border-b border-white/10 flex justify-between items-center bg-black/50">
         <div>
-            <h3 class="text-xl font-black tracking-tighter">LISTĂ CUMPĂRĂTURI</h3>
+            <h3 class="text-xl font-black tracking-tighter text-white">LISTĂ CUMPĂRĂTURI</h3>
             <p id="shopping-summary-count" class="text-[9px] font-bold text-purple-400 uppercase tracking-[2px]">0 PRODUSE TOTAL</p>
         </div>
-        <button onclick="closeSheets()" class="w-10 h-10 flex items-center justify-center bg-white/5 rounded-full text-white font-bold">✕</button>
+        <div class="flex gap-2">
+            <!-- Butonul care deschide dialogul de meniuri -->
+            <button onclick="openMenusManager()" class="px-3 h-10 bg-purple-500/20 border border-purple-500/30 rounded-xl text-[10px] font-black text-purple-300 uppercase tracking-tight active:scale-95 transition-all">
+                Meniuri
+            </button>
+            <button onclick="closeSheets()" class="w-10 h-10 flex items-center justify-center bg-white/5 rounded-full text-white font-bold">✕</button>
+        </div>
     </div>
 
-
-<div id="shopping-list-content" class="flex-grow overflow-y-auto p-6 space-y-3 pb-32">
-    <!-- Aici vor fi injectate produsele consolidate -->
+    <div id="shopping-list-content" class="flex-grow overflow-y-auto p-6 space-y-3 pb-32">
+        <!-- Produsele vin aici -->
+    </div>
 </div>
 
+<!-- 2. SHEET GESTIONARE MENIURI (Dialog separat) -->
+<div id="menus-manager-sheet" class="bottom-sheet full overflow-hidden flex flex-col" style="z-index: 2500; background: #020205;">
+    <div class="p-6 border-b border-white/10 flex justify-between items-center bg-black/80">
+        <div>
+            <h3 class="text-xl font-black tracking-tighter text-white">GESTIONARE MENIURI</h3>
+            <p class="text-[9px] font-bold text-purple-400 uppercase tracking-[2px]">Meniuri disponibile</p>
+        </div>
+        <button onclick="document.getElementById('menus-manager-sheet').classList.remove('active')" class="w-10 h-10 flex items-center justify-center bg-white/5 rounded-full text-white font-bold">✕</button>
+    </div>
+    
+    <div id="menus-manager-content" class="flex-grow overflow-y-auto p-6 space-y-3 pb-32">
+        <!-- Rețetele vin aici prin JS -->
+    </div>
+
+    <div class="absolute bottom-8 left-0 w-full px-6 pointer-events-none">
+        <button onclick="document.getElementById('menus-manager-sheet').classList.remove('active'); openShoppingList();" 
+                class="pointer-events-auto w-full py-5 bg-purple-600 text-white rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-2xl shadow-purple-500/40">
+            Gata, Revino la Listă
+        </button>
+    </div>
+</div>
 
 </div>
 
@@ -1054,50 +1082,99 @@ function openShoppingList() {
     listContent.innerHTML = '';
 
     let cumparaturi = {};
+    let detaliiMeniuri = {}; 
+
     rețete.forEach(r => {
         if (r.selectat) {
             r.ingrediente.forEach(ing => {
                 if (!ing.idProd) return;
-                const qtyTotala = ing.qty * r.portii;
+                
+                const qtyPerMeniu = ing.qty * r.portii;
+                const produs = catalog.find(p => p.id === ing.idProd);
+                const unit = produs ? produs.unit : '';
+
                 if (cumparaturi[ing.idProd]) {
-                    cumparaturi[ing.idProd] += qtyTotala;
+                    cumparaturi[ing.idProd] += qtyPerMeniu;
+                    detaliiMeniuri[ing.idProd].push(`${r.nume} (${Number(qtyPerMeniu.toFixed(3))} ${unit})`);
                 } else {
-                    cumparaturi[ing.idProd] = qtyTotala;
+                    cumparaturi[ing.idProd] = qtyPerMeniu;
+                    detaliiMeniuri[ing.idProd] = [`${r.nume} (${Number(qtyPerMeniu.toFixed(3))} ${unit})`];
                 }
             });
         }
     });
 
-    const keys = Object.keys(cumparaturi);
-    summaryCount.innerText = `${keys.length} PRODUSE UNICE`;
+    const sortableItems = Object.keys(cumparaturi).map(id => {
+        const produs = catalog.find(p => p.id === id);
+        return { 
+            id: id, 
+            totalQty: cumparaturi[id],
+            listaMeniuri: detaliiMeniuri[id],
+            unitNormalized: produs ? produs.unit.trim().toLowerCase() : '',
+            unitDisplay: produs ? produs.unit : ''
+        };
+    });
 
-    if (keys.length === 0) {
+    sortableItems.sort((a, b) => {
+        if (a.unitNormalized > b.unitNormalized) return -1;
+        if (a.unitNormalized < b.unitNormalized) return 1;
+        return b.totalQty - a.totalQty;
+    });
+
+    summaryCount.innerText = `${sortableItems.length} PRODUSE UNICE`;
+
+    if (sortableItems.length === 0) {
         listContent.innerHTML = '<p class="text-center text-gray-500 py-10 font-bold uppercase text-xs tracking-widest">Nicio rețetă selectată</p>';
     } else {
-        keys.forEach(idProd => {
-            const produs = catalog.find(p => p.id === idProd);
-            if (!produs) return;
+        sortableItems.forEach(item => {
+            const pReal = catalog.find(x => x.id === item.id);
+            if (!pReal) return;
 
-            const cantitateRaw = cumparaturi[idProd];
-            // Formatează gramajul: max 3 zecimale, elimină zerourile inutile (ex: 0.125)
-            const cantitateFormatata = Number(cantitateRaw.toFixed(3));
+            const cantitateRaw = item.totalQty;
+            const pretTotalLei = pReal.pretLei * cantitateRaw;
+            const pretTotalEur = pretTotalLei / CURS;
             
-            const pretTotalProdus = (produs.pretLei * cantitateRaw);
-            // Formatează prețul: fix 2 zecimale (ex: 17.99)
-            const pretLeiFormatat = pretTotalProdus.toFixed(2);
-            const pretEurFormatat = (pretTotalProdus / CURS).toFixed(2);
+            const textDialog = `Produs: ${pReal.nume}\n--------------------------\n` + item.listaMeniuri.join('\n');
+
+            // 1. Badge-ul de Meniuri (Vizibil doar dacă count > 1, VERDE, CERC)
+            const countMeniuri = item.listaMeniuri.length;
+            const badgeMeniuriHTML = countMeniuri > 1 
+                ? `<span class="flex-shrink-0 w-5 h-5 flex items-center justify-center bg-emerald-500/20 text-emerald-400 rounded-full text-[10px] font-black border border-emerald-500/30 shadow-[0_0_8px_rgba(16,185,129,0.2)]">
+                    ${countMeniuri}
+                   </span>` 
+                : '';
 
             listContent.innerHTML += `
-                <div class="glass-card p-4 flex justify-between items-center border-l-4 border-purple-500">
-                    <div>
-                        <p class="font-bold text-white text-sm">${produs.nume}</p>
-                        <p class="text-[10px] font-black text-gray-500 uppercase">
-                            ${cantitateFormatata} ${produs.unit} × ${produs.pretLei.toFixed(2)} lei
-                        </p>
+                <div class="glass-card p-4 flex justify-between items-center border-l-4 border-purple-500 gap-3 active:scale-[0.97] transition-transform" 
+                     onclick="alert(\`${textDialog}\`)">
+                    
+                    <div class="min-w-0 flex-grow">
+                        <!-- Rândul 1: Badge Cantitate + Titlu + Badge Meniuri -->
+                        <div class="flex items-center gap-2 mb-1">
+                            <!-- Badge Unitate (Cantitate + UM) -->
+                            <span class="flex-shrink-0 bg-white/10 text-white px-2 py-0.5 rounded-md text-[11px] font-black border border-white/5 uppercase">
+                                ${Number(cantitateRaw.toFixed(3))} ${item.unitDisplay}
+                            </span>
+                            
+                            <p class="font-bold text-white text-sm truncate">
+                                ${pReal.nume}
+                            </p>
+
+                            ${badgeMeniuriHTML}
+                        </div>
+
+                        <!-- Rândul 2: Preț per unitate -->
+                        <div class="flex items-center gap-1 ml-1">
+                            <p class="text-[10px] font-bold text-gray-500 uppercase tracking-tight">
+                                ${pReal.pretLei.toFixed(2)} LEI / ${item.unitDisplay}
+                            </p>
+                        </div>
                     </div>
-                    <div class="text-right">
-                        <p class="text-sm font-black text-white">${pretLeiFormatat} LEI</p>
-                        <p class="text-[10px] font-bold text-purple-400">${pretEurFormatat} €</p>
+
+                    <!-- Dreapta: Total per produs -->
+                    <div class="text-right flex-shrink-0">
+                        <p class="text-base font-black text-white leading-none">${pretTotalLei.toFixed(2)} LEI</p>
+                        <p class="text-[10px] font-bold text-purple-400 mt-1">${pretTotalEur.toFixed(2)} €</p>
                     </div>
                 </div>
             `;
@@ -1106,6 +1183,77 @@ function openShoppingList() {
 
     document.getElementById('shopping-sheet').classList.add('active');
 }
+
+
+
+
+function openMenusManager() {
+    const container = document.getElementById('menus-manager-content');
+    container.innerHTML = '';
+    
+    const nrPers = parseInt(document.getElementById('num-persoane-input').value) || 1;
+    
+    // --- LOGICA DE SORTARE (Identică cu cea din Render) ---
+    // Luăm meniurile selectate și le sortăm după eficiență (Preț/Timp)
+    const meniuriActive = rețete
+        .filter(r => r.selectat)
+        .sort((a, b) => b.eficienta - a.eficienta);
+
+    if (meniuriActive.length === 0) {
+        container.innerHTML = `<p class="text-center text-gray-500 py-10 font-black text-xs uppercase tracking-widest">Niciun meniu selectat în plan</p>`;
+    } else {
+        meniuriActive.forEach((r) => {
+            const portiiAfisate = r.portii; 
+            const oreCalculate = +(r.ore / nrPers).toFixed(2);
+
+            let ingredienteHTML = '';
+            r.ingrediente.forEach(ing => {
+                const p = catalog.find(x => x.id === ing.idProd);
+                if (p) {
+                    ingredienteHTML += `
+                        <div class="flex justify-between items-end border-b border-white/5 pb-2">
+                            <span class="text-base text-gray-300 font-bold tracking-tight">${p.nume}</span>
+                            <span class="text-base text-white font-black">
+                                ${+ing.qty.toFixed(3)} 
+                                <small class="text-[10px] text-purple-400 uppercase">${p.unit}</small>
+                            </span>
+                        </div>`;
+                }
+            });
+
+            container.innerHTML += `
+                <div class="glass-card p-6 border-l-[6px] border-purple-500 bg-white/5 mb-6">
+                    <div class="mb-4">
+                        <h4 class="font-extrabold text-white text-xl tracking-tighter leading-tight uppercase">${r.nume}</h4>
+                    </div>
+
+                    <div class="flex gap-3 mb-6">
+                        <div class="flex-1 bg-white/5 border border-white/10 p-3 rounded-xl flex justify-between items-center">
+                            <p class="text-[9px] font-black text-gray-500 uppercase tracking-widest">Porții</p>
+                            <p class="text-lg font-black text-purple-400 leading-none">${portiiAfisate}</p>
+                        </div>
+                        
+                        <div class="flex-1 bg-white/5 border border-white/10 p-3 rounded-xl flex justify-between items-center">
+                            <p class="text-[9px] font-black text-gray-500 uppercase tracking-widest">Ore / Porție</p>
+                            <p class="text-lg font-black text-emerald-400 leading-none">${oreCalculate}h</p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2 border-t border-white/10 pt-5">
+                        <p class="text-[10px] font-black text-gray-400 uppercase tracking-[3px] mb-3">Ingrediente</p>
+                        ${ingredienteHTML}
+                    </div>
+                </div>`;
+        });
+    }
+    
+    document.getElementById('menus-manager-sheet').classList.add('active');
+}
+
+
+
+
+
 
 // ============================================================
 // UTILITĂȚI
@@ -1177,6 +1325,10 @@ function render() {
     if (!list) return;
     list.innerHTML = '';
     let tEur = 0, tOre = 0;
+
+    // 0. PRELUARE NR PERSOANE PENTRU CALCUL
+    const inputPers = document.getElementById('num-persoane-input');
+    let nrPers = parseInt(inputPers.value) || 1;
 
     // 1. CALCULARE DATE ȘI EFICIENȚĂ
     rețete.forEach(r => {
@@ -1268,14 +1420,33 @@ function render() {
                 </div>
 
                 <div class="recipe-stats-footer grid grid-cols-3 gap-2 border-t border-white/5 pt-3 items-center text-center">
-                    <div onclick="${isUnlocked ? `openNumPicker(${rIdx}, 'ore')` : ''}" class="${oreCls} flex flex-col items-center">
-                        <p class="text-[7px] font-black text-gray-500 uppercase tracking-widest">Ore</p>
-                        <p class="text-lm font-bold text-white">${reteta.ore}h</p>
-                    </div>
+                    
+<!-- ORE - REPARAT: FĂRĂ ITALIC, SPAȚIERE STRÂNSĂ -->
+<div onclick="${isUnlocked ? `openNumPicker(${rIdx}, 'ore')` : ''}" class="${oreCls} flex flex-col items-center">
+    <p class="text-[7px] font-black text-gray-500 uppercase tracking-widest leading-none mb-1">Ore</p>
+    <p class="text-lm font-bold text-white leading-none">${reteta.ore}h</p>
+    
+    ${nrPers > 1 ? `
+    <div class="mt-1 flex items-center justify-center opacity-90">
+        <!-- 1. NUMĂR (Am scos 'italic' și am pus 'text-purple-400') -->
+        <span class="text-[9px] font-extrabold text-purple-400" style="line-height: 1;">${nrPers}</span>
+        
+        <!-- 2. ICONIȚĂ (Am micșorat marginea laterală) -->
+        <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#c084fc" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="margin: 0 2px;">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+        </svg>
+        
+        <!-- 3. ORE REZULTATE -->
+        <span class="text-white font-bold text-[9px]" style="line-height: 1;">${(reteta.ore / nrPers).toFixed(1)}h</span>
+    </div>
+    ` : ''}
+</div>
                     <div class="bg-purple-500/10 py-1.5 rounded-xl border border-purple-500/20">
                         <p class="text-[7px] font-black text-emerald-400 uppercase tracking-widest">Preț Total</p>
                         <p class="text-lg font-black text-white leading-none">${reteta.costEurCalculat.toFixed(2)}€</p>
                     </div>
+                    
                     <div onclick="openNumPicker(${rIdx}, 'portii')" class="cursor-pointer flex flex-col items-center">
                         <p class="text-[7px] font-black text-gray-500 uppercase tracking-widest">Porții</p>
                         <p class="text-lm font-bold text-white">${reteta.portii}</p>
@@ -1287,42 +1458,25 @@ function render() {
     });
 
     // 4. ACTUALIZARE HUD
-// === LOGICA HUD CORECTATĂ ===
-const inputPers = document.getElementById('num-persoane-input');
-let nrPers = parseInt(inputPers.value) || 1;
+    let tEurTotal = tEur; 
+    let tOreAutonomie = tOre / nrPers;
+    const orePerZi = 12; 
+    const zileAutonomie = tOreAutonomie / orePerZi;
+    const pretPeZi = tOre > 0 ? (tEurTotal / tOre) * (orePerZi * nrPers) : 0;
 
-// 1. Totalul de Euro selectat
-let tEurTotal = tEur; 
+    document.getElementById('hud-eur').innerText = tEurTotal.toFixed(2) + '€';
+    document.getElementById('hud-per-day').innerText = pretPeZi.toFixed(2) + '€/zi';
 
-// 2. Orele totale de autonomie se împart la numărul de persoane 
-// (Dacă sunt 2 oameni, mâncarea se consumă de 2 ori mai repede)
-let tOreAutonomie = tOre / nrPers;
+    const zileIntregi = Math.floor(zileAutonomie);
+    const oreRest = Math.round(tOreAutonomie % orePerZi);
 
-const orePerZi = 12; // Standardul tău de ore/zi
-const zileAutonomie = tOreAutonomie / orePerZi;
-
-// 3. Prețul pe zi (Media de consum zilnic pentru TOATĂ echipa/familia)
-// Formula: (Total Euro / Ore Totale) * (Ore pe zi * Nr Persoane)
-const pretPeZi = tOre > 0 ? (tEurTotal / tOre) * (orePerZi * nrPers) : 0;
-
-// Update Vizual în HUD
-document.getElementById('hud-eur').innerText = tEurTotal.toFixed(2) + '€';
-document.getElementById('hud-per-day').innerText = pretPeZi.toFixed(2) + '€/zi';
-
-// Calcul zile/ore pentru afișare autonomie
-const zileIntregi = Math.floor(zileAutonomie);
-const oreRest = Math.round(tOreAutonomie % orePerZi);
-
-let htmlAutonomie = `<span class="text-base font-black tracking-tighter text-white uppercase">${zileIntregi} ${zileIntregi === 1 ? 'zi' : 'zile'}</span>`;
-
-if (oreRest > 0) {
-    htmlAutonomie += `<span class="text-[10px] font-black text-purple-400 uppercase tracking-tighter leading-none">${oreRest}H / ${orePerZi}H</span>`;
-}
-
-document.getElementById('hud-hours').innerHTML = htmlAutonomie;    
+    let htmlAutonomie = `<span class="text-base font-black tracking-tighter text-white uppercase">${zileIntregi} ${zileIntregi === 1 ? 'zi' : 'zile'}</span>`;
+    if (oreRest > 0) {
+        htmlAutonomie += `<span class="text-[10px] font-black text-purple-400 uppercase tracking-tighter leading-none">${oreRest}H / ${orePerZi}H</span>`;
+    }
+    document.getElementById('hud-hours').innerHTML = htmlAutonomie;    
     
-
-// 5. ICONIȚĂ BULK SELECT
+    // 5. ICONIȚĂ BULK SELECT
     const bulkBtn = document.getElementById('bulk-select-btn');
     const bulkIcon = document.getElementById('bulk-select-icon');
     if(bulkBtn && bulkIcon) {
@@ -1339,15 +1493,10 @@ document.getElementById('hud-hours').innerHTML = htmlAutonomie;
 
     // 6. LOGICA DE SCROLL AUTOMAT
     if (lastEditedId) {
-        // Folosim un setTimeout scurt pentru a ne asigura că DOM-ul este gata
         setTimeout(() => {
             const editedElement = document.getElementById(`recipe-${lastEditedId}`);
             if (editedElement) {
-                editedElement.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'center'
-                });
-                // Resetăm ID-ul ca să nu execute scroll la orice alt render viitor
+                editedElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 lastEditedId = null;
             }
         }, 100);
