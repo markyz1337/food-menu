@@ -412,7 +412,21 @@ body.collapsed-active #collapse-btn svg {
 }
 
 
+/* Separator implicit pentru cardurile BIFATE (Mov) */
+.card-divider {
+    height: 1px;
+    width: 100%;
+    background: linear-gradient(to right, transparent, rgba(192, 132, 252, 0.4) 20%, rgba(192, 132, 252, 0.4) 80%, transparent);
+    margin-top: 12px;
+    margin-bottom: 12px;
+    border: none;
+    transition: background 0.3s ease;
+}
 
+/* Culoarea divizorului când cardul este DEBIFAT (Alb discret) */
+.glass-card.inactive .card-divider {
+    background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.2) 20%, rgba(255, 255, 255, 0.2) 80%, transparent);
+}
 
 
 </style>
@@ -1134,6 +1148,43 @@ function openShoppingList() {
             calcule: detaliiCalcul[id],
             unitDisplay: produs ? produs.unit : ''
         };
+    }).sort((a, b) => {
+        // 1. Curățăm textul unității (ex: "Kg " -> "kg")
+        const unitA = (a.unitDisplay || '').toLowerCase().replace(/[^a-z]/g, '');
+        const unitB = (b.unitDisplay || '').toLowerCase().replace(/[^a-z]/g, '');
+        
+        // 2. Ierarhia cerută: Kg primele (valoare mare), Bucățile la sfârșit (valoare mică)
+        const prioritati = { 
+            'kg': 6, 
+            'l': 5, 
+            'g': 4, 
+            'ml': 3, 
+            'leg': 2, 
+            'buc': 1 
+        };
+        
+        const prioritateA = prioritati[unitA] || 0;
+        const prioritateB = prioritati[unitB] || 0;
+        
+        // Criteriul 1: Sortează descrescător după TIPUL unității (6 -> 5 -> 4 -> ...)
+        if (prioritateB !== prioritateA) {
+            return prioritateB - prioritateA;
+        }
+        
+        // Criteriul 2: Dacă au unități nespecificate (ex: ambele sunt "plic"), le grupăm alfabetic
+        if (prioritateA === 0 && prioritateB === 0 && unitA !== unitB) {
+            return unitA.localeCompare(unitB);
+        }
+        
+        // Criteriul 3: Dacă au ACEEAȘI unitate, sortează după CANTITATE DESCRESCĂTOR (de la mult la puțin)
+        if (b.totalQty !== a.totalQty) {
+            return b.totalQty - a.totalQty;
+        }
+        
+        // Criteriul 4: Dacă au și aceeași unitate și aceeași cantitate, le sortează alfabetic după nume
+        const prodA = catalog.find(x => x.id === a.id)?.nume || '';
+        const prodB = catalog.find(x => x.id === b.id)?.nume || '';
+        return prodA.localeCompare(prodB);
     });
 
     summaryCount.innerText = `${sortableItems.length} PRODUSE UNICE`;
@@ -1422,8 +1473,9 @@ function render() {
                         ${isUnlocked ? `<button onclick="addIngredient(${rIdx})" class="text-[9px] font-black text-purple-400 uppercase tracking-widest pt-1">+ Ingredient</button>` : ''}
                     </div>
                 </div>
+<div class="card-divider"></div>
 
-                <div class="recipe-stats-footer grid grid-cols-3 gap-2 border-t border-white/5 pt-3 items-center text-center">
+                <div class="recipe-stats-footer grid grid-cols-3 gap-2 pt-3 items-center text-center">
                     
 <!-- ORE - REPARAT: FĂRĂ ITALIC, SPAȚIERE STRÂNSĂ -->
 <div onclick="${isUnlocked ? `openNumPicker(${rIdx}, 'ore')` : ''}" class="${oreCls} flex flex-col items-center">
@@ -1453,7 +1505,7 @@ function render() {
                     
                     <div onclick="openNumPicker(${rIdx}, 'portii')" class="cursor-pointer flex flex-col items-center">
                         <p class="text-[7px] font-black text-gray-500 uppercase tracking-widest">Porții</p>
-                        <p class="text-lm font-bold text-white">${reteta.portii}</p>
+                        <p class="text-xl font-bold text-white">${reteta.portii}</p>
                     </div>
                 </div>
 
