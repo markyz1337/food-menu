@@ -271,7 +271,7 @@ let catalog = [
     { id: 'c59', nume: 'Ouă (L)', pretLei: 1.25, unit: 'buc' }
 ];
 
-let rețete = [
+let retete = [
     {
         id: 1, selectat: true, nume: '🍳 Mic Dejun Proteic',
         ore: 4, portii: 2, ingrediente: [{ idProd: 'c59', qty: 4 }], tags: 'oua, proteina, rapid'
@@ -285,8 +285,16 @@ let lastEditedId = null;
 // AUCHAN LINK HELPER
 // ============================================================
 
+function stripEmojisAndTrim(text) {
+    return text
+        .replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
 function buildAuchanUrl(numeProdus) {
-    const encoded = numeProdus.replace(/ /g, '%20');
+    const curat = stripEmojisAndTrim(numeProdus);
+    const encoded = encodeURIComponent(curat);
     return `https://www.auchan.ro/${encoded}?_q=${encoded}&map=ft`;
 }
 
@@ -306,7 +314,7 @@ function handleCardClick(event, rIdx) {
     const target = event.target;
     const isPortiiZone = target.closest('[onclick*="openNumPicker"][onclick*="portii"]');
     if (isPortiiZone || target.type === 'checkbox') return;
-    toggleSelectReteta(rIdx, !rețete[rIdx].selectat);
+    toggleSelectReteta(rIdx, !retete[rIdx].selectat);
 }
 
 let lastScrollPos = 0;
@@ -329,12 +337,12 @@ async function resetDacaEGol(input) {
 }
 
 async function toggleSelectAll() {
-    if (rețete.length === 0) return;
-    const allSel = rețete.every(r => r.selectat);
-    rețete.forEach(r => r.selectat = !allSel);
+    if (retete.length === 0) return;
+    const allSel = retete.every(r => r.selectat);
+    retete.forEach(r => r.selectat = !allSel);
     render();
     if (USE_SUPABASE) {
-        try { await Promise.all(rețete.map(r => db_upsertReteta(r))); }
+        try { await Promise.all(retete.map(r => db_upsertReteta(r))); }
         catch (err) { console.error("Eroare salvare stare globală:", err); }
     }
 }
@@ -347,7 +355,7 @@ function openNumPicker(rIdx, type, iIdx = null) {
     const title = document.getElementById('num-picker-title');
     const unitDisp = document.getElementById('num-unit-display');
     if (type === 'ingQty') {
-        const prod = catalog.find(p => p.id === rețete[rIdx].ingrediente[iIdx].idProd);
+        const prod = catalog.find(p => p.id === retete[rIdx].ingrediente[iIdx].idProd);
         title.innerText = "Cantitate Ingredient";
         unitDisp.innerText = prod ? prod.unit : 'unit';
     } else if (type === 'ore') {
@@ -375,13 +383,13 @@ async function confirmNum() {
     const ctx = activeCtx;
     if (!ctx) return;
     if ((ctx.type === 'portii' || ctx.type === 'ore') && finalVal < 1) finalVal = 1;
-    if (ctx.type === 'ore') rețete[ctx.rIdx].ore = finalVal;
-    else if (ctx.type === 'portii') rețete[ctx.rIdx].portii = Math.round(finalVal);
-    else if (ctx.type === 'ingQty') rețete[ctx.rIdx].ingrediente[ctx.iIdx].qty = finalVal;
-    lastEditedId = rețete[ctx.rIdx].id;
+    if (ctx.type === 'ore') retete[ctx.rIdx].ore = finalVal;
+    else if (ctx.type === 'portii') retete[ctx.rIdx].portii = Math.round(finalVal);
+    else if (ctx.type === 'ingQty') retete[ctx.rIdx].ingrediente[ctx.iIdx].qty = finalVal;
+    lastEditedId = retete[ctx.rIdx].id;
     closeSheets();
     render();
-    if (USE_SUPABASE) db_upsertReteta(rețete[ctx.rIdx]).catch(err => console.error("Eroare salvare:", err));
+    if (USE_SUPABASE) db_upsertReteta(retete[ctx.rIdx]).catch(err => console.error("Eroare salvare:", err));
     currentNumInput = "0";
 }
 
@@ -416,7 +424,7 @@ async function db_loadRetete() {
     if (!USE_SUPABASE) return;
     const { data, error } = await supabaseClient.from('retete').select('*');
     if (error) { console.error('Eroare retete:', error); return; }
-    rețete = data.map(r => ({ id: r.id, nume: r.nume, ore: r.ore, portii: r.portii, tags: r.tags || '', selectat: r.selectat, ingrediente: r.ingrediente || [] }));
+    retete = data.map(r => ({ id: r.id, nume: r.nume, ore: r.ore, portii: r.portii, tags: r.tags || '', selectat: r.selectat, ingrediente: r.ingrediente || [] }));
 }
 
 async function db_deleteCatalogItem(id) {
@@ -485,7 +493,7 @@ function openShoppingList() {
     let cumparaturi = {};
     let detaliiCalcul = {};
 
-    rețete.forEach(r => {
+    retete.forEach(r => {
         if (r.selectat) {
             r.ingrediente.forEach(ing => {
                 if (!ing.idProd) return;
@@ -532,7 +540,6 @@ function openShoppingList() {
             if (!pReal) return;
             const pretTotalLei = pReal.pretLei * item.totalQty;
 
-            // Dialog text pentru badge-ul cu unitatea de măsură
             const textDialog = `PRODUS: ${pReal.nume}\n----------------------------\n\n` +
                 item.calcule.join('\n\n') +
                 `\n\n----------------------------\nTOTAL GENERAL: ${Number(item.totalQty.toFixed(3))} ${item.unitDisplay}`;
@@ -544,12 +551,10 @@ function openShoppingList() {
                 <div class="glass-card p-4 flex justify-between items-center border-l-4 border-purple-500 gap-3">
                     <div class="min-w-0 flex-grow">
                         <div class="flex items-center gap-2 mb-1">
-                            <!-- Badge unitate: click → dialog detalii meniuri -->
                             <span onclick="event.stopPropagation(); alert(\`${textDialog}\`)"
                                   class="flex-shrink-0 bg-white/10 text-white px-2 py-0.5 rounded-md text-[11px] font-black border border-white/5 uppercase cursor-pointer active:scale-95 transition-transform select-none">
                                 ${Number(item.totalQty.toFixed(3))} ${item.unitDisplay}
                             </span>
-                            <!-- Nume produs: click → Auchan în filă nouă -->
                             <p onclick="openAuchan('${numeEscaped}')" 
                                class="font-bold text-white text-sm truncate cursor-pointer active:opacity-70 transition-opacity">
                                 ${pReal.nume}
@@ -576,7 +581,7 @@ function openMenusManager() {
     const container = document.getElementById('menus-manager-content');
     container.innerHTML = '';
     const nrPers = parseInt(document.getElementById('num-persoane-input').value) || 1;
-    const meniuriActive = rețete.filter(r => r.selectat).sort((a, b) => b.eficienta - a.eficienta);
+    const meniuriActive = retete.filter(r => r.selectat).sort((a, b) => b.eficienta - a.eficienta);
 
     if (meniuriActive.length === 0) {
         container.innerHTML = `<p class="text-center text-gray-500 py-10 font-black text-xs uppercase tracking-widest">Niciun meniu selectat în plan</p>`;
@@ -675,8 +680,7 @@ function render() {
 
     const nrPers = parseInt(document.getElementById('num-persoane-input').value) || 1;
 
-    // 1. Calculare costuri în LEI
-    rețete.forEach(r => {
+    retete.forEach(r => {
         let costLeiMasa = 0;
         r.ingrediente.forEach(ing => {
             const p = catalog.find(x => x.id === ing.idProd);
@@ -688,8 +692,7 @@ function render() {
         if (r.selectat) { tLei += r.costLeiCalculat; tOre += r.totalOreCalculat; }
     });
 
-    // 2. Filtrare și sortare
-    const reteteFiltrate = rețete
+    const reteteFiltrate = retete
         .filter(r => {
             const nNume = normalizeText(r.nume);
             const nTags = normalizeText(r.tags || "");
@@ -697,9 +700,8 @@ function render() {
         })
         .sort((a, b) => b.eficienta - a.eficienta);
 
-    // 3. Generare HTML
     reteteFiltrate.forEach((reteta) => {
-        const rIdx = rețete.findIndex(r => r.id === reteta.id);
+        const rIdx = retete.findIndex(r => r.id === reteta.id);
         const oreCls = isUnlocked ? 'cursor-pointer' : 'ore-locked cursor-default';
         const textLockCls = isUnlocked ? '' : 'pointer-events-none';
 
@@ -772,7 +774,6 @@ function render() {
                         </div>` : ''}
                     </div>
 
-                    <!-- PREȚ TOTAL ÎN LEI -->
                     <div class="bg-purple-500/10 py-1.5 rounded-xl border border-purple-500/20">
                         <p class="text-[7px] font-black text-emerald-400 uppercase tracking-widest">Preț Total</p>
                         <p class="text-lg font-black text-white leading-none">${reteta.costLeiCalculat.toFixed(2)}</p>
@@ -789,7 +790,6 @@ function render() {
             </div>`;
     });
 
-    // 4. HUD — total în LEI
     const orePerZi = 12;
     const tOreAutonomie = tOre / nrPers;
     const zileAutonomie = tOreAutonomie / orePerZi;
@@ -804,12 +804,11 @@ function render() {
     if (oreRest > 0) htmlAutonomie += `<span class="text-[10px] font-black text-purple-400 uppercase tracking-tighter leading-none">${oreRest}H / ${orePerZi}H</span>`;
     document.getElementById('hud-hours').innerHTML = htmlAutonomie;
 
-    // 5. Iconiță bulk select
     const bulkBtn = document.getElementById('bulk-select-btn');
     const bulkIcon = document.getElementById('bulk-select-icon');
     if (bulkBtn && bulkIcon) {
-        const anySelected = rețete.some(r => r.selectat);
-        const allSel = rețete.length > 0 && rețete.every(r => r.selectat);
+        const anySelected = retete.some(r => r.selectat);
+        const allSel = retete.length > 0 && retete.every(r => r.selectat);
         if (allSel) {
             bulkBtn.className = "w-10 h-10 flex items-center justify-center bg-purple-600 text-white rounded-full shadow-lg active:scale-90 transition-all";
             bulkIcon.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
@@ -821,7 +820,6 @@ function render() {
         }
     }
 
-    // 6. Scroll automat
     if (lastEditedId) {
         setTimeout(() => {
             const el = document.getElementById(`recipe-${lastEditedId}`);
@@ -844,6 +842,7 @@ function renderCatalog() {
         .sort((a, b) => a.pretLei - b.pretLei)
         .forEach((prod) => {
             const cIdx = catalog.findIndex(x => x.id === prod.id);
+            const numeEscJS = prod.nume.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
             cat.innerHTML += `
                 <div class="glass-card p-5 flex justify-between items-center">
                     <div class="flex-grow">
@@ -854,7 +853,7 @@ function renderCatalog() {
                                value="${prod.unit}" ${isUnlocked ? '' : 'readonly'}
                                onchange="updateCatalogField(${cIdx}, 'unit', this.value)">
                     </div>
-                    <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-2">
                         <div class="bg-white/5 px-3 py-2 rounded-xl flex items-center gap-2 border border-white/5">
                             <input type="number" step="0.01" 
                                    class="w-16 text-right font-black text-emerald-400 bg-transparent outline-none ${isUnlocked ? '' : 'pointer-events-none'}" 
@@ -862,7 +861,16 @@ function renderCatalog() {
                                    onchange="updateCatalogField(${cIdx}, 'pretLei', parseFloat(this.value))">
                             <span class="text-[9px] font-bold text-gray-500">LEI</span>
                         </div>
-                        ${isUnlocked ? `<button onclick="confirmDeleteCatalogItem(${cIdx})" class="w-8 h-8 flex items-center justify-center bg-red-500/10 text-red-500 border border-red-500/20 rounded-full">✕</button>` : ''}
+                        ${isUnlocked ? `
+                        <button onclick="openAuchan('${numeEscJS}')" 
+                                class="w-8 h-8 flex items-center justify-center bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-full active:scale-90 transition-all"
+                                title="Caută pe Auchan">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                            </svg>
+                        </button>
+                        <button onclick="confirmDeleteCatalogItem(${cIdx})" class="w-8 h-8 flex items-center justify-center bg-red-500/10 text-red-500 border border-red-500/20 rounded-full">✕</button>` : ''}
                     </div>
                 </div>`;
         });
@@ -895,51 +903,51 @@ async function confirmDeleteCatalogItem(idx) {
 }
 
 async function toggleSelectReteta(rIdx, checked) {
-    rețete[rIdx].selectat = checked;
-    await db_upsertReteta(rețete[rIdx]);
+    retete[rIdx].selectat = checked;
+    await db_upsertReteta(retete[rIdx]);
     render();
 }
 
 async function updateRetetaField(rIdx, field, value) {
-    rețete[rIdx][field] = value;
-    await db_upsertReteta(rețete[rIdx]);
+    retete[rIdx][field] = value;
+    await db_upsertReteta(retete[rIdx]);
     render();
 }
 
 async function addIngredient(rIdx) {
-    rețete[rIdx].ingrediente.push({ idProd: null, qty: 1 });
-    await db_upsertReteta(rețete[rIdx]);
+    retete[rIdx].ingrediente.push({ idProd: null, qty: 1 });
+    await db_upsertReteta(retete[rIdx]);
     render();
 }
 
 async function addRecipe() {
     const newReteta = { id: Date.now(), selectat: true, nume: 'Meniu Nou', ore: 1, portii: 1, ingrediente: [], tags: '' };
-    rețete.push(newReteta);
+    retete.push(newReteta);
     await db_upsertReteta(newReteta);
     render();
 }
 
 async function confirmDeleteRecipe(idx) {
-    const reteta = rețete[idx];
+    const reteta = retete[idx];
     if (confirm(`Ești sigur că vrei să ștergi "${reteta.nume}"?`)) {
         await db_deleteReteta(reteta.id);
-        rețete.splice(idx, 1);
+        retete.splice(idx, 1);
         render();
     }
 }
 
 async function confirmDeleteIngredient(rIdx, iIdx) {
-    const ing = rețete[rIdx].ingrediente[iIdx];
+    const ing = retete[rIdx].ingrediente[iIdx];
     const produs = catalog.find(p => p.id === ing.idProd);
     if (produs) {
         if (confirm(`Ștergi ${produs.nume} din listă?`)) {
-            rețete[rIdx].ingrediente.splice(iIdx, 1);
-            await db_upsertReteta(rețete[rIdx]);
+            retete[rIdx].ingrediente.splice(iIdx, 1);
+            await db_upsertReteta(retete[rIdx]);
             render();
         }
     } else {
-        rețete[rIdx].ingrediente.splice(iIdx, 1);
-        await db_upsertReteta(rețete[rIdx]);
+        retete[rIdx].ingrediente.splice(iIdx, 1);
+        await db_upsertReteta(retete[rIdx]);
         render();
     }
 }
@@ -977,19 +985,19 @@ function renderPickerOptions() {
 }
 
 async function selectProduct(id) {
-    rețete[activeCtx.rIdx].ingrediente[activeCtx.iIdx].idProd = id;
-    lastEditedId = rețete[activeCtx.rIdx].id;
-    await db_upsertReteta(rețete[activeCtx.rIdx]);
+    retete[activeCtx.rIdx].ingrediente[activeCtx.iIdx].idProd = id;
+    lastEditedId = retete[activeCtx.rIdx].id;
+    await db_upsertReteta(retete[activeCtx.rIdx]);
     closeSheets();
     render();
 }
 
 async function setNum(val) {
-    if (activeCtx.type === 'ore') rețete[activeCtx.rIdx].ore = val;
-    if (activeCtx.type === 'portii') rețete[activeCtx.rIdx].portii = val;
-    if (activeCtx.type === 'ingQty') rețete[activeCtx.rIdx].ingrediente[activeCtx.iIdx].qty = val;
-    lastEditedId = rețete[activeCtx.rIdx].id;
-    await db_upsertReteta(rețete[activeCtx.rIdx]);
+    if (activeCtx.type === 'ore') retete[activeCtx.rIdx].ore = val;
+    if (activeCtx.type === 'portii') retete[activeCtx.rIdx].portii = val;
+    if (activeCtx.type === 'ingQty') retete[activeCtx.rIdx].ingrediente[activeCtx.iIdx].qty = val;
+    lastEditedId = retete[activeCtx.rIdx].id;
+    await db_upsertReteta(retete[activeCtx.rIdx]);
     closeSheets();
     render();
 }
