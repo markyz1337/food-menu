@@ -10,18 +10,13 @@
 
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
-        /* === CONFIGURARE GLOBALA SI FUNDAL === */
         :root { --primary: #c084fc; --glass: rgba(255, 255, 255, 0.03); --glass-border: rgba(255, 255, 255, 0.1); }
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: #020205; color: #ffffff; min-height: 100vh; overflow-x: hidden; -webkit-tap-highlight-color: transparent; }
         body.pb-44 { padding-bottom: 120px; }
         #view-title { color: #ffffff !important; text-shadow: 0 4px 12px rgba(0,0,0,0.5); display: block; opacity: 1; }
         .orb { position: fixed; width: 500px; height: 500px; background: radial-gradient(circle, rgba(192, 132, 252, 0.1) 0%, transparent 70%); z-index: -1; filter: blur(80px); animation: float 20s infinite alternate; }
         @keyframes float { from { transform: translate(-10%, -10%); } to { transform: translate(30%, 20%); } }
-
-        /* === COMSORTAMENT TOUCH / INTERACTIUNE === */
         .num-key, .nav-btn, button, .glass-card { touch-action: manipulation; }
-
-        /* === CARDURI (GLASS-CARD) SI STARI === */
         .glass-card { background: var(--glass); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); border: 1px solid var(--glass-border); border-radius: 27px; transition: box-shadow 0.3s ease, border-color 0.3s ease, transform 0.3s ease, opacity 0.3s ease; }
         .glass-card:not(.inactive) { border-left: 0px solid rgba(192, 132, 252, 0.7); box-shadow: inset 12px 0 18px -6px rgba(192, 132, 252, 0.40), inset 4px 0 4px -2px rgba(192, 132, 252, 0.60), -6px 0 20px -4px rgba(192, 132, 252, 0.25); }
         .inactive { opacity: 1; transform: scale(0.99); filter: grayscale(0.2); }
@@ -30,35 +25,25 @@
         .glass-card.inactive .recipe-title-input { color: white !important; -webkit-text-fill-color: white !important; }
         .card-divider { height: 1px; width: 100%; background: linear-gradient(to right, transparent, rgba(192, 132, 252, 0.4) 20%, rgba(192, 132, 252, 0.4) 80%, transparent); margin-top: 12px; margin-bottom: 12px; border: none; transition: background 0.3s ease; }
         .glass-card.inactive .card-divider { background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.2) 20%, rgba(255, 255, 255, 0.2) 80%, transparent); }
-
-        /* === ELEMENTE HUD, CAUTARE SI SELECTOARE === */
         .hud-status { position: fixed; right: 20px; bottom: 90px; padding: 10px 22px; background: rgba(15, 15, 20, 0.8); backdrop-filter: blur(15px); border: 1px solid rgba(192, 132, 252, 0.4); border-radius: 29px; z-index: 900; box-shadow: 0 15px 35px rgba(0,0,0,0.5); border-left: 4px solid var(--primary); }
         .search-pill { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 15px; padding: 12px 20px; width: 100%; color: white; font-size: 14px; outline: none; transition: all 0.3s; }
         .search-pill:focus { border-color: var(--primary); background: rgba(255,255,255,0.08); }
         .person-picker { position: fixed; right: 25px; bottom: 155px; background: rgba(15, 15, 20, 0.9); backdrop-filter: blur(10px); border: 1px solid rgba(192, 132, 252, 0.4); border-radius: 18px; padding: 6px 12px; display: flex; align-items: center; gap: 6px; z-index: 900; box-shadow: 0 10px 20px rgba(0,0,0,0.4); transition: all 0.2s ease; }
         .person-picker:active { transform: scale(0.95); }
         #num-persoane-input { background: transparent; border: none; color: white; font-weight: 800; font-size: 16px; width: 15px; text-align: center; outline: none; }
-
-        /* === NAVIGATIE / TAB BAR === */
         .tab-bar { position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 400px; background: rgba(15, 15, 20, 0.6); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); display: flex; justify-content: space-around; padding: 8px; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 40px; z-index: 1000; box-shadow: 0 15px 35px rgba(0,0,0,0.4); touch-action: none; }
         .nav-btn { flex: 1; padding: 15px 0; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; color: rgba(255, 255, 255, 0.4); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 30px; display: flex; align-items: center; justify-content: center; }
         .nav-btn.active { color: #ffffff; background: rgba(192, 132, 252, 0.2); box-shadow: inset 0 0 15px rgba(192, 132, 252, 0.1); }
-
-        /* === BOTTOM SHEET (FOILE DE JOS) === */
         .bottom-sheet { position: fixed; bottom: 0; left: 0; width: 100%; height: 75vh; background: rgba(10, 10, 15, 0.98); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px); border-top: 1px solid var(--glass-border); z-index: 2000; transform: translateY(110%); transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1); border-radius: 32px 32px 0 0; display: flex; flex-direction: column; }
         .bottom-sheet.active { transform: translateY(0); bottom: 0 !important; }
         .bottom-sheet.full { height: 100vh !important; height: 100dvh !important; top: 0; border-radius: 0; background: #020205; }
         .bottom-sheet .absolute.bottom-6 button { box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
         #product-options { flex-grow: 1; overflow-y: auto; padding: 0 20px 120px 20px; scrollbar-width: none; }
         #product-options::-webkit-scrollbar { display: none; }
-
-        /* === NUMBER PICKER INTERN === */
         #number-picker { background: rgba(15, 15, 25, 0.95); border-top: 2px solid var(--primary); padding-bottom: env(safe-area-inset-bottom); }
         #number-picker.active { bottom: 0; }
         .num-key { height: 60px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; font-size: 1.25rem; font-weight: 700; transition: all 0.1s ease; display: flex; align-items: center; justify-content: center; }
         .num-key:active { background: var(--primary); color: black; transform: scale(0.92); }
-
-        /* === SYSTEM LOCK / UNLOCK SYSTEM === */
         #lock-btn { width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 50%; cursor: pointer; transition: all 0.3s ease; flex-shrink: 0; }
         #lock-btn:active { transform: scale(0.9); }
         #lock-btn.unlocked { background: rgba(192, 132, 252, 0.15); border-color: rgba(192, 132, 252, 0.4); }
@@ -72,20 +57,14 @@
         body.unlocked .ore-locked { pointer-events: auto; cursor: pointer; }
         .pret-input-locked { pointer-events: none; }
         body.unlocked .pret-input-locked { pointer-events: auto; }
-
-        /* === LOGICA EXTINDERE / RESTRANGERE (COLLAPSE) === */
         .recipe-content-wrapper { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); max-height: 2000px; opacity: 1; overflow: hidden; }
         body.collapsed-active .recipe-content-wrapper { max-height: 0; opacity: 0; padding-top: 0; padding-bottom: 0; }
         #collapse-btn svg { transition: transform 0.3s ease; transform: rotate(0deg); }
         body.collapsed-active #collapse-btn svg { transform: rotate(180deg); }
     </style>
-
-
 </head>
 
 <body class="pb-44">
-
-<!-- Bottom Sheet pentru Lista de Cumpărături -->
 
 <!-- 1. SHEET LISTA CUMPĂRĂTURI -->
 <div id="shopping-sheet" class="bottom-sheet full overflow-hidden flex flex-col">
@@ -95,20 +74,16 @@
             <p id="shopping-summary-count" class="text-[9px] font-bold text-purple-400 uppercase tracking-[2px]">0 PRODUSE TOTAL</p>
         </div>
         <div class="flex gap-2">
-            <!-- Butonul care deschide dialogul de meniuri -->
             <button onclick="openMenusManager()" class="px-3 h-10 bg-purple-500/20 border border-purple-500/30 rounded-xl text-[10px] font-black text-purple-300 uppercase tracking-tight active:scale-95 transition-all">
                 Meniuri
             </button>
             <button onclick="closeSheets()" class="w-10 h-10 flex items-center justify-center bg-white/5 rounded-full text-white font-bold">✕</button>
         </div>
     </div>
-
-    <div id="shopping-list-content" class="flex-grow overflow-y-auto p-6 space-y-3 pb-32">
-        <!-- Produsele vin aici -->
-    </div>
+    <div id="shopping-list-content" class="flex-grow overflow-y-auto p-6 space-y-3 pb-32"></div>
 </div>
 
-<!-- 2. SHEET GESTIONARE MENIURI (Dialog separat) -->
+<!-- 2. SHEET GESTIONARE MENIURI -->
 <div id="menus-manager-sheet" class="bottom-sheet full overflow-hidden flex flex-col" style="z-index: 2500; background: #020205;">
     <div class="p-6 border-b border-white/10 flex justify-between items-center bg-black/80">
         <div>
@@ -117,11 +92,7 @@
         </div>
         <button onclick="document.getElementById('menus-manager-sheet').classList.remove('active')" class="w-10 h-10 flex items-center justify-center bg-white/5 rounded-full text-white font-bold">✕</button>
     </div>
-    
-    <div id="menus-manager-content" class="flex-grow overflow-y-auto p-6 space-y-3 pb-32">
-        <!-- Rețetele vin aici prin JS -->
-    </div>
-
+    <div id="menus-manager-content" class="flex-grow overflow-y-auto p-6 space-y-3 pb-32"></div>
     <div class="absolute bottom-8 left-0 w-full px-6 pointer-events-none">
         <button onclick="document.getElementById('menus-manager-sheet').classList.remove('active'); openShoppingList();" 
                 class="pointer-events-auto w-full py-5 bg-purple-600 text-white rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-2xl shadow-purple-500/40">
@@ -129,9 +100,6 @@
         </button>
     </div>
 </div>
-
-</div>
-
 
 <div class="orb"></div>
 
@@ -142,47 +110,37 @@
             <h1 id="view-title" class="text-4xl font-extrabold tracking-tighter">Planificator</h1>
             <p class="text-[10px] font-bold text-gray-500 tracking-[3px] uppercase mt-1">Configurator Mese</p>
         </div>
-        
-<div class="flex items-center gap-2">
-    <!-- Buton Collapse (Nou) -->
-    <button id="collapse-btn" onclick="toggleCollapseAll()" 
-            class="w-10 h-10 flex items-center justify-center bg-white/5 border border-white/10 rounded-full active:scale-90 transition-all">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400">
-            <polyline points="18 15 12 9 6 15"></polyline>
-        </svg>
-    </button>
-
-    <button id="bulk-select-btn" onclick="toggleSelectAll()" 
-            class="w-10 h-10 flex items-center justify-center bg-white text-black rounded-full shadow-lg active:scale-90 transition-all">
-        <div id="bulk-select-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        <div class="flex items-center gap-2">
+            <button id="collapse-btn" onclick="toggleCollapseAll()" 
+                    class="w-10 h-10 flex items-center justify-center bg-white/5 border border-white/10 rounded-full active:scale-90 transition-all">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400">
+                    <polyline points="18 15 12 9 6 15"></polyline>
+                </svg>
+            </button>
+            <button id="bulk-select-btn" onclick="toggleSelectAll()" 
+                    class="w-10 h-10 flex items-center justify-center bg-white text-black rounded-full shadow-lg active:scale-90 transition-all">
+                <div id="bulk-select-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </div>
+            </button>
+            <button id="lock-btn" onclick="toggleLock()">
+                <svg id="icon-locked" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #6b7280;">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+                <svg id="icon-unlocked" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #c084fc; display:none;">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 9.9-1"></path>
+                </svg>
+            </button>
         </div>
-    </button>
-
-    <button id="lock-btn" onclick="toggleLock()">
-        <svg id="icon-locked" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #6b7280;">
-            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-        </svg>
-        <svg id="icon-unlocked" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #c084fc; display:none;">
-            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-            <path d="M7 11V7a5 5 0 0 1 9.9-1"></path>
-        </svg>
-    </button>
-</div>
     </div>
 </header>
 
-
-
-
-
-    <!-- Search Bar Universal (pentru Home/Meniuri) -->
     <div id="search-container" class="mb-6">
         <div class="relative flex items-center">
             <input type="text" id="main-search" oninput="updateSearch(this.value)" placeholder="Caută în meniu..." 
                    class="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 pr-12 text-sm font-semibold text-white placeholder:text-gray-600 focus:outline-none focus:border-purple-500/50 transition-all">
-            
             <button id="clear-search" onclick="clearSearch()" 
                     class="hidden absolute right-4 w-8 h-8 flex items-center justify-center bg-white/10 hover:bg-white/20 rounded-full transition-all">
                 <span class="text-gray-400 text-xs font-bold">✕</span>
@@ -192,59 +150,40 @@
 
     <div id="page-home" class="space-y-6">
         <div id="recipes-list" class="space-y-6"></div>
-        <!-- Buton "Adaugă Meniu Nou" - vizibil doar deblocat -->
         <button onclick="addRecipe()" class="locked-only-block w-full py-5 glass-card border-dashed border-2 border-white/10 text-gray-400 font-black text-xs tracking-widest uppercase">+ Adaugă Meniu Nou</button>
     </div>
 
     <div id="page-catalog" class="hidden space-y-4">
-        <!-- Search Bar pentru Catalog -->
         <div class="px-2 mb-4">
-            <input type="text" id="catalog-search" oninput="renderCatalog()" placeholder="Caută în catalog..." 
-                   class="search-pill">
+            <input type="text" id="catalog-search" oninput="renderCatalog()" placeholder="Caută în catalog..." class="search-pill">
         </div>
-
         <div class="flex justify-between items-center px-2 mb-4">
             <h3 class="text-xs font-black text-gray-400 uppercase tracking-widest">Baza de Date Produse</h3>
-            <!-- Buton "+ Produs" vizibil doar deblocat -->
             <button onclick="addNewProductToCatalog()" class="locked-only text-xs font-bold text-purple-400 bg-purple-500/10 px-3 py-1 rounded-full">+ Produs</button>
         </div>
         <div id="catalog-list" class="space-y-3"></div>
     </div>
 </div>
 
-<!-- Input ascuns pentru a forța tastatura numerică a sistemului -->
-<input type="tel" id="hidden-password-input" 
-       style="position:absolute; opacity:0; pointer-events:none; top:0;" 
-       maxlength="4">
-
-
-
+<input type="tel" id="hidden-password-input" style="position:absolute; opacity:0; pointer-events:none; top:0;" maxlength="4">
 
 <div class="person-picker" onclick="document.getElementById('num-persoane-input').focus()">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c084fc" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
         <circle cx="12" cy="7" r="4"></circle>
     </svg>
-<input type="tel" id="num-persoane-input" value="1" 
-       inputmode="numeric" 
-       onfocus="prepareInput(this)" 
-       onblur="resetDacaEGol(this)"
-       oninput="validarePersoane(this)"
-       maxlength="1">
-       </div>
+    <input type="tel" id="num-persoane-input" value="1" inputmode="numeric" 
+           onfocus="prepareInput(this)" onblur="resetDacaEGol(this)" oninput="validarePersoane(this)" maxlength="1">
+</div>
 
-
+<!-- HUD — afișează LEI -->
 <div class="hud-status" onclick="openShoppingList()" style="cursor: pointer; padding: 10px 18px;">
     <div class="flex items-center gap-4">
-        <!-- Coloana Stânga: Bani -->
         <div class="flex flex-col items-start leading-[1.1]">
-            <span id="hud-eur" class="text-base font-black tracking-tighter text-white">0.00€</span>
-            <span id="hud-per-day" class="text-[10px] font-black text-emerald-400 uppercase tracking-tighter">0.00€/zi</span>
+            <span id="hud-lei" class="text-base font-black tracking-tighter text-white">0.00 LEI</span>
+            <span id="hud-per-day" class="text-[10px] font-black text-emerald-400 uppercase tracking-tighter">0.00 LEI/zi</span>
         </div>
-
         <div class="w-[1px] h-7 bg-white/10"></div>
-
-        <!-- Coloana Dreapta: Timp -->
         <div id="hud-hours" class="flex flex-col items-start leading-[1.1]">
             <span class="text-base font-black tracking-tighter text-white uppercase">0 zile</span>
             <span class="text-[10px] font-black text-purple-400 uppercase tracking-tighter">0h / 12h</span>
@@ -252,24 +191,19 @@
     </div>
 </div>
 
-<!-- SECȚIUNEA NUMBER PICKER REPARATĂ COMPLET -->
+<!-- NUMBER PICKER -->
 <div id="number-picker" class="bottom-sheet">
     <div class="w-12 h-1.5 bg-white/10 mx-auto rounded-full mt-3 mb-4"></div>
-    
     <div class="px-6 mb-2 flex justify-between items-center">
         <h3 id="num-picker-title" class="text-[10px] font-black uppercase tracking-[2px] text-purple-400">Introduceți Cantitatea</h3>
         <button onclick="closeSheets()" class="text-gray-500 text-xs font-bold uppercase">Închide</button>
     </div>
-
-    <!-- Ecran Afișare Valoare -->
     <div class="px-6 mb-6">
         <div class="bg-white/5 border border-white/10 rounded-2xl p-4 text-center">
             <span id="num-display" class="text-4xl font-black text-white">0</span>
             <span id="num-unit-display" class="text-sm font-bold text-gray-500 ml-2">unit</span>
         </div>
     </div>
-
-    <!-- Tastatură Numerică Corectă -->
     <div class="grid grid-cols-3 gap-3 px-6 pb-12">
         <button onclick="pressNum('1')" class="num-key h-14 rounded-xl text-xl font-bold text-white">1</button>
         <button onclick="pressNum('2')" class="num-key h-14 rounded-xl text-xl font-bold text-white">2</button>
@@ -283,17 +217,14 @@
         <button onclick="pressNum('.')" class="num-key h-14 rounded-xl text-xl font-bold text-white">.</button>
         <button onclick="pressNum('0')" class="num-key h-14 rounded-xl text-xl font-bold text-white">0</button>
         <button onclick="pressNum('back')" class="num-key h-14 rounded-xl text-xl font-bold text-red-400">←</button>
-        
         <button onclick="confirmNum()" class="col-span-3 mt-2 py-4 bg-purple-600 text-white rounded-xl font-black uppercase tracking-widest active:scale-95 transition-all shadow-lg shadow-purple-500/20">
             Confirmă Valoarea
         </button>
     </div>
 </div>
-<!-- SFÂRȘIT NUMBER PICKER -->
 
-
+<!-- PRODUCT PICKER -->
 <div id="product-picker" class="bottom-sheet full">
-    <!-- Header Fix -->
     <div class="p-6 border-b border-white/10 flex justify-between items-center bg-black/50">
         <div>
             <h3 class="text-xl font-black tracking-tighter">SELECTEAZĂ PRODUS</h3>
@@ -301,20 +232,10 @@
         </div>
         <button onclick="closeSheets()" class="w-10 h-10 flex items-center justify-center bg-white/5 rounded-full text-white font-bold">✕</button>
     </div>
-
-    <!-- Căutare Fixă -->
     <div class="p-4 bg-black/20">
-        <input type="text" id="picker-search" oninput="renderPickerOptions()" 
-               placeholder="Caută în catalog..." 
-               class="search-pill w-full">
+        <input type="text" id="picker-search" oninput="renderPickerOptions()" placeholder="Caută în catalog..." class="search-pill w-full">
     </div>
-
-    <!-- Lista care face scroll (flex-grow o face să se întindă) -->
-    <div id="product-options" class="px-4 space-y-2">
-        <!-- Produsele se injectează aici -->
-    </div>
-    
-    <!-- Buton de confirmare/închidere plutitor la bază -->
+    <div id="product-options" class="px-4 space-y-2"></div>
     <div class="absolute bottom-8 left-0 w-full px-6 pointer-events-none">
         <button onclick="closeSheets()" class="pointer-events-auto w-full py-4 bg-purple-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-2xl shadow-purple-500/40">
             Gata / Închide
@@ -322,46 +243,26 @@
     </div>
 </div>
 
-</div>
-
-
-<!-- ÎNLOCUIEȘTE BARA VECHE CU ASTA -->
 <nav class="tab-bar">
-    <button onclick="switchTab('home')" id="nav-home" class="nav-btn active">
-        <span>Meniuri</span>
-    </button>
-    <button onclick="switchTab('catalog')" id="nav-catalog" class="nav-btn">
-        <span>Catalog</span>
-    </button>
+    <button onclick="switchTab('home')" id="nav-home" class="nav-btn active"><span>Meniuri</span></button>
+    <button onclick="switchTab('catalog')" id="nav-catalog" class="nav-btn"><span>Catalog</span></button>
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 
-// ============================================================
-// CONFIGURARE SUPABASE
-// ============================================================
-const USE_SUPABASE = true; // <-- SCHIMBĂ AICI
-
+const USE_SUPABASE = true;
 const SUPABASE_URL = 'https://fndjrfieitieqzafhyzz.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_bHDKjiKAVHqW199ICw7i2g_O3olYMAr';
-
-const supabaseClient = USE_SUPABASE
-    ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
-    : null;
-
-// ============================================================
+const supabaseClient = USE_SUPABASE ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
 const CURS = 5.09;
 let searchTerm = "";
 let isUnlocked = false;
-let scrollPositions = {
-    home: 0,
-    catalog: 0
-};
+let scrollPositions = { home: 0, catalog: 0 };
 let currentTab = 'home';
+let isCollapsed = false;
 
-// Date locale pentru simulare (folosite când USE_SUPABASE = false)
 let catalog = [
     { id: 'c1', nume: 'Icre roșii', pretLei: 761.00, unit: 'Kg' },
     { id: 'c2', nume: 'Pătrunjel', pretLei: 148.75, unit: 'Kg' },
@@ -371,166 +272,81 @@ let catalog = [
 
 let rețete = [
     {
-        id: 1,
-        selectat: true,
-        nume: '🍳 Mic Dejun Proteic',
-        ore: 4,
-        portii: 2,
-        ingrediente: [{ idProd: 'c59', qty: 4 }],
-        tags: 'oua, proteina, rapid'
+        id: 1, selectat: true, nume: '🍳 Mic Dejun Proteic',
+        ore: 4, portii: 2, ingrediente: [{ idProd: 'c59', qty: 4 }], tags: 'oua, proteina, rapid'
     }
 ];
 
 let activeCtx = null;
 let lastEditedId = null;
 
-// Verifică să ai aceste valori în <script>
-let isCollapsed = false; 
-
 function toggleCollapseAll() {
     isCollapsed = !isCollapsed;
-    
-    // Toggle clasa care acum înseamnă "restrângere" conform noului CSS
     document.body.classList.toggle('collapsed-active', isCollapsed);
-    
-    // Nu este nevoie de re-render total dacă folosim doar clase CSS pe body, 
-    // dar e bine să păstrăm consistența dacă ai logici dependente în render()
 }
-
 
 function handleCardClick(event, rIdx) {
-    // 1. Dacă e deblocat, nu facem nimic (interacțiuni standard)
     if (isUnlocked) return;
-
-    // 2. Identificăm elementul pe care s-a dat click
     const target = event.target;
-
-    // 3. Verificăm dacă click-ul a căzut pe zona de PORȚII
-    // Căutăm dacă elementul sau părinții lui au apelul openNumPicker cu 'portii'
     const isPortiiZone = target.closest('[onclick*="openNumPicker"][onclick*="portii"]');
-    
-    // Dacă am apăsat pe porții sau direct pe checkbox, oprim funcția aici
-    if (isPortiiZone || target.type === 'checkbox') {
-        return;
-    }
-
-    // 4. Altfel, inversăm selecția cardului
-    const newState = !rețete[rIdx].selectat;
-    toggleSelectReteta(rIdx, newState);
+    if (isPortiiZone || target.type === 'checkbox') return;
+    toggleSelectReteta(rIdx, !rețete[rIdx].selectat);
 }
-
-
-
 
 let lastScrollPos = 0;
 
 function prepareInput(input) {
-    // Salvăm poziția actuală a paginii înainte să apară tastatura
     lastScrollPos = window.scrollY;
     input.value = '';
-    
-    // Un mic delay pentru a preveni browserul să facă scroll automat imediat
-    setTimeout(() => {
-        window.scrollTo(0, lastScrollPos);
-    }, 10);
+    setTimeout(() => window.scrollTo(0, lastScrollPos), 10);
 }
 
 function validarePersoane(input) {
     let val = input.value.replace(/[^1-9]/g, '');
-    
-    if (val !== "") {
-        input.value = val;
-        input.blur(); 
-    }
+    if (val !== "") { input.value = val; input.blur(); }
 }
 
 async function resetDacaEGol(input) {
-    if (input.value.trim() === "" || input.value === "0") {
-        input.value = "1";
-    }
-    
-    // Salvare în Supabase
+    if (input.value.trim() === "" || input.value === "0") input.value = "1";
     await db_saveNumPersoane(input.value);
-
-    setTimeout(() => {
-        window.scrollTo({
-            top: lastScrollPos,
-            behavior: 'smooth'
-        });
-        render(); 
-    }, 50);
+    setTimeout(() => { window.scrollTo({ top: lastScrollPos, behavior: 'smooth' }); render(); }, 50);
 }
-
-
-
-// Variabilă pentru a urmări starea globală (opțional)
-let allSelected = true;
 
 async function toggleSelectAll() {
     if (rețete.length === 0) return;
-
-    // Verificăm dacă sunt deja TOATE selectate
-    const allSelected = rețete.every(r => r.selectat);
-    
-    // Dacă sunt toate selectate -> le deselectăm pe toate.
-    // Altfel (dacă sunt doar câteva sau niciuna) -> le selectăm pe toate.
-    const newState = !allSelected;
-
-    rețete.forEach(r => {
-        r.selectat = newState;
-    });
-
-    // Feedback vizual instant
+    const allSel = rețete.every(r => r.selectat);
+    rețete.forEach(r => r.selectat = !allSel);
     render();
-
-    // Sincronizare Supabase
     if (USE_SUPABASE) {
-        try {
-            const updates = rețete.map(r => db_upsertReteta(r));
-            await Promise.all(updates);
-        } catch (err) {
-            console.error("Eroare la salvarea stării globale:", err);
-        }
+        try { await Promise.all(rețete.map(r => db_upsertReteta(r))); }
+        catch (err) { console.error("Eroare salvare stare globală:", err); }
     }
 }
-
 
 let currentNumInput = "0";
 
 function openNumPicker(rIdx, type, iIdx = null) {
     activeCtx = { rIdx, type, iIdx };
-    currentNumInput = "0"; // Resetăm la fiecare deschidere
-    
-    // Setăm titlul și unitatea vizuală
+    currentNumInput = "0";
     const title = document.getElementById('num-picker-title');
     const unitDisp = document.getElementById('num-unit-display');
-    
-    if(type === 'ingQty') {
-        const prodId = rețete[rIdx].ingrediente[iIdx].idProd;
-        const prod = catalog.find(p => p.id === prodId);
+    if (type === 'ingQty') {
+        const prod = catalog.find(p => p.id === rețete[rIdx].ingrediente[iIdx].idProd);
         title.innerText = "Cantitate Ingredient";
         unitDisp.innerText = prod ? prod.unit : 'unit';
-    } else if(type === 'ore') {
-        title.innerText = "Ore per Masă";
-        unitDisp.innerText = "h";
+    } else if (type === 'ore') {
+        title.innerText = "Ore per Masă"; unitDisp.innerText = "h";
     } else {
-        title.innerText = "Număr Porții";
-        unitDisp.innerText = "buc";
+        title.innerText = "Număr Porții"; unitDisp.innerText = "buc";
     }
-
     updateNumDisplay();
     document.getElementById('number-picker').classList.add('active');
 }
 
 function pressNum(val) {
-    if (val === 'back') {
-        currentNumInput = currentNumInput.length > 1 ? currentNumInput.slice(0, -1) : "0";
-    } else if (val === '.') {
-        if (!currentNumInput.includes('.')) currentNumInput += '.';
-    } else {
-        if (currentNumInput === "0") currentNumInput = val;
-        else currentNumInput += val;
-    }
+    if (val === 'back') currentNumInput = currentNumInput.length > 1 ? currentNumInput.slice(0, -1) : "0";
+    else if (val === '.') { if (!currentNumInput.includes('.')) currentNumInput += '.'; }
+    else { if (currentNumInput === "0") currentNumInput = val; else currentNumInput += val; }
     updateNumDisplay();
 }
 
@@ -540,160 +356,73 @@ function updateNumDisplay() {
 
 async function confirmNum() {
     let finalVal = parseFloat(currentNumInput) || 0;
-    const ctx = activeCtx; 
-    
+    const ctx = activeCtx;
     if (!ctx) return;
-
-    // --- LOGICA NOUĂ: CORECȚIE PENTRU PORȚII ȘI ORE ---
-    // Dacă tipul este 'portii' sau 'ore' și valoarea e sub 1, forțăm la 1
-    if ((ctx.type === 'portii' || ctx.type === 'ore') && finalVal < 1) {
-        finalVal = 1;
-    }
-    // ------------------------------------------------
-
-    // 1. Actualizare rapidă a datelor locale
-    if (ctx.type === 'ore') {
-        rețete[ctx.rIdx].ore = finalVal;
-    } else if (ctx.type === 'portii') {
-        rețete[ctx.rIdx].portii = Math.round(finalVal);
-    } else if (ctx.type === 'ingQty') {
-        rețete[ctx.rIdx].ingrediente[ctx.iIdx].qty = finalVal;
-    }
-
-    // 2. Feedback Instantaneu
+    if ((ctx.type === 'portii' || ctx.type === 'ore') && finalVal < 1) finalVal = 1;
+    if (ctx.type === 'ore') rețete[ctx.rIdx].ore = finalVal;
+    else if (ctx.type === 'portii') rețete[ctx.rIdx].portii = Math.round(finalVal);
+    else if (ctx.type === 'ingQty') rețete[ctx.rIdx].ingrediente[ctx.iIdx].qty = finalVal;
     lastEditedId = rețete[ctx.rIdx].id;
     closeSheets();
-    render(); 
-
-    // 3. Sincronizare în fundal cu Supabase
-    if (USE_SUPABASE) {
-        db_upsertReteta(rețete[ctx.rIdx]).catch(err => {
-            console.error("Eroare la salvarea în fundal:", err);
-        });
-    }
-
+    render();
+    if (USE_SUPABASE) db_upsertReteta(rețete[ctx.rIdx]).catch(err => console.error("Eroare salvare:", err));
     currentNumInput = "0";
 }
 
-
-
 // ============================================================
-// LAYER SUPABASE -- toate operațiile DB sunt izolate aici
+// SUPABASE LAYER
 // ============================================================
 
-
-// Salvează numărul de persoane
 async function db_saveNumPersoane(val) {
     if (!USE_SUPABASE) return;
-    const { error } = await supabaseClient
-        .from('setari')
-        .upsert({ id: 'num_persoane', valoare: val.toString() });
-    
-    if (error) console.error('Eroare salvare persoane:', error);
+    await supabaseClient.from('setari').upsert({ id: 'num_persoane', valoare: val.toString() });
 }
 
-// Încarcă numărul de persoane
 async function db_loadNumPersoane() {
     if (!USE_SUPABASE) return;
-    const { data, error } = await supabaseClient
-        .from('setari')
-        .select('valoare')
-        .eq('id', 'num_persoane')
-        .single();
-    
-    if (data) {
-        document.getElementById('num-persoane-input').value = data.valoare;
-    }
+    const { data } = await supabaseClient.from('setari').select('valoare').eq('id', 'num_persoane').single();
+    if (data) document.getElementById('num-persoane-input').value = data.valoare;
 }
-
 
 async function db_loadCatalog() {
     if (!USE_SUPABASE) return;
     const { data, error } = await supabaseClient.from('catalog').select('*');
-    console.log('📦 Catalog din Supabase:', data, 'Eroare:', error);
     if (error) { console.error('Eroare catalog:', error); return; }
-    catalog = data.map(r => ({
-        id: r.id,
-        nume: r.nume,
-        pretLei: parseFloat(r.pretLei),
-        unit: r.unit
-    }));
+    catalog = data.map(r => ({ id: r.id, nume: r.nume, pretLei: parseFloat(r.pretLei), unit: r.unit }));
 }
-
-
-
-
 
 async function db_upsertCatalogItem(prod) {
     if (!USE_SUPABASE) return;
-    const { data, error } = await supabaseClient.from('catalog').upsert({
-        id: prod.id,
-        nume: prod.nume,
-        pretLei: prod.pretLei,
-        unit: prod.unit
-    }).select();
-    if (error) {
-        console.error('❌ Eroare salvare produs:', JSON.stringify(error, null, 2));
-    } else {
-        console.log('✅ Salvat cu succes:', data);
-    }
+    await supabaseClient.from('catalog').upsert({ id: prod.id, nume: prod.nume, pretLei: prod.pretLei, unit: prod.unit });
 }
-
-
 
 async function db_loadRetete() {
-    if (!USE_SUPABASE) return; // folosim datele locale
+    if (!USE_SUPABASE) return;
     const { data, error } = await supabaseClient.from('retete').select('*');
     if (error) { console.error('Eroare retete:', error); return; }
-    rețete = data.map(r => ({
-        id: r.id,
-        nume: r.nume,
-        ore: r.ore,
-        portii: r.portii,
-        tags: r.tags || '',
-        selectat: r.selectat,
-        ingrediente: r.ingrediente || []
-    }));
+    rețete = data.map(r => ({ id: r.id, nume: r.nume, ore: r.ore, portii: r.portii, tags: r.tags || '', selectat: r.selectat, ingrediente: r.ingrediente || [] }));
 }
-
-
 
 async function db_deleteCatalogItem(id) {
     if (!USE_SUPABASE) return;
-    const { error } = await supabaseClient.from('catalog').delete().eq('id', id);
-    if (error) console.error('Eroare ștergere produs:', error);
+    await supabaseClient.from('catalog').delete().eq('id', id);
 }
 
 async function db_upsertReteta(reteta) {
     if (!USE_SUPABASE) return;
-    const payload = {
-        nume: reteta.nume,
-        ore: reteta.ore,
-        portii: reteta.portii,
-        tags: reteta.tags || '',
-        selectat: reteta.selectat,
-        ingrediente: reteta.ingrediente
-    };
-    // Dacă ID-ul e generat de Supabase (BIGINT IDENTITY), nu-l trimitem la INSERT
+    const payload = { nume: reteta.nume, ore: reteta.ore, portii: reteta.portii, tags: reteta.tags || '', selectat: reteta.selectat, ingrediente: reteta.ingrediente };
     if (typeof reteta.id === 'number' && reteta.id > 1000000000) {
-        // ID generat local (timestamp) -- INSERT fără id, Supabase generează unul nou
         const { data, error } = await supabaseClient.from('retete').insert(payload).select().single();
         if (error) { console.error('Eroare inserare rețetă:', error); return; }
-        // Actualizăm ID-ul local cu cel de la Supabase
         reteta.id = data.id;
     } else {
-        // ID existent de la Supabase -- UPDATE
-        const { error } = await supabaseClient.from('retete').update(payload).eq('id', reteta.id);
-        if (error) console.error('Eroare update rețetă:', error);
+        await supabaseClient.from('retete').update(payload).eq('id', reteta.id);
     }
 }
 
 async function db_deleteReteta(id) {
     if (!USE_SUPABASE) return;
-    // ID-urile locale (timestamp mare) nu există în DB, ignorăm
-    if (typeof id === 'number' && id > 1000000000 && !USE_SUPABASE) return;
-    const { error } = await supabaseClient.from('retete').delete().eq('id', id);
-    if (error) console.error('Eroare ștergere rețetă:', error);
+    await supabaseClient.from('retete').delete().eq('id', id);
 }
 
 // ============================================================
@@ -701,27 +430,13 @@ async function db_deleteReteta(id) {
 // ============================================================
 
 function toggleLock() {
-    const PAROLA_CORECTA = "4579";
-    
-    if (isUnlocked) {
-        applyLockState(false);
-        return;
-    }
-
+    if (isUnlocked) { applyLockState(false); return; }
     const hiddenInput = document.getElementById('hidden-password-input');
-    hiddenInput.value = ""; // Resetăm
-    hiddenInput.focus();    // Deschide tastatura mobilului
-
-    // Ascultăm input-ul de pe tastatura sistemului
+    hiddenInput.value = ""; hiddenInput.focus();
     hiddenInput.oninput = function() {
         if (this.value.length === 4) {
-            if (this.value === PAROLA_CORECTA) {
-                applyLockState(true);
-                this.blur(); // Închide tastatura
-            } else {
-                alert("Cod incorect!");
-                this.value = ""; // Resetăm pentru reîncercare
-            }
+            if (this.value === "4579") { applyLockState(true); this.blur(); }
+            else { alert("Cod incorect!"); this.value = ""; }
         }
     };
 }
@@ -730,25 +445,20 @@ function applyLockState(shouldUnlock) {
     isUnlocked = shouldUnlock;
     const body = document.body;
     const btn = document.getElementById('lock-btn');
-    const iconLocked = document.getElementById('icon-locked');
-    const iconUnlocked = document.getElementById('icon-unlocked');
-
     if (isUnlocked) {
-        body.classList.add('unlocked');
-        btn.classList.add('unlocked');
-        iconLocked.style.display = 'none';
-        iconUnlocked.style.display = 'block';
+        body.classList.add('unlocked'); btn.classList.add('unlocked');
+        document.getElementById('icon-locked').style.display = 'none';
+        document.getElementById('icon-unlocked').style.display = 'block';
     } else {
-        body.classList.remove('unlocked');
-        btn.classList.remove('unlocked');
-        iconLocked.style.display = 'block';
-        iconUnlocked.style.display = 'none';
+        body.classList.remove('unlocked'); btn.classList.remove('unlocked');
+        document.getElementById('icon-locked').style.display = 'block';
+        document.getElementById('icon-unlocked').style.display = 'none';
     }
     render();
 }
 
 // ============================================================
-// SHOPPING LIST
+// SHOPPING LIST — toate valorile în LEI
 // ============================================================
 
 function openShoppingList() {
@@ -757,25 +467,18 @@ function openShoppingList() {
     listContent.innerHTML = '';
 
     let cumparaturi = {};
-    let detaliiCalcul = {}; 
+    let detaliiCalcul = {};
 
     rețete.forEach(r => {
         if (r.selectat) {
             r.ingrediente.forEach(ing => {
                 if (!ing.idProd) return;
-                
-                const qtyReteta = ing.qty; // Cantitatea per masă definită în card
-                const nrPortii = r.portii;  // Numărul de porții setat
+                const qtyReteta = ing.qty;
+                const nrPortii = r.portii;
                 const qtyTotalaMeniu = qtyReteta * nrPortii;
-                
                 const produs = catalog.find(p => p.id === ing.idProd);
                 const unit = produs ? produs.unit : '';
-
-                // FORMATUL CERUT: 
-                // Nume Rețetă:
-                // cantitate x porții = total unitate
                 const textLinie = `${r.nume}:\n${Number(qtyReteta.toFixed(3))} ${unit} x ${nrPortii} porții = ${Number(qtyTotalaMeniu.toFixed(3))} ${unit}`;
-
                 if (cumparaturi[ing.idProd]) {
                     cumparaturi[ing.idProd] += qtyTotalaMeniu;
                     detaliiCalcul[ing.idProd].push(textLinie);
@@ -789,49 +492,18 @@ function openShoppingList() {
 
     const sortableItems = Object.keys(cumparaturi).map(id => {
         const produs = catalog.find(p => p.id === id);
-        return { 
-            id: id, 
-            totalQty: cumparaturi[id],
-            calcule: detaliiCalcul[id],
-            unitDisplay: produs ? produs.unit : ''
-        };
+        return { id, totalQty: cumparaturi[id], calcule: detaliiCalcul[id], unitDisplay: produs ? produs.unit : '' };
     }).sort((a, b) => {
-        // 1. Curățăm textul unității (ex: "Kg " -> "kg")
         const unitA = (a.unitDisplay || '').toLowerCase().replace(/[^a-z]/g, '');
         const unitB = (b.unitDisplay || '').toLowerCase().replace(/[^a-z]/g, '');
-        
-        // 2. Ierarhia cerută: Kg primele (valoare mare), Bucățile la sfârșit (valoare mică)
-        const prioritati = { 
-            'kg': 6, 
-            'l': 5, 
-            'g': 4, 
-            'ml': 3, 
-            'leg': 2, 
-            'buc': 1 
-        };
-        
-        const prioritateA = prioritati[unitA] || 0;
-        const prioritateB = prioritati[unitB] || 0;
-        
-        // Criteriul 1: Sortează descrescător după TIPUL unității (6 -> 5 -> 4 -> ...)
-        if (prioritateB !== prioritateA) {
-            return prioritateB - prioritateA;
-        }
-        
-        // Criteriul 2: Dacă au unități nespecificate (ex: ambele sunt "plic"), le grupăm alfabetic
-        if (prioritateA === 0 && prioritateB === 0 && unitA !== unitB) {
-            return unitA.localeCompare(unitB);
-        }
-        
-        // Criteriul 3: Dacă au ACEEAȘI unitate, sortează după CANTITATE DESCRESCĂTOR (de la mult la puțin)
-        if (b.totalQty !== a.totalQty) {
-            return b.totalQty - a.totalQty;
-        }
-        
-        // Criteriul 4: Dacă au și aceeași unitate și aceeași cantitate, le sortează alfabetic după nume
-        const prodA = catalog.find(x => x.id === a.id)?.nume || '';
-        const prodB = catalog.find(x => x.id === b.id)?.nume || '';
-        return prodA.localeCompare(prodB);
+        const prioritati = { 'kg': 6, 'l': 5, 'g': 4, 'ml': 3, 'leg': 2, 'buc': 1 };
+        const pA = prioritati[unitA] || 0, pB = prioritati[unitB] || 0;
+        if (pB !== pA) return pB - pA;
+        if (pA === 0 && pB === 0 && unitA !== unitB) return unitA.localeCompare(unitB);
+        if (b.totalQty !== a.totalQty) return b.totalQty - a.totalQty;
+        const nA = catalog.find(x => x.id === a.id)?.nume || '';
+        const nB = catalog.find(x => x.id === b.id)?.nume || '';
+        return nA.localeCompare(nB);
     });
 
     summaryCount.innerText = `${sortableItems.length} PRODUSE UNICE`;
@@ -842,23 +514,15 @@ function openShoppingList() {
         sortableItems.forEach(item => {
             const pReal = catalog.find(x => x.id === item.id);
             if (!pReal) return;
-
             const pretTotalLei = pReal.pretLei * item.totalQty;
-            const pretTotalEur = pretTotalLei / CURS;
-            
-            // Construim textul final pentru Alert
-            const textDialog = `PRODUS: ${pReal.nume}\n` + 
-                               `----------------------------\n\n` + 
-                               item.calcule.join('\n\n') + // Dublu Enter între rețete pentru claritate
-                               `\n\n----------------------------\n` +
-                               `TOTAL GENERAL: ${Number(item.totalQty.toFixed(3))} ${item.unitDisplay}`;
-
+            const textDialog = `PRODUS: ${pReal.nume}\n----------------------------\n\n` +
+                item.calcule.join('\n\n') +
+                `\n\n----------------------------\nTOTAL GENERAL: ${Number(item.totalQty.toFixed(3))} ${item.unitDisplay}`;
             const countMeniuri = item.calcule.length;
 
             listContent.innerHTML += `
                 <div class="glass-card p-4 flex justify-between items-center border-l-4 border-purple-500 gap-3 active:scale-[0.97] transition-transform" 
                      onclick="alert(\`${textDialog}\`)">
-                    
                     <div class="min-w-0 flex-grow">
                         <div class="flex items-center gap-2 mb-1">
                             <span class="flex-shrink-0 bg-white/10 text-white px-2 py-0.5 rounded-md text-[11px] font-black border border-white/5 uppercase">
@@ -873,54 +537,36 @@ function openShoppingList() {
                             </p>
                         </div>
                     </div>
-
                     <div class="text-right flex-shrink-0">
                         <p class="text-base font-black text-white leading-none">${pretTotalLei.toFixed(2)} LEI</p>
-                        <p class="text-[10px] font-bold text-purple-400 mt-1">${pretTotalEur.toFixed(2)} €</p>
                     </div>
-                </div>
-            `;
+                </div>`;
         });
     }
 
     document.getElementById('shopping-sheet').classList.add('active');
 }
 
-
-
-
 function openMenusManager() {
     const container = document.getElementById('menus-manager-content');
     container.innerHTML = '';
-    
     const nrPers = parseInt(document.getElementById('num-persoane-input').value) || 1;
-    
-    // --- LOGICA DE SORTARE (Identică cu cea din Render) ---
-    // Luăm meniurile selectate și le sortăm după eficiență (Preț/Timp)
-    const meniuriActive = rețete
-        .filter(r => r.selectat)
-        .sort((a, b) => b.eficienta - a.eficienta);
+    const meniuriActive = rețete.filter(r => r.selectat).sort((a, b) => b.eficienta - a.eficienta);
 
     if (meniuriActive.length === 0) {
         container.innerHTML = `<p class="text-center text-gray-500 py-10 font-black text-xs uppercase tracking-widest">Niciun meniu selectat în plan</p>`;
     } else {
         meniuriActive.forEach((r) => {
-            const portiiAfisate = r.portii; 
-            const oreCalculate = +(r.ore / nrPers).toFixed(2);
-
             let ingredienteHTML = '';
             r.ingrediente.forEach(ing => {
                 const p = catalog.find(x => x.id === ing.idProd);
-                if (p) {
-                    ingredienteHTML += `
-                        <div class="flex justify-between items-end border-b border-white/5 pb-2">
-                            <span class="text-base text-gray-300 font-bold tracking-tight">${p.nume}</span>
-                            <span class="text-base text-white font-black">
-                                ${+ing.qty.toFixed(3)} 
-                                <small class="text-[10px] text-purple-400 uppercase">${p.unit}</small>
-                            </span>
-                        </div>`;
-                }
+                if (p) ingredienteHTML += `
+                    <div class="flex justify-between items-end border-b border-white/5 pb-2">
+                        <span class="text-base text-gray-300 font-bold tracking-tight">${p.nume}</span>
+                        <span class="text-base text-white font-black">
+                            ${+ing.qty.toFixed(3)} <small class="text-[10px] text-purple-400 uppercase">${p.unit}</small>
+                        </span>
+                    </div>`;
             });
 
             container.innerHTML += `
@@ -928,19 +574,16 @@ function openMenusManager() {
                     <div class="mb-4">
                         <h4 class="font-extrabold text-white text-xl tracking-tighter leading-tight uppercase">${r.nume}</h4>
                     </div>
-
                     <div class="flex gap-3 mb-6">
                         <div class="flex-1 bg-white/5 border border-white/10 p-3 rounded-xl flex justify-between items-center">
                             <p class="text-[9px] font-black text-gray-500 uppercase tracking-widest">Porții</p>
-                            <p class="text-lg font-black text-purple-400 leading-none">${portiiAfisate}</p>
+                            <p class="text-lg font-black text-purple-400 leading-none">${r.portii}</p>
                         </div>
-                        
                         <div class="flex-1 bg-white/5 border border-white/10 p-3 rounded-xl flex justify-between items-center">
                             <p class="text-[9px] font-black text-gray-500 uppercase tracking-widest">Ore / Porție</p>
-                            <p class="text-lg font-black text-emerald-400 leading-none">${oreCalculate}h</p>
+                            <p class="text-lg font-black text-emerald-400 leading-none">${+(r.ore / nrPers).toFixed(2)}h</p>
                         </div>
                     </div>
-
                     <div class="space-y-2 border-t border-white/10 pt-5">
                         <p class="text-[10px] font-black text-gray-400 uppercase tracking-[3px] mb-3">Ingrediente</p>
                         ${ingredienteHTML}
@@ -948,14 +591,8 @@ function openMenusManager() {
                 </div>`;
         });
     }
-    
     document.getElementById('menus-manager-sheet').classList.add('active');
 }
-
-
-
-
-
 
 // ============================================================
 // UTILITĂȚI
@@ -963,12 +600,8 @@ function openMenusManager() {
 
 function normalizeText(text) {
     if (!text) return "";
-    return text.toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/ț/g, "t").replace(/ș/g, "s")
-        .replace(/ă/g, "a").replace(/â/g, "a")
-        .replace(/î/g, "i");
+    return text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .replace(/ț/g, "t").replace(/ș/g, "s").replace(/ă/g, "a").replace(/â/g, "a").replace(/î/g, "i");
 }
 
 function updateSearch(val) {
@@ -981,76 +614,50 @@ function updateSearch(val) {
 
 function clearSearch() {
     const input = document.getElementById('main-search');
-    input.value = "";
-    updateSearch("");
-    input.focus();
+    input.value = ""; updateSearch(""); input.focus();
 }
 
 function switchTab(tab) {
-    // Dacă utilizatorul apasă pe tab-ul deja activ, nu face nimic
     if (currentTab === tab) return;
-
-    // Salvează poziția curentă a scroll-ului
     scrollPositions[currentTab] = window.scrollY;
-
-    // Schimbă vizibilitatea paginilor
     document.getElementById('page-home').classList.toggle('hidden', tab !== 'home');
     document.getElementById('page-catalog').classList.toggle('hidden', tab !== 'catalog');
-    
     const searchBar = document.getElementById('search-container');
     if (searchBar) searchBar.classList.toggle('hidden', tab !== 'home');
-
-    // Actualizare clase butoane
     document.getElementById('nav-home').classList.toggle('active', tab === 'home');
     document.getElementById('nav-catalog').classList.toggle('active', tab === 'catalog');
-    
     document.getElementById('view-title').innerText = tab === 'home' ? 'Planificator' : 'Catalog';
-
     currentTab = tab;
-
-    // Render și Scroll
     render();
-    setTimeout(() => {
-        window.scrollTo({
-            top: scrollPositions[tab] || 0,
-            behavior: 'instant'
-        });
-    }, 10);
+    setTimeout(() => window.scrollTo({ top: scrollPositions[tab] || 0, behavior: 'instant' }), 10);
 }
 
 // ============================================================
-// RENDER PRINCIPAL
+// RENDER PRINCIPAL — toate valorile monetare în LEI
 // ============================================================
 
 function render() {
     const list = document.getElementById('recipes-list');
     if (!list) return;
     list.innerHTML = '';
-    let tEur = 0, tOre = 0;
+    let tLei = 0, tOre = 0;
 
-    // 0. PRELUARE NR PERSOANE PENTRU CALCUL
-    const inputPers = document.getElementById('num-persoane-input');
-    let nrPers = parseInt(inputPers.value) || 1;
+    const nrPers = parseInt(document.getElementById('num-persoane-input').value) || 1;
 
-    // 1. CALCULARE DATE ȘI EFICIENȚĂ
+    // 1. Calculare costuri în LEI
     rețete.forEach(r => {
         let costLeiMasa = 0;
         r.ingrediente.forEach(ing => {
             const p = catalog.find(x => x.id === ing.idProd);
-            if (p) costLeiMasa += (p.pretLei * ing.qty);
+            if (p) costLeiMasa += p.pretLei * ing.qty;
         });
-
-        r.costEurCalculat = (costLeiMasa / CURS) * r.portii;
+        r.costLeiCalculat = costLeiMasa * r.portii;
         r.totalOreCalculat = r.ore * r.portii;
-        r.eficienta = r.costEurCalculat > 0 ? (r.totalOreCalculat / r.costEurCalculat) : 0;
-
-        if (r.selectat) {
-            tEur += r.costEurCalculat;
-            tOre += r.totalOreCalculat;
-        }
+        r.eficienta = r.costLeiCalculat > 0 ? r.totalOreCalculat / r.costLeiCalculat : 0;
+        if (r.selectat) { tLei += r.costLeiCalculat; tOre += r.totalOreCalculat; }
     });
 
-    // 2. FILTRARE ȘI SORTARE
+    // 2. Filtrare și sortare
     const reteteFiltrate = rețete
         .filter(r => {
             const nNume = normalizeText(r.nume);
@@ -1059,26 +666,23 @@ function render() {
         })
         .sort((a, b) => b.eficienta - a.eficienta);
 
-    // 3. GENERARE HTML REȚETE
+    // 3. Generare HTML — preț în LEI pe card
     reteteFiltrate.forEach((reteta) => {
         const rIdx = rețete.findIndex(r => r.id === reteta.id);
         const oreCls = isUnlocked ? 'cursor-pointer' : 'ore-locked cursor-default';
         const textLockCls = isUnlocked ? '' : 'pointer-events-none';
-        
-        const collapsedClass = isCollapsed ? 'collapsed' : '';
 
         list.innerHTML += `
             <div id="recipe-${reteta.id}" 
                  onclick="handleCardClick(event, ${rIdx})"
-                 class="glass-card p-5 relative transition-all duration-300 ${reteta.selectat ? '' : 'inactive'} ${collapsedClass}">
+                 class="glass-card p-5 relative transition-all duration-300 ${reteta.selectat ? '' : 'inactive'}">
                 
                 <div class="flex items-center gap-4 mb-1">
                     <input type="checkbox" ${reteta.selectat ? 'checked' : ''} 
                            onchange="toggleSelectReteta(${rIdx}, this.checked)" 
                            class="w-6 h-6 accent-purple-500">
                     <input class="font-extrabold text-xl flex-grow text-white bg-transparent outline-none border-none ${textLockCls}" 
-                           value="${reteta.nume}" 
-                           ${isUnlocked ? '' : 'readonly'}
+                           value="${reteta.nume}" ${isUnlocked ? '' : 'readonly'}
                            onchange="updateRetetaField(${rIdx}, 'nume', this.value)">
                 </div>
                 
@@ -1087,8 +691,7 @@ function render() {
                         <span class="text-purple-500 font-bold text-[10px]">#</span>
                         <input class="text-[10px] font-bold text-gray-500 bg-transparent border-none outline-none w-full uppercase tracking-widest ${textLockCls}" 
                                placeholder="taguri..."
-                               value="${reteta.tags || ''}" 
-                               ${isUnlocked ? '' : 'readonly'}
+                               value="${reteta.tags || ''}" ${isUnlocked ? '' : 'readonly'}
                                onchange="updateRetetaField(${rIdx}, 'tags', this.value)">
                     </div>
 
@@ -1096,7 +699,6 @@ function render() {
                         ${reteta.ingrediente.map((ing, iIdx) => {
                             const p = catalog.find(x => x.id === ing.idProd);
                             const qtyCurat = Number(parseFloat(ing.qty).toFixed(3));
-                            
                             return `
                             <div class="flex items-center gap-2 bg-white/5 p-2 pr-3 rounded-2xl border border-white/5">
                                 ${isUnlocked ? `
@@ -1120,34 +722,30 @@ function render() {
                         ${isUnlocked ? `<button onclick="addIngredient(${rIdx})" class="text-[9px] font-black text-purple-400 uppercase tracking-widest pt-1">+ Ingredient</button>` : ''}
                     </div>
                 </div>
-<div class="card-divider"></div>
+
+                <div class="card-divider"></div>
 
                 <div class="recipe-stats-footer grid grid-cols-3 gap-2 pt-3 items-center text-center">
                     
-<!-- ORE - REPARAT: FĂRĂ ITALIC, SPAȚIERE STRÂNSĂ -->
-<div onclick="${isUnlocked ? `openNumPicker(${rIdx}, 'ore')` : ''}" class="${oreCls} flex flex-col items-center">
-    <p class="text-[7px] font-black text-gray-500 uppercase tracking-widest leading-none mb-1">Ore</p>
-    <p class="text-lm font-bold text-white leading-none">${reteta.ore}h</p>
-    
-    ${nrPers > 1 ? `
-    <div class="mt-1 flex items-center justify-center opacity-90">
-        <!-- 1. NUMĂR (Am scos 'italic' și am pus 'text-purple-400') -->
-        <span class="text-[9px] font-extrabold text-purple-400" style="line-height: 1;">${nrPers}</span>
-        
-        <!-- 2. ICONIȚĂ (Am micșorat marginea laterală) -->
-        <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#c084fc" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="margin: 0 2px;">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-            <circle cx="12" cy="7" r="4"></circle>
-        </svg>
-        
-        <!-- 3. ORE REZULTATE -->
-        <span class="text-white font-bold text-[9px]" style="line-height: 1;">${(reteta.ore / nrPers).toFixed(1)}h</span>
-    </div>
-    ` : ''}
-</div>
+                    <div onclick="${isUnlocked ? `openNumPicker(${rIdx}, 'ore')` : ''}" class="${oreCls} flex flex-col items-center">
+                        <p class="text-[7px] font-black text-gray-500 uppercase tracking-widest leading-none mb-1">Ore</p>
+                        <p class="text-lm font-bold text-white leading-none">${reteta.ore}h</p>
+                        ${nrPers > 1 ? `
+                        <div class="mt-1 flex items-center justify-center opacity-90">
+                            <span class="text-[9px] font-extrabold text-purple-400" style="line-height: 1;">${nrPers}</span>
+                            <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#c084fc" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="margin: 0 2px;">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                            <span class="text-white font-bold text-[9px]" style="line-height: 1;">${(reteta.ore / nrPers).toFixed(1)}h</span>
+                        </div>` : ''}
+                    </div>
+
+                    <!-- PREȚ TOTAL ÎN LEI -->
                     <div class="bg-purple-500/10 py-1.5 rounded-xl border border-purple-500/20">
                         <p class="text-[7px] font-black text-emerald-400 uppercase tracking-widest">Preț Total</p>
-                        <p class="text-lg font-black text-white leading-none">${reteta.costEurCalculat.toFixed(2)}€</p>
+                        <p class="text-lg font-black text-white leading-none">${reteta.costLeiCalculat.toFixed(2)}</p>
+                        <p class="text-[9px] font-black text-purple-400 leading-none">LEI</p>
                     </div>
                     
                     <div onclick="openNumPicker(${rIdx}, 'portii')" class="cursor-pointer flex flex-col items-center">
@@ -1160,104 +758,88 @@ function render() {
             </div>`;
     });
 
-    // 4. ACTUALIZARE HUD
-    let tEurTotal = tEur; 
-    let tOreAutonomie = tOre / nrPers;
-    const orePerZi = 12; 
+    // 4. HUD — total în LEI
+    const orePerZi = 12;
+    const tOreAutonomie = tOre / nrPers;
     const zileAutonomie = tOreAutonomie / orePerZi;
-    const pretPeZi = tOre > 0 ? (tEurTotal / tOre) * (orePerZi * nrPers) : 0;
+    const pretPeZiLei = tOre > 0 ? (tLei / tOre) * (orePerZi * nrPers) : 0;
 
-    document.getElementById('hud-eur').innerText = tEurTotal.toFixed(2) + '€';
-    document.getElementById('hud-per-day').innerText = pretPeZi.toFixed(2) + '€/zi';
+    document.getElementById('hud-lei').innerText = tLei.toFixed(2) + ' LEI';
+    document.getElementById('hud-per-day').innerText = pretPeZiLei.toFixed(2) + ' LEI/zi';
 
     const zileIntregi = Math.floor(zileAutonomie);
     const oreRest = Math.round(tOreAutonomie % orePerZi);
-
     let htmlAutonomie = `<span class="text-base font-black tracking-tighter text-white uppercase">${zileIntregi} ${zileIntregi === 1 ? 'zi' : 'zile'}</span>`;
-    if (oreRest > 0) {
-        htmlAutonomie += `<span class="text-[10px] font-black text-purple-400 uppercase tracking-tighter leading-none">${oreRest}H / ${orePerZi}H</span>`;
-    }
-    document.getElementById('hud-hours').innerHTML = htmlAutonomie;    
-    
-    // 5. ICONIȚĂ BULK SELECT
+    if (oreRest > 0) htmlAutonomie += `<span class="text-[10px] font-black text-purple-400 uppercase tracking-tighter leading-none">${oreRest}H / ${orePerZi}H</span>`;
+    document.getElementById('hud-hours').innerHTML = htmlAutonomie;
+
+    // 5. Iconiță bulk select
     const bulkBtn = document.getElementById('bulk-select-btn');
     const bulkIcon = document.getElementById('bulk-select-icon');
-    if(bulkBtn && bulkIcon) {
+    if (bulkBtn && bulkIcon) {
         const anySelected = rețete.some(r => r.selectat);
-        const allSelected = rețete.length > 0 && rețete.every(r => r.selectat);
-        if (allSelected) {
+        const allSel = rețete.length > 0 && rețete.every(r => r.selectat);
+        if (allSel) {
             bulkBtn.className = "w-10 h-10 flex items-center justify-center bg-purple-600 text-white rounded-full shadow-lg active:scale-90 transition-all";
             bulkIcon.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
         } else {
             bulkBtn.className = "w-10 h-10 flex items-center justify-center bg-white text-black rounded-full shadow-lg active:scale-90 transition-all";
-            bulkIcon.innerHTML = anySelected ? `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line></svg>` : `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+            bulkIcon.innerHTML = anySelected
+                ? `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line></svg>`
+                : `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
         }
     }
 
-    // 6. LOGICA DE SCROLL AUTOMAT
+    // 6. Scroll automat
     if (lastEditedId) {
         setTimeout(() => {
-            const editedElement = document.getElementById(`recipe-${lastEditedId}`);
-            if (editedElement) {
-                editedElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                lastEditedId = null;
-            }
+            const el = document.getElementById(`recipe-${lastEditedId}`);
+            if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); lastEditedId = null; }
         }, 100);
     }
 
     renderCatalog();
 }
 
-
 function renderCatalog() {
     const cat = document.getElementById('catalog-list');
     if (!cat) return;
-
     const catSearch = normalizeText(document.getElementById('catalog-search')?.value || "");
     cat.innerHTML = '';
-
-    const catalogFiltrat = catalog
-        .filter(p => normalizeText(p.nume).includes(catSearch))
-        .sort((a, b) => a.pretLei - b.pretLei);
-
     const textLockCls = isUnlocked ? '' : 'pointer-events-none';
 
-    catalogFiltrat.forEach((prod) => {
-        const cIdx = catalog.findIndex(x => x.id === prod.id);
-
-        cat.innerHTML += `
-            <div class="glass-card p-5 flex justify-between items-center">
-                <div class="flex-grow">
-                    <input class="font-bold text-sm block text-white bg-transparent outline-none border-none w-full ${textLockCls}" 
-                           value="${prod.nume}" 
-                           ${isUnlocked ? '' : 'readonly'}
-                           onchange="updateCatalogField(${cIdx}, 'nume', this.value)">
-                    <input class="text-[10px] font-black text-gray-600 uppercase bg-transparent outline-none border-none w-full ${textLockCls}" 
-                           value="${prod.unit}" 
-                           ${isUnlocked ? '' : 'readonly'}
-                           onchange="updateCatalogField(${cIdx}, 'unit', this.value)">
-                </div>
-                
-                <div class="flex items-center gap-3">
-                    <div class="bg-white/5 px-3 py-2 rounded-xl flex items-center gap-2 border border-white/5">
-                        <input type="number" step="0.01" 
-                               class="w-16 text-right font-black text-emerald-400 bg-transparent outline-none ${isUnlocked ? '' : 'pointer-events-none'}" 
-                               value="${prod.pretLei}" 
-                               ${isUnlocked ? '' : 'readonly'}
-                               onchange="updateCatalogField(${cIdx}, 'pretLei', parseFloat(this.value))">
-                        <span class="text-[9px] font-bold text-gray-500">LEI</span>
+    catalog
+        .filter(p => normalizeText(p.nume).includes(catSearch))
+        .sort((a, b) => a.pretLei - b.pretLei)
+        .forEach((prod) => {
+            const cIdx = catalog.findIndex(x => x.id === prod.id);
+            cat.innerHTML += `
+                <div class="glass-card p-5 flex justify-between items-center">
+                    <div class="flex-grow">
+                        <input class="font-bold text-sm block text-white bg-transparent outline-none border-none w-full ${textLockCls}" 
+                               value="${prod.nume}" ${isUnlocked ? '' : 'readonly'}
+                               onchange="updateCatalogField(${cIdx}, 'nume', this.value)">
+                        <input class="text-[10px] font-black text-gray-600 uppercase bg-transparent outline-none border-none w-full ${textLockCls}" 
+                               value="${prod.unit}" ${isUnlocked ? '' : 'readonly'}
+                               onchange="updateCatalogField(${cIdx}, 'unit', this.value)">
                     </div>
-                    ${isUnlocked ? `<button onclick="confirmDeleteCatalogItem(${cIdx})" class="w-8 h-8 flex items-center justify-center bg-red-500/10 text-red-500 border border-red-500/20 rounded-full">✕</button>` : ''}
-                </div>
-            </div>`;
-    });
+                    <div class="flex items-center gap-3">
+                        <div class="bg-white/5 px-3 py-2 rounded-xl flex items-center gap-2 border border-white/5">
+                            <input type="number" step="0.01" 
+                                   class="w-16 text-right font-black text-emerald-400 bg-transparent outline-none ${isUnlocked ? '' : 'pointer-events-none'}" 
+                                   value="${prod.pretLei}" ${isUnlocked ? '' : 'readonly'}
+                                   onchange="updateCatalogField(${cIdx}, 'pretLei', parseFloat(this.value))">
+                            <span class="text-[9px] font-bold text-gray-500">LEI</span>
+                        </div>
+                        ${isUnlocked ? `<button onclick="confirmDeleteCatalogItem(${cIdx})" class="w-8 h-8 flex items-center justify-center bg-red-500/10 text-red-500 border border-red-500/20 rounded-full">✕</button>` : ''}
+                    </div>
+                </div>`;
+        });
 }
 
 // ============================================================
-// FUNCȚII CRUD CU SYNC SUPABASE
+// CRUD
 // ============================================================
-
-// --- Catalog ---
 
 async function updateCatalogField(cIdx, field, value) {
     catalog[cIdx][field] = value;
@@ -1281,8 +863,6 @@ async function confirmDeleteCatalogItem(idx) {
     }
 }
 
-// --- Rețete ---
-
 async function toggleSelectReteta(rIdx, checked) {
     rețete[rIdx].selectat = checked;
     await db_upsertReteta(rețete[rIdx]);
@@ -1302,17 +882,9 @@ async function addIngredient(rIdx) {
 }
 
 async function addRecipe() {
-    const newReteta = {
-        id: Date.now(), // ID temporar local; înlocuit cu cel de la Supabase după insert
-        selectat: true,
-        nume: 'Meniu Nou',
-        ore: 1,
-        portii: 1,
-        ingrediente: [],
-        tags: ''
-    };
+    const newReteta = { id: Date.now(), selectat: true, nume: 'Meniu Nou', ore: 1, portii: 1, ingrediente: [], tags: '' };
     rețete.push(newReteta);
-    await db_upsertReteta(newReteta); // ID-ul local e înlocuit în obiect dacă USE_SUPABASE=true
+    await db_upsertReteta(newReteta);
     render();
 }
 
@@ -1328,7 +900,6 @@ async function confirmDeleteRecipe(idx) {
 async function confirmDeleteIngredient(rIdx, iIdx) {
     const ing = rețete[rIdx].ingrediente[iIdx];
     const produs = catalog.find(p => p.id === ing.idProd);
-
     if (produs) {
         if (confirm(`Ștergi ${produs.nume} din listă?`)) {
             rețete[rIdx].ingrediente.splice(iIdx, 1);
@@ -1343,7 +914,7 @@ async function confirmDeleteIngredient(rIdx, iIdx) {
 }
 
 // ============================================================
-// PICKER-E (număr + produs)
+// PICKER-E
 // ============================================================
 
 function openProductPicker(rIdx, iIdx) {
@@ -1357,23 +928,21 @@ function renderPickerOptions() {
     const container = document.getElementById('product-options');
     const searchVal = normalizeText(document.getElementById('picker-search').value);
     container.innerHTML = '';
-
-    const filtrat = catalog
+    catalog
         .filter(p => normalizeText(p.nume).includes(searchVal))
-        .sort((a, b) => a.pretLei - b.pretLei);
-
-    filtrat.forEach(prod => {
-        container.innerHTML += `
-            <div onclick="selectProduct('${prod.id}')" class="w-full p-4 glass-card mb-2 flex justify-between items-center active:scale-[0.98] transition-transform cursor-pointer">
-                <div>
-                    <span class="block font-bold text-white text-base">${prod.nume}</span>
-                    <span class="text-[10px] font-bold text-gray-500 uppercase">${prod.unit}</span>
-                </div>
-                <div class="text-right">
-                    <span class="text-sm font-black text-purple-400">${prod.pretLei.toFixed(2)} lei</span>
-                </div>
-            </div>`;
-    });
+        .sort((a, b) => a.pretLei - b.pretLei)
+        .forEach(prod => {
+            container.innerHTML += `
+                <div onclick="selectProduct('${prod.id}')" class="w-full p-4 glass-card mb-2 flex justify-between items-center active:scale-[0.98] transition-transform cursor-pointer">
+                    <div>
+                        <span class="block font-bold text-white text-base">${prod.nume}</span>
+                        <span class="text-[10px] font-bold text-gray-500 uppercase">${prod.unit}</span>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-sm font-black text-purple-400">${prod.pretLei.toFixed(2)} LEI</span>
+                    </div>
+                </div>`;
+        });
 }
 
 async function selectProduct(id) {
@@ -1384,12 +953,10 @@ async function selectProduct(id) {
     render();
 }
 
-
 async function setNum(val) {
     if (activeCtx.type === 'ore') rețete[activeCtx.rIdx].ore = val;
     if (activeCtx.type === 'portii') rețete[activeCtx.rIdx].portii = val;
     if (activeCtx.type === 'ingQty') rețete[activeCtx.rIdx].ingrediente[activeCtx.iIdx].qty = val;
-
     lastEditedId = rețete[activeCtx.rIdx].id;
     await db_upsertReteta(rețete[activeCtx.rIdx]);
     closeSheets();
@@ -1407,12 +974,10 @@ function closeSheets() {
 window.onload = async function () {
     await db_loadCatalog();
     await db_loadRetete();
-    await db_loadNumPersoane(); // <--- Adaugă această linie
+    await db_loadNumPersoane();
     render();
 };
 
 </script>
-
-
 </body>
 </html>
