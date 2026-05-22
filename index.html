@@ -516,10 +516,7 @@ function renderFridge() {
 // ============================================================
 
 function computeFridgeResults() {
-    const orePerZi = 12;
-
     const results = retete.map(reteta => {
-        // Ignorăm portii din reteta, lucrăm EXCLUSIV per 1 porție
         let costPer1Portie = 0;
         let canMake1Portie = true;
         let missingFor1Portie = [];
@@ -529,30 +526,33 @@ function computeFridgeResults() {
             const prod = catalog.find(p => p.id === ing.idProd);
             if (!prod) return;
             const fridgeItem = frigider.find(f => f.id === ing.idProd);
-            const needed = ing.qty; // per 1 porție
+            const needed = ing.qty;
             const available = fridgeItem ? fridgeItem.qty : 0;
             costPer1Portie += prod.pretLei * needed;
 
             if (available < needed) {
                 canMake1Portie = false;
+                const lipsa = needed - available;
                 missingFor1Portie.push({
                     idProd: ing.idProd,
                     nume: prod.nume,
                     unit: prod.unit,
                     available,
                     needed,
-                    lipsa: needed - available,
-                    pretLei: prod.pretLei
+                    lipsa,
+                    pretLei: prod.pretLei,
+                    costLipsa: prod.pretLei * lipsa
                 });
             }
         });
 
-        // ore per 1 porție (din câmpul ore al rețetei -- tratăm ca ore pentru o gătire)
-        const orePer1 = reteta.ore;
-        // LEI per oră -- metrica de eficiență (mai mic = mai bun)
+const nrPers = parseInt(document.getElementById('num-persoane-input').value) || 1;
+const orePer1 = Math.round(reteta.ore / nrPers);
         const leiPerOra = orePer1 > 0 ? costPer1Portie / orePer1 : Infinity;
 
-        // Ingrediente complete pentru afișare
+        const totalCostLipsa = missingFor1Portie.reduce((sum, ing) => sum + ing.costLipsa, 0);
+        const leiLipsaPerOra = (orePer1 > 0 && totalCostLipsa > 0) ? totalCostLipsa / orePer1 : Infinity;
+
         const ingredienteComplet = reteta.ingrediente.map(ing => {
             const prod = catalog.find(p => p.id === ing.idProd);
             const fridgeItem = frigider.find(f => f.id === ing.idProd);
@@ -575,48 +575,29 @@ function computeFridgeResults() {
             costPer1Portie,
             orePer1,
             leiPerOra,
+            leiLipsaPerOra,
+            totalCostLipsa,
             missingFor1Portie,
             ingredienteComplet
         };
     });
 
-    // ---- DISPONIBILE (toate ingredientele ok pentru 1 porție) ----
-    // Sortare: 2+ ingrediente înainte, 1 ingredient la final
-    // În fiecare grup: ore DESC (mai multe ore = mai sus)
     const available = results
         .filter(r => r.canMake1Portie)
         .sort((a, b) => {
             const aMulti = a.nrIngrediente >= 2 ? 1 : 0;
             const bMulti = b.nrIngrediente >= 2 ? 1 : 0;
-            if (aMulti !== bMulti) return bMulti - aMulti; // 2+ înainte
-            return b.orePer1 - a.orePer1; // mai multe ore = mai sus
+            if (aMulti !== bMulti) return bMulti - aMulti;
+            return b.orePer1 - a.orePer1;
         });
 
-    // ---- INSUFICIENTE (lipsește cel puțin 1 ingredient pentru 1 porție) ----
-    // Afișăm DOAR meniuri cu 2+ ingrediente
-    // Sortare: leiPerOra ASC (ieftin+timp-lung = sus; scump+timp-scurt = jos)
-const unavailable = results
-    .filter(r => {
-        if (r.canMake1Portie) return false;
-        if (r.nrIngrediente < 2) return false;
-        // Cel puțin 1 ingredient trebuie să fie în frigider
-        const haveAtLeastOne = r.nrIngrediente - r.missingFor1Portie.length >= 1;
-        return haveAtLeastOne;
-    })
-    .sort((a, b) => {
-        // 1. Câte ingrediente AI în frigider (descrescător -- mai multe avute = sus)
-        const aHave = a.nrIngrediente - a.missingFor1Portie.length;
-        const bHave = b.nrIngrediente - b.missingFor1Portie.length;
-        if (bHave !== aHave) return bHave - aHave;
-
-        // 2. Câte lipsesc (crescător -- lipsesc mai puține = sus)
-        const aMissing = a.missingFor1Portie.length;
-        const bMissing = b.missingFor1Portie.length;
-        if (aMissing !== bMissing) return aMissing - bMissing;
-
-        // 3. Eficiență: ore multe + lei puțini = sus (leiPerOra crescător)
-        return a.leiPerOra - b.leiPerOra;
-    });
+    const unavailable = results
+        .filter(r => {
+            if (r.canMake1Portie) return false;
+            if (r.nrIngrediente < 2) return false;
+            return (r.nrIngrediente - r.missingFor1Portie.length) >= 1;
+        })
+        .sort((a, b) => a.leiLipsaPerOra - b.leiLipsaPerOra);
 
     return { available, unavailable };
 }
@@ -633,17 +614,14 @@ function renderFridgeResults() {
 
     const { available, unavailable } = computeFridgeResults();
 
-    // ---- DISPONIBILE COMPLET ----
     if (available.length > 0) {
         container.innerHTML += `<p class="fridge-section-title text-emerald-400">✅ Disponibile (${available.length})</p>`;
 
         available.forEach((res, idx) => {
             const r = res.reteta;
-            // Bara de eficiență: mai multe ore = mai plină (normalizăm față de max)
             const maxOre = Math.max(...available.map(x => x.orePer1), 1);
             const barW = Math.min(100, Math.round((res.orePer1 / maxOre) * 100));
 
-            // Singular ingredient indicator
             const singleBadge = res.nrIngrediente === 1
                 ? `<span class="text-[8px] font-black text-gray-500 bg-white/5 border border-white/10 rounded-md px-2 py-0.5 uppercase ml-1">1 ing.</span>`
                 : '';
@@ -652,9 +630,9 @@ function renderFridgeResults() {
                 <div class="fridge-ing-row">
                     <span class="text-xs text-white font-semibold truncate flex-grow">${ing.nume}</span>
                     <div class="flex items-center gap-2 flex-shrink-0">
-<span class="text-[10px] font-black text-emerald-400">${+ing.qty.toFixed(3)} ${ing.unit}</span>
-<span class="text-[9px] text-gray-600 font-bold">/ ${+ing.available.toFixed(3)}</span>
-<span class="text-[9px] font-black text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-md px-2 py-0.5">+${+(ing.available - ing.qty).toFixed(3)}</span>
+<span class="text-[9px] font-black px-2 py-0.5 rounded-md border ${ing.available >= ing.qty ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : ing.available > 0 ? 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20' : 'text-red-400 bg-red-500/10 border-red-500/20'}">
+    ${+ing.available.toFixed(3)} ${ing.unit.toUpperCase()} → ${+ing.qty.toFixed(3)} ${ing.unit.toUpperCase()}
+</span>
                     </div>
                 </div>`).join('');
 
@@ -696,29 +674,23 @@ function renderFridgeResults() {
         });
     }
 
-    // ---- INSUFICIENTE (2+ ingrediente, lipsește cel puțin 1) ----
     if (unavailable.length > 0) {
         container.innerHTML += `<div class="h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent my-4"></div>`;
         container.innerHTML += `<p class="fridge-section-title text-red-400">⚠️ Ingrediente insuficiente (${unavailable.length})</p>`;
 
-        const maxOreUnavail = Math.max(...unavailable.map(x => x.orePer1), 1);
-
         unavailable.forEach((res, idx) => {
             const r = res.reteta;
-            // Bara: inversăm leiPerOra -- mai ieftin/oră = bara mai plină
-            const maxLei = Math.max(...unavailable.map(x => x.leiPerOra === Infinity ? 0 : x.leiPerOra), 0.001);
-            const barW = res.leiPerOra === Infinity ? 5 : Math.min(100, Math.round((1 - res.leiPerOra / (maxLei * 1.2)) * 100 + 5));
+            const maxLipsa = Math.max(...unavailable.map(x => x.leiLipsaPerOra === Infinity ? 0 : x.leiLipsaPerOra), 0.001);
+            const barW = res.leiLipsaPerOra === Infinity ? 5 : Math.min(100, Math.round((1 - res.leiLipsaPerOra / (maxLipsa * 1.2)) * 100 + 5));
 
             const ingredienteHTML = res.ingredienteComplet.map(ing => `
                 <div class="fridge-ing-row">
                     <span class="text-xs ${ing.ok ? 'text-white' : 'text-red-300/80'} font-semibold truncate flex-grow">${ing.nume}</span>
                     <div class="flex items-center gap-2 flex-shrink-0">
-                        <span class="text-[10px] font-black ${ing.ok ? 'text-emerald-400' : 'text-red-400'}">${+ing.qty.toFixed(3)} ${ing.unit}</span>
-                        <span class="text-[9px] text-gray-600 font-bold">ai: ${+ing.available.toFixed(3)}</span>
-${!ing.ok 
-    ? `<span class="missing-badge">-${+(ing.qty - ing.available).toFixed(3)}</span>` 
-    : `<span class="text-[9px] font-black text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-md px-2 py-0.5">+${+(ing.available - ing.qty).toFixed(3)}</span>`
-}
+<span class="text-[9px] font-black px-2 py-0.5 rounded-md border ${ing.ok ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : ing.available > 0 ? 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20' : 'text-red-400 bg-red-500/10 border-red-500/20'}">
+    ${+ing.available.toFixed(3)} ${ing.unit.toUpperCase()} → ${+ing.qty.toFixed(3)} ${ing.unit.toUpperCase()}
+</span>
+
                     </div>
                 </div>`).join('');
 
@@ -735,6 +707,8 @@ ${!ing.ok
                         <div class="text-right flex-shrink-0">
                             <p class="text-sm font-black text-white/60 leading-none">${res.costPer1Portie.toFixed(2)} LEI</p>
                             <p class="text-[9px] font-bold text-gray-600">/ porție</p>
+                            <p class="text-sm font-black text-red-400 leading-none mt-1">${res.totalCostLipsa.toFixed(2)} LEI</p>
+                            <p class="text-[9px] font-bold text-red-500/60">de cumpărat</p>
                         </div>
                     </div>
                     <div class="flex gap-2 mt-2 mb-3">
@@ -743,8 +717,8 @@ ${!ing.ok
                             <p class="text-sm font-black text-red-400/80 leading-tight">${res.orePer1}h</p>
                         </div>
                         <div class="flex-1 bg-white/5 rounded-xl p-2 text-center border border-white/5">
-                            <p class="text-[7px] font-black text-gray-500 uppercase tracking-widest">LEI/oră</p>
-                            <p class="text-sm font-black text-gray-400 leading-tight">${res.leiPerOra === Infinity ? '∞' : res.leiPerOra.toFixed(2)}</p>
+                            <p class="text-[7px] font-black text-gray-500 uppercase tracking-widest">LEI lipsă/oră</p>
+                            <p class="text-sm font-black text-red-400 leading-tight">${res.leiLipsaPerOra === Infinity ? '∞' : res.leiLipsaPerOra.toFixed(2)}</p>
                         </div>
                         <div class="flex-1 bg-white/5 rounded-xl p-2 text-center border border-white/5">
                             <p class="text-[7px] font-black text-gray-500 uppercase tracking-widest">Lipsesc</p>
@@ -763,6 +737,7 @@ ${!ing.ok
         container.innerHTML += `<p class="text-center text-gray-600 py-4 font-black text-[10px] uppercase tracking-widest">Niciun meniu cu 2+ ingrediente configurat</p>`;
     }
 }
+
 
 // ============================================================
 
