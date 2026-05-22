@@ -51,6 +51,8 @@
         body.unlocked .locked-only { display: flex !important; }
         .locked-only-block { display: none !important; }
         body.unlocked .locked-only-block { display: block !important; }
+        .locked-only-inline { display: none !important; }
+        body.unlocked .locked-only-inline { display: inline-block !important; }
         .qty-btn-locked { pointer-events: none; opacity: 0.6; }
         body.unlocked .qty-btn-locked { pointer-events: auto; opacity: 1; }
         .ore-locked { pointer-events: none; cursor: default; }
@@ -256,7 +258,6 @@ const SUPABASE_URL = 'https://fndjrfieitieqzafhyzz.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_bHDKjiKAVHqW199ICw7i2g_O3olYMAr';
 const supabaseClient = USE_SUPABASE ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
-const CURS = 5.09;
 let searchTerm = "";
 let isUnlocked = false;
 let scrollPositions = { home: 0, catalog: 0 };
@@ -279,6 +280,21 @@ let rețete = [
 
 let activeCtx = null;
 let lastEditedId = null;
+
+// ============================================================
+// AUCHAN LINK HELPER
+// ============================================================
+
+function buildAuchanUrl(numeProdus) {
+    const encoded = numeProdus.replace(/ /g, '%20');
+    return `https://www.auchan.ro/${encoded}?_q=${encoded}&map=ft`;
+}
+
+function openAuchan(numeProdus) {
+    window.open(buildAuchanUrl(numeProdus), '_blank');
+}
+
+// ============================================================
 
 function toggleCollapseAll() {
     isCollapsed = !isCollapsed;
@@ -515,20 +531,29 @@ function openShoppingList() {
             const pReal = catalog.find(x => x.id === item.id);
             if (!pReal) return;
             const pretTotalLei = pReal.pretLei * item.totalQty;
+
+            // Dialog text pentru badge-ul cu unitatea de măsură
             const textDialog = `PRODUS: ${pReal.nume}\n----------------------------\n\n` +
                 item.calcule.join('\n\n') +
                 `\n\n----------------------------\nTOTAL GENERAL: ${Number(item.totalQty.toFixed(3))} ${item.unitDisplay}`;
+
             const countMeniuri = item.calcule.length;
+            const numeEscaped = pReal.nume.replace(/'/g, "\\'").replace(/`/g, '\\`');
 
             listContent.innerHTML += `
-                <div class="glass-card p-4 flex justify-between items-center border-l-4 border-purple-500 gap-3 active:scale-[0.97] transition-transform" 
-                     onclick="alert(\`${textDialog}\`)">
+                <div class="glass-card p-4 flex justify-between items-center border-l-4 border-purple-500 gap-3">
                     <div class="min-w-0 flex-grow">
                         <div class="flex items-center gap-2 mb-1">
-                            <span class="flex-shrink-0 bg-white/10 text-white px-2 py-0.5 rounded-md text-[11px] font-black border border-white/5 uppercase">
+                            <!-- Badge unitate: click → dialog detalii meniuri -->
+                            <span onclick="event.stopPropagation(); alert(\`${textDialog}\`)"
+                                  class="flex-shrink-0 bg-white/10 text-white px-2 py-0.5 rounded-md text-[11px] font-black border border-white/5 uppercase cursor-pointer active:scale-95 transition-transform select-none">
                                 ${Number(item.totalQty.toFixed(3))} ${item.unitDisplay}
                             </span>
-                            <p class="font-bold text-white text-sm truncate">${pReal.nume}</p>
+                            <!-- Nume produs: click → Auchan în filă nouă -->
+                            <p onclick="openAuchan('${numeEscaped}')" 
+                               class="font-bold text-white text-sm truncate cursor-pointer active:opacity-70 transition-opacity">
+                                ${pReal.nume}
+                            </p>
                             ${countMeniuri > 1 ? `<span class="w-5 h-5 flex items-center justify-center bg-emerald-500/20 text-emerald-400 rounded-full text-[10px] font-black border border-emerald-500/30">${countMeniuri}</span>` : ''}
                         </div>
                         <div class="flex items-center gap-1 ml-1">
@@ -560,13 +585,19 @@ function openMenusManager() {
             let ingredienteHTML = '';
             r.ingrediente.forEach(ing => {
                 const p = catalog.find(x => x.id === ing.idProd);
-                if (p) ingredienteHTML += `
+                if (p) {
+                    const numeEsc = p.nume.replace(/'/g, "\\'");
+                    ingredienteHTML += `
                     <div class="flex justify-between items-end border-b border-white/5 pb-2">
-                        <span class="text-base text-gray-300 font-bold tracking-tight">${p.nume}</span>
+                        <span onclick="openAuchan('${numeEsc}')"
+                              class="text-base text-gray-300 font-bold tracking-tight cursor-pointer active:opacity-70 transition-opacity">
+                            ${p.nume}
+                        </span>
                         <span class="text-base text-white font-black">
                             ${+ing.qty.toFixed(3)} <small class="text-[10px] text-purple-400 uppercase">${p.unit}</small>
                         </span>
                     </div>`;
+                }
             });
 
             container.innerHTML += `
@@ -666,7 +697,7 @@ function render() {
         })
         .sort((a, b) => b.eficienta - a.eficienta);
 
-    // 3. Generare HTML — preț în LEI pe card
+    // 3. Generare HTML
     reteteFiltrate.forEach((reteta) => {
         const rIdx = rețete.findIndex(r => r.id === reteta.id);
         const oreCls = isUnlocked ? 'cursor-pointer' : 'ore-locked cursor-default';
