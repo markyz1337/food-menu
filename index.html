@@ -23,19 +23,81 @@
         .glass-card.inactive .recipe-title-input { color: white !important; -webkit-text-fill-color: white !important; }
         .card-divider { height: 1px; width: 100%; background: linear-gradient(to right, transparent, rgba(192, 132, 252, 0.4) 20%, rgba(192, 132, 252, 0.4) 80%, transparent); margin-top: 12px; margin-bottom: 12px; border: none; transition: background 0.3s ease; }
         .glass-card.inactive .card-divider { background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.2) 20%, rgba(255, 255, 255, 0.2) 80%, transparent); }
-        .hud-status { position: fixed; right: 20px; bottom: 90px; padding: 10px 22px; background: rgba(15, 15, 20, 0.8); backdrop-filter: blur(15px); border: 1px solid rgba(192, 132, 252, 0.4); border-radius: 29px; z-index: 900; box-shadow: 0 15px 35px rgba(0,0,0,0.5); border-left: 4px solid var(--primary); }
+        @keyframes slideUpFade {
+            from { opacity: 0; transform: translateX(-50%) translateY(18px); }
+            to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+        @keyframes fadeInScale {
+            from { opacity: 0; transform: scale(0.9) translateY(8px); }
+            to   { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .hud-status { position: fixed; right: 20px; bottom: 90px; padding: 10px 22px; background: rgba(15, 15, 20, 0.8); backdrop-filter: blur(15px); border: 1px solid rgba(192, 132, 252, 0.4); border-radius: 29px; z-index: 900; box-shadow: 0 15px 35px rgba(0,0,0,0.5); border-left: 4px solid var(--primary); opacity: 0; }
+        .hud-status.ui-visible { animation: fadeInScale 0.55s cubic-bezier(0.22, 1, 0.36, 1) both; opacity: 1; }
+
         .search-pill { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 15px; padding: 12px 20px; width: 100%; color: white; font-size: 14px; outline: none; transition: all 0.3s; }
         .search-pill:focus { border-color: var(--primary); background: rgba(255,255,255,0.08); }
-        .person-picker { position: fixed; right: 25px; bottom: 155px; background: rgba(15, 15, 20, 0.9); backdrop-filter: blur(10px); border: 1px solid rgba(192, 132, 252, 0.4); border-radius: 18px; padding: 6px 12px; display: flex; align-items: center; gap: 6px; z-index: 900; box-shadow: 0 10px 20px rgba(0,0,0,0.4); transition: all 0.2s ease; }
+        .person-picker { position: fixed; right: 25px; bottom: 155px; background: rgba(15, 15, 20, 0.9); backdrop-filter: blur(10px); border: 1px solid rgba(192, 132, 252, 0.4); border-radius: 18px; padding: 6px 12px; display: flex; align-items: center; gap: 6px; z-index: 900; box-shadow: 0 10px 20px rgba(0,0,0,0.4); opacity: 0; }
+        .person-picker.ui-visible { animation: fadeInScale 0.55s cubic-bezier(0.22, 1, 0.36, 1) both; opacity: 1; }
         .person-picker:active { transform: scale(0.95); }
         #num-persoane-input { background: transparent; border: none; color: white; font-weight: 800; font-size: 16px; width: 15px; text-align: center; outline: none; }
-        .tab-bar { position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 440px; background: rgba(15, 15, 20, 0.6); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); display: flex; justify-content: space-around; padding: 8px; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 40px; z-index: 1000; box-shadow: 0 15px 35px rgba(0,0,0,0.4); touch-action: none; }
+
+        .tab-bar {
+            position: fixed;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%) translateY(18px);
+            width: 90%;
+            max-width: 440px;
+            background: rgba(15, 15, 20, 0.6);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            display: flex !important;
+            justify-content: space-around;
+            padding: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 40px;
+            z-index: 1000;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+            touch-action: none;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.35s ease, transform 0.35s ease;
+        }
+        .tab-bar.ui-visible {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateX(-50%) translateY(0);
+        }
+        body.keyboard-open:not(.person-picker-focus):not(.suppress-keyboard) .tab-bar {
+            opacity: 0 !important;
+            pointer-events: none !important;
+            transform: translateX(-50%) translateY(18px) !important;
+        }
+
         .nav-btn { flex: 1; padding: 15px 0; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.2px; color: rgba(255, 255, 255, 0.4); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 30px; display: flex; align-items: center; justify-content: center; }
         .nav-btn.active { color: #ffffff; background: rgba(192, 132, 252, 0.2); box-shadow: inset 0 0 15px rgba(192, 132, 252, 0.1); }
-        .bottom-sheet { position: fixed; bottom: 0; left: 0; width: 100%; height: 75vh; background: rgba(10, 10, 15, 0.98); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px); border-top: 1px solid var(--glass-border); z-index: 2000; transform: translateY(110%); transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1); border-radius: 32px 32px 0 0; display: flex; flex-direction: column; }
-        .bottom-sheet.active { transform: translateY(0); bottom: 0 !important; }
+
+        .bottom-sheet {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 75vh;
+            background: rgba(10, 10, 15, 0.98);
+            backdrop-filter: blur(40px);
+            border-top: 1px solid var(--glass-border);
+            z-index: 2000;
+            border-radius: 32px 32px 0 0;
+            display: none;
+            flex-direction: column;
+        }
+        .bottom-sheet.active {
+            display: flex;
+        }
         .bottom-sheet.full { height: 100vh !important; height: 100dvh !important; top: 0; border-radius: 0; background: #020205; }
         .bottom-sheet .absolute.bottom-6 button { box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
+
         #product-options { flex-grow: 1; overflow-y: auto; padding: 0 20px 120px 20px; scrollbar-width: none; }
         #product-options::-webkit-scrollbar { display: none; }
         .locked-only { display: none !important; }
@@ -55,11 +117,9 @@
         #collapse-btn svg { transition: transform 0.3s ease; transform: rotate(0deg); }
         body.collapsed-active #collapse-btn svg { transform: rotate(180deg); }
 
-        /* Hide number input spinners globally */
         input[type=number]::-webkit-inner-spin-button,
         input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         input[type=number] { -moz-appearance: textfield; }
-        /* Inline input highlight on focus */
         input[type=number]:focus { color: #c084fc !important; }
         .fridge-qty-btn input[type=number]:focus { color: #10b981 !important; }
 
@@ -71,26 +131,22 @@
         .fridge-qty-btn { background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3); color: #6ee7b7; border-radius: 12px; padding: 4px 10px; font-size: 10px; font-weight: 900; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 4px; }
         .fridge-qty-btn:active { transform: scale(0.93); background: rgba(16,185,129,0.3); }
         .score-badge { background: rgba(192,132,252,0.15); border: 1px solid rgba(192,132,252,0.3); color: #e9d5ff; border-radius: 10px; padding: 2px 8px; font-size: 9px; font-weight: 900; }
-        .fridge-product-row { display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 18px; padding: 10px 12px; margin-bottom: 8px; }
+        .fridge-product-row { display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 18px; padding: 7px 10px; margin-bottom: 10px; }
         .fridge-add-btn { width: 100%; padding: 16px; background: rgba(16,185,129,0.08); border: 2px dashed rgba(16,185,129,0.25); border-radius: 20px; color: #6ee7b7; font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; transition: all 0.2s; }
         .fridge-add-btn:active { background: rgba(16,185,129,0.18); transform: scale(0.98); }
         .efficiency-bar { height: 3px; background: rgba(255,255,255,0.07); border-radius: 2px; overflow: hidden; margin-top: 4px; }
         .efficiency-bar-fill { height: 100%; background: linear-gradient(to right, #10b981, #c084fc); border-radius: 2px; transition: width 0.5s ease; }
-        /* Fridge picker sheet */
         #fridge-product-picker { z-index: 2600; }
         #fridge-product-options { flex-grow:1; overflow-y:auto; padding: 0 20px 120px 20px; scrollbar-width:none; }
         #fridge-product-options::-webkit-scrollbar { display:none; }
 
-        /* Ingredient row in fridge card */
         .fridge-ing-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .fridge-ing-row:last-child { border-bottom: none; }
 
-        /* Portii toggle */
         .portii-toggle { display: flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 3px 8px; cursor: pointer; transition: all 0.2s; user-select: none; }
         .portii-toggle:active { transform: scale(0.95); }
         .portii-toggle.expanded { background: rgba(192,132,252,0.12); border-color: rgba(192,132,252,0.3); }
 
-        /* Inline number inputs in recipe cards */
         .inline-num-input { background: transparent; border: none; outline: none; color: white; font-family: 'Plus Jakarta Sans', sans-serif; text-align: center; -moz-appearance: textfield; }
         .inline-num-input:focus { color: #c084fc; }
         .ing-qty-wrap { display: flex; align-items: center; background: rgba(192,132,252,0.15); border-radius: 12px; padding: 4px 8px; min-width: 55px; justify-content: center; gap: 2px; transition: background 0.2s; }
@@ -101,18 +157,99 @@
         #lock-btn:active { transform: scale(0.9); }
         #lock-btn.unlocked { background: rgba(192, 132, 252, 0.15); border-color: rgba(192, 132, 252, 0.4); }
 
-        /* ── KEYBOARD SCROLL HELPER ─────────────────────────── */
-        /* When keyboard is open, we push the focused element into view */
-        body.keyboard-open .hud-status,
-        body.keyboard-open .person-picker,
-        body.keyboard-open .tab-bar { opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+        #recipes-list, #catalog-list { scroll-margin-top: 100px; }
+
+        /* FRIDGE SEARCH */
+        .fridge-search-wrap {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .fridge-search-wrap input {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 14px;
+            padding: 9px 36px 9px 14px;
+            width: 100%;
+            color: white;
+            font-size: 12px;
+            font-weight: 600;
+            outline: none;
+            transition: all 0.25s;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        .fridge-search-wrap input:focus {
+            border-color: rgba(16,185,129,0.45);
+            background: rgba(16,185,129,0.05);
+        }
+        .fridge-search-wrap input::placeholder { color: rgba(255,255,255,0.25); }
+        .fridge-search-clear {
+            position: absolute;
+            right: 8px;
+            width: 22px;
+            height: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+            cursor: pointer;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+            font-size: 10px;
+            font-weight: 900;
+            color: rgba(255,255,255,0.6);
+        }
+        .fridge-search-clear.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .fridge-search-clear:active { transform: scale(0.88); }
+
+        /* Date badge compact */
+        .date-badge {
+            font-size: 8px;
+            font-weight: 800;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.25);
+            line-height: 1;
+            white-space: nowrap;
+        }
+        .date-badge.modified {
+            color: rgba(192,132,252,0.55);
+        }
+
+        /* Expand button */
+        .fridge-expand-btn {
+            width: 100%;
+            padding: 11px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 14px;
+            color: rgba(255,255,255,0.45);
+            font-size: 10px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            margin-top: 6px;
+        }
+        .fridge-expand-btn:active { background: rgba(255,255,255,0.07); transform: scale(0.98); }
+        .fridge-expand-btn svg { transition: transform 0.3s ease; }
+        .fridge-expand-btn.expanded svg { transform: rotate(180deg); }
     </style>
 </head>
 
 <body class="pb-44">
 
 <!-- 1. SHEET LISTA CUMPĂRĂTURI -->
-<div id="shopping-sheet" class="bottom-sheet full overflow-hidden flex flex-col">
+<div id="shopping-sheet" class="bottom-sheet full overflow-hidden">
     <div class="p-6 border-b border-white/10 flex justify-between items-center bg-black/50">
         <div>
             <h3 class="text-xl font-black tracking-tighter text-white">LISTĂ CUMPĂRĂTURI</h3>
@@ -129,7 +266,7 @@
 </div>
 
 <!-- 2. SHEET GESTIONARE MENIURI -->
-<div id="menus-manager-sheet" class="bottom-sheet full overflow-hidden flex flex-col" style="z-index: 2500; background: #020205;">
+<div id="menus-manager-sheet" class="bottom-sheet full overflow-hidden" style="z-index: 2500; background: #020205;">
     <div class="p-6 border-b border-white/10 flex justify-between items-center bg-black/80">
         <div>
             <h3 class="text-xl font-black tracking-tighter text-white">GESTIONARE MENIURI</h3>
@@ -139,7 +276,7 @@
     </div>
     <div id="menus-manager-content" class="flex-grow overflow-y-auto p-6 space-y-3 pb-32"></div>
     <div class="absolute bottom-8 left-0 w-full px-6 pointer-events-none">
-        <button onclick="document.getElementById('menus-manager-sheet').classList.remove('active'); openShoppingList();" 
+        <button onclick="document.getElementById('menus-manager-sheet').classList.remove('active'); openShoppingList();"
                 class="pointer-events-auto w-full py-5 bg-purple-600 text-white rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-2xl shadow-purple-500/40">
             Gata, Revino la Listă
         </button>
@@ -176,13 +313,13 @@
             <p id="view-subtitle" class="text-[10px] font-bold text-gray-500 tracking-[3px] uppercase mt-1">Configurator Mese</p>
         </div>
         <div class="flex items-center gap-2">
-            <button id="collapse-btn" onclick="toggleCollapseAll()" 
+            <button id="collapse-btn" onclick="toggleCollapseAll()"
                     class="w-10 h-10 flex items-center justify-center bg-white/5 border border-white/10 rounded-full active:scale-90 transition-all">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400">
                     <polyline points="18 15 12 9 6 15"></polyline>
                 </svg>
             </button>
-            <button id="bulk-select-btn" onclick="toggleSelectAll()" 
+            <button id="bulk-select-btn" onclick="toggleSelectAll()"
                     class="w-10 h-10 flex items-center justify-center bg-white text-black rounded-full shadow-lg active:scale-90 transition-all">
                 <div id="bulk-select-icon">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
@@ -204,9 +341,9 @@
 
     <div id="search-container" class="mb-6">
         <div class="relative flex items-center">
-            <input type="text" id="main-search" oninput="updateSearch(this.value)" placeholder="Caută în meniu..." 
+            <input type="text" id="main-search" oninput="updateSearch(this.value)" placeholder="Caută în meniu..."
                    class="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 pr-12 text-sm font-semibold text-white placeholder:text-gray-600 focus:outline-none focus:border-purple-500/50 transition-all">
-            <button id="clear-search" onclick="clearSearch()" 
+            <button id="clear-search" onclick="clearSearch()"
                     class="hidden absolute right-4 w-8 h-8 flex items-center justify-center bg-white/10 hover:bg-white/20 rounded-full transition-all">
                 <span class="text-gray-400 text-xs font-bold">✕</span>
             </button>
@@ -231,6 +368,7 @@
 
     <!-- TAB FRIGIDER -->
     <div id="page-fridge" class="hidden space-y-4">
+        <!-- Header stoc -->
         <div class="flex justify-between items-center px-1 mb-2">
             <div>
                 <p class="text-[9px] font-black text-emerald-400 uppercase tracking-[3px]">Stoc disponibil</p>
@@ -241,13 +379,18 @@
             </button>
         </div>
 
-        <!-- Produse în frigider -->
-        <div id="fridge-products-list" class="space-y-2 mb-6"></div>
+        <!-- Search bar frigider -->
+        <div class="fridge-search-wrap">
+            <input type="text" id="fridge-stock-search"
+                   placeholder="Caută în stoc..."
+                   oninput="onFridgeStockSearch(this.value)">
+            <span id="fridge-stock-clear" class="fridge-search-clear" onclick="clearFridgeSearch()">✕</span>
+        </div>
 
-        <!-- Divider -->
+        <div id="fridge-products-list" class="mb-2"></div>
+
         <div class="h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent my-4"></div>
 
-        <!-- Meniuri posibile -->
         <div id="fridge-results" class="space-y-3"></div>
     </div>
 </div>
@@ -259,8 +402,8 @@
         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
         <circle cx="12" cy="7" r="4"></circle>
     </svg>
-    <input type="tel" id="num-persoane-input" value="1" inputmode="numeric" 
-           onfocus="prepareInput(this)" onblur="resetDacaEGol(this)" oninput="validarePersoane(this)" maxlength="1">
+    <input type="tel" id="num-persoane-input" value="1" inputmode="numeric"
+           onfocus="preparePersonInput(this)" onblur="resetDacaEGol(this)" oninput="validarePersoane(this)" maxlength="1">
 </div>
 
 <!-- HUD -->
@@ -311,8 +454,6 @@
 
 // ============================================================
 // KEYBOARD SCROLL MANAGEMENT
-// Scrolls the focused element to the top of the visible area
-// when the virtual keyboard opens, then restores on close.
 // ============================================================
 
 (function() {
@@ -323,25 +464,30 @@
 
     function scrollInputIntoView(el) {
         if (!el) return;
-        // How much screen is available above the keyboard
-        const vpHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
         const rect = el.getBoundingClientRect();
-        // We want the element 80px from the top of the visible viewport
         const targetTop = rect.top + window.scrollY - 80;
         window.scrollTo({ top: targetTop, behavior: 'smooth' });
+    }
+
+    function isPersonPickerInput(el) {
+        return el && (el.id === 'num-persoane-input' || el.closest('.person-picker'));
     }
 
     function onFocusIn(e) {
         const el = e.target;
         const tag = el.tagName;
         if (tag !== 'INPUT' && tag !== 'TEXTAREA') return;
-        // Skip hidden password input and non-visible inputs
         if (el.id === 'hidden-password-input') return;
-        if (el.closest('.bottom-sheet')) return; // sheets handle their own scroll
+
+        if (isPersonPickerInput(el)) {
+            document.body.classList.add('person-picker-focus');
+            return;
+        }
+
+        if (el.closest('.bottom-sheet')) return;
 
         savedScrollY = window.scrollY;
 
-        // Delay to let keyboard animate open
         clearTimeout(scrollTimeout);
         scrollTimeout = setTimeout(() => {
             keyboardOpen = true;
@@ -355,15 +501,19 @@
         const tag = el.tagName;
         if (tag !== 'INPUT' && tag !== 'TEXTAREA') return;
         if (el.id === 'hidden-password-input') return;
+
+        if (isPersonPickerInput(el)) {
+            document.body.classList.remove('person-picker-focus');
+            return;
+        }
+
         if (el.closest('.bottom-sheet')) return;
 
         clearTimeout(scrollTimeout);
         scrollTimeout = setTimeout(() => {
-            // Only restore if keyboard actually closed (check viewport)
             const vpHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
             const heightDiff = initialViewportHeight - vpHeight;
             if (heightDiff < 100) {
-                // Keyboard closed
                 keyboardOpen = false;
                 document.body.classList.remove('keyboard-open');
                 window.scrollTo({ top: savedScrollY, behavior: 'smooth' });
@@ -371,23 +521,23 @@
         }, 350);
     }
 
-    // visualViewport resize = keyboard opened/closed
     if (window.visualViewport) {
         window.visualViewport.addEventListener('resize', () => {
             const vpHeight = window.visualViewport.height;
             const heightDiff = initialViewportHeight - vpHeight;
 
+            const focused = document.activeElement;
+            if (focused && isPersonPickerInput(focused)) return;
+
             if (heightDiff > 150) {
-                // Keyboard opened
                 keyboardOpen = true;
                 document.body.classList.add('keyboard-open');
-                const focused = document.activeElement;
-                if (focused && !focused.closest('.bottom-sheet') && focused.id !== 'hidden-password-input') {
+                if (focused && !focused.closest('.bottom-sheet')
+                    && focused.id !== 'hidden-password-input') {
                     clearTimeout(scrollTimeout);
                     scrollTimeout = setTimeout(() => scrollInputIntoView(focused), 100);
                 }
             } else {
-                // Keyboard closed
                 if (keyboardOpen) {
                     keyboardOpen = false;
                     document.body.classList.remove('keyboard-open');
@@ -396,7 +546,6 @@
                         window.scrollTo({ top: savedScrollY, behavior: 'smooth' });
                     }, 100);
                 }
-                // Update baseline when keyboard fully gone
                 initialViewportHeight = vpHeight;
             }
         });
@@ -422,9 +571,12 @@ let scrollPositions = { home: 0, catalog: 0, fridge: 0 };
 let currentTab = 'home';
 let isCollapsed = false;
 
-// frigider items: each has { id, qty, addedAt } — addedAt for sort newest-first
 let frigider = [];
 let fridgeActiveCtx = null;
+let fridgeStockSearchTerm = '';
+let fridgeStockExpanded = false;
+
+const FRIDGE_PREVIEW_COUNT = 4;
 
 let catalog = [
     { id: 'c1', nume: 'Icre roșii', pretLei: 761.00, unit: 'Kg' },
@@ -442,6 +594,54 @@ let retete = [
 
 let activeCtx = null;
 let lastEditedId = null;
+let lastEditedCatalogId = null;
+
+// ============================================================
+// DATE HELPERS
+// ============================================================
+
+function formatDateCompact(ts) {
+    if (!ts) return '';
+    const d = new Date(ts);
+    const now = new Date();
+    const diffMs = now - d;
+    const diffMin = Math.floor(diffMs / 60000);
+    const diffH = Math.floor(diffMs / 3600000);
+    const diffD = Math.floor(diffMs / 86400000);
+
+    if (diffMin < 1) return 'acum';
+    if (diffMin < 60) return `${diffMin}min`;
+    if (diffH < 24) return `${diffH}h`;
+    if (diffD < 7) return `${diffD}z`;
+    // same year: show day.month
+    if (d.getFullYear() === now.getFullYear()) {
+        return `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}`;
+    }
+    return `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getFullYear()).slice(-2)}`;
+}
+
+// ============================================================
+// FRIDGE SEARCH
+// ============================================================
+
+function onFridgeStockSearch(val) {
+    fridgeStockSearchTerm = val.trim().toLowerCase();
+    const clearBtn = document.getElementById('fridge-stock-clear');
+    if (clearBtn) clearBtn.classList.toggle('visible', val.length > 0);
+    // when searching, auto-expand
+    if (fridgeStockSearchTerm.length > 0) fridgeStockExpanded = true;
+    renderFridge();
+}
+
+function clearFridgeSearch() {
+    const inp = document.getElementById('fridge-stock-search');
+    if (inp) inp.value = '';
+    fridgeStockSearchTerm = '';
+    const clearBtn = document.getElementById('fridge-stock-clear');
+    if (clearBtn) clearBtn.classList.remove('visible');
+    renderFridge();
+    inp && inp.focus();
+}
 
 // ============================================================
 // INLINE INPUT CONFIRM FUNCTIONS
@@ -473,6 +673,7 @@ async function confirmFridgeQtyInput(prodId, inputEl) {
     const item = frigider.find(f => f.id === prodId);
     if (item) {
         item.qty = finalVal;
+        item.modifiedAt = Date.now();
         inputEl.value = +finalVal.toFixed(3);
         await db_upsertFrigiderItem(item);
         renderFridge();
@@ -511,13 +712,19 @@ async function db_loadFrigider() {
     frigider = (data || []).map(r => ({
         id: r.id,
         qty: parseFloat(r.qty),
-        addedAt: r.addedAt || r.added_at || 0   // support both column names
+        addedAt: r.addedAt || r.added_at || 0,
+        modifiedAt: r.modifiedAt || r.modified_at || null
     }));
 }
 
 async function db_upsertFrigiderItem(item) {
     if (!USE_SUPABASE) return;
-    await supabaseClient.from('frigider').upsert({ id: item.id, qty: item.qty });
+    await supabaseClient.from('frigider').upsert({
+        id: item.id,
+        qty: item.qty,
+        addedAt: item.addedAt,
+        modifiedAt: item.modifiedAt || null
+    });
 }
 
 async function db_deleteFrigiderItem(id) {
@@ -565,28 +772,19 @@ async function addToFridge(prodId) {
         renderFridge();
         return;
     }
-    // addedAt = current timestamp for newest-first sorting
-    const newItem = { id: prodId, qty: 1, addedAt: Date.now() };
+    const newItem = { id: prodId, qty: 1, addedAt: Date.now(), modifiedAt: null };
     frigider.push(newItem);
     await db_upsertFrigiderItem(newItem);
     closeSheets();
     renderFridge();
-    // Scroll to top of fridge list so newly added item is visible
-    setTimeout(() => {
-        const list = document.getElementById('fridge-products-list');
-        if (list) list.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 100);
-}
-
-function openFridgeQtyPicker(prodId) {
-    const safeId = prodId.replace(/[^a-zA-Z0-9_-]/g, '_');
-    const input = document.getElementById(`fridge-qty-input-${safeId}`);
-    if (input) { input.focus(); input.select(); }
 }
 
 async function deleteFridgeItem(prodId) {
+    const prod = catalog.find(p => p.id === prodId);
+    const nume = prod ? prod.nume : prodId;
+    if (!confirm(`Ștergi "${nume}" din frigider?`)) return;
     frigider = frigider.filter(f => f.id !== prodId);
-    await db_deleteFrigiderItem(prodId);
+    await db_deleteFridgeItem(prodId);
     renderFridge();
 }
 
@@ -601,38 +799,85 @@ function renderFridge() {
         return;
     }
 
-    // ── Sort: newest first (highest addedAt first) ──
-    frigider
+    // Filter by search
+    const sortedAll = frigider
         .slice()
-        .sort((a, b) => (b.addedAt || 0) - (a.addedAt || 0))
-        .forEach(item => {
+        .sort((a, b) => (b.addedAt || 0) - (a.addedAt || 0));
+
+    const filtered = fridgeStockSearchTerm
+        ? sortedAll.filter(item => {
             const prod = catalog.find(p => p.id === item.id);
-            if (!prod) return;
-            const safeId = prod.id.replace(/[^a-zA-Z0-9_-]/g, '_');
+            return prod && normalizeText(prod.nume).includes(normalizeText(fridgeStockSearchTerm));
+          })
+        : sortedAll;
+
+    const total = filtered.length;
+    const showAll = fridgeStockExpanded || fridgeStockSearchTerm.length > 0;
+    const displayed = showAll ? filtered : filtered.slice(0, FRIDGE_PREVIEW_COUNT);
+    const hidden = total - displayed.length;
+
+    displayed.forEach(item => {
+        const prod = catalog.find(p => p.id === item.id);
+        if (!prod) return;
+        const safeId = prod.id.replace(/[^a-zA-Z0-9_-]/g, '_');
+        const numeEscJS = prod.nume.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+
+        // Date display
+        const wasModified = item.modifiedAt && item.modifiedAt !== item.addedAt;
+        const dateTs = wasModified ? item.modifiedAt : item.addedAt;
+        const dateLabel = formatDateCompact(dateTs);
+        const datePrefix = wasModified ? '✎' : '＋';
+        const dateCls = wasModified ? 'date-badge modified' : 'date-badge';
+
+        list.innerHTML += `
+            <div class="fridge-product-row">
+                <div class="flex-grow min-w-0 cursor-pointer active:opacity-70 transition-opacity" onclick="openAuchan('${numeEscJS}')">
+                    <p class="font-bold text-white text-sm truncate leading-tight">${prod.nume}</p>
+                    <div class="flex items-center gap-2 mt-0.5">
+                        <p class="text-[9px] text-gray-500 font-black uppercase tracking-widest">${prod.pretLei.toFixed(2)} LEI/${prod.unit}</p>
+                        <span class="${dateCls}">${datePrefix}${dateLabel}</span>
+                    </div>
+                </div>
+                <div class="fridge-qty-btn" onclick="document.getElementById('fridge-qty-input-${safeId}').focus();document.getElementById('fridge-qty-input-${safeId}').select()">
+                    <input id="fridge-qty-input-${safeId}"
+                           type="number"
+                           inputmode="decimal"
+                           min="0" step="any"
+                           value="${+item.qty.toFixed(3)}"
+                           onfocus="this.select()"
+                           onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}"
+                           onblur="confirmFridgeQtyInput('${prod.id}', this)"
+                           class="w-14 text-center text-[10px] font-black text-emerald-400 bg-transparent outline-none border-none"
+                           style="-moz-appearance:textfield; -webkit-appearance:none;">
+                    <span class="text-[10px] font-black text-emerald-400">${prod.unit}</span>
+                </div>
+                <button onclick="deleteFridgeItem('${prod.id}')" class="w-7 h-7 flex items-center justify-center bg-red-500/10 text-red-400 rounded-full border border-red-500/15 active:scale-90 transition-all text-xs">✕</button>
+            </div>`;
+    });
+
+    // Expand / collapse button
+    if (!fridgeStockSearchTerm) {
+        if (total > FRIDGE_PREVIEW_COUNT) {
+            const expandedCls = fridgeStockExpanded ? 'expanded' : '';
+            const btnLabel = fridgeStockExpanded
+                ? `Restrânge`
+                : `Vezi toate — ${hidden} mai multe`;
             list.innerHTML += `
-                <div class="fridge-product-row">
-                    <div class="flex-grow min-w-0">
-                        <p class="font-bold text-white text-sm truncate">${prod.nume}</p>
-                        <p class="text-[9px] text-gray-500 font-black uppercase tracking-widest">${prod.pretLei.toFixed(2)} LEI / ${prod.unit}</p>
-                    </div>
-                    <div class="fridge-qty-btn" onclick="document.getElementById('fridge-qty-input-${safeId}').focus();document.getElementById('fridge-qty-input-${safeId}').select()">
-                        <input id="fridge-qty-input-${safeId}"
-                               type="number"
-                               inputmode="decimal"
-                               min="0" step="any"
-                               value="${+item.qty.toFixed(3)}"
-                               onfocus="this.select()"
-                               onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}"
-                               onblur="confirmFridgeQtyInput('${prod.id}', this)"
-                               class="w-14 text-center text-[10px] font-black text-emerald-400 bg-transparent outline-none border-none"
-                               style="-moz-appearance:textfield; -webkit-appearance:none;">
-                        <span class="text-[10px] font-black text-emerald-400">${prod.unit}</span>
-                    </div>
-                    <button onclick="deleteFridgeItem('${prod.id}')" class="w-7 h-7 flex items-center justify-center bg-red-500/10 text-red-400 rounded-full border border-red-500/15 active:scale-90 transition-all text-xs">✕</button>
-                </div>`;
-        });
+                <button onclick="toggleFridgeExpand()" class="fridge-expand-btn ${expandedCls}">
+                    <span>${btnLabel}</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </button>`;
+        }
+    }
 
     renderFridgeResults();
+}
+
+function toggleFridgeExpand() {
+    fridgeStockExpanded = !fridgeStockExpanded;
+    renderFridge();
 }
 
 // ============================================================
@@ -711,12 +956,15 @@ function computeFridgeResults() {
         .sort((a, b) => b.orePer1 - a.orePer1);
 
     const unavailable = results
-        .filter(r => {
-            if (r.canMake1Portie) return false;
-            if (r.nrIngrediente < 2) return false;
-            return (r.nrIngrediente - r.missingFor1Portie.length) >= 1;
-        })
-        .sort((a, b) => a.leiLipsaPerOra - b.leiLipsaPerOra);
+        .filter(r => !r.canMake1Portie)
+        .sort((a, b) => {
+            const leiA = a.leiLipsaPerOra === Infinity ? Infinity : a.leiLipsaPerOra;
+            const leiB = b.leiLipsaPerOra === Infinity ? Infinity : b.leiLipsaPerOra;
+            if (leiA === Infinity && leiB === Infinity) return 0;
+            if (leiA === Infinity) return 1;
+            if (leiB === Infinity) return -1;
+            return leiA - leiB;
+        });
 
     return { available, unavailable };
 }
@@ -745,15 +993,20 @@ function renderFridgeResults() {
                 ? `<span class="text-[8px] font-black text-gray-500 bg-white/5 border border-white/10 rounded-md px-2 py-0.5 uppercase ml-1">1 ing.</span>`
                 : '';
 
-            const ingredienteHTML = res.ingredienteComplet.map(ing => `
+            const numeEscJS = r.nume.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+
+            const ingredienteHTML = res.ingredienteComplet.map(ing => {
+                const ingNumeEsc = ing.nume.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+                return `
                 <div class="fridge-ing-row">
-                    <span class="text-xs text-white font-semibold truncate flex-grow">${ing.nume}</span>
+                    <span onclick="openAuchan('${ingNumeEsc}')" class="text-xs text-white font-semibold truncate flex-grow cursor-pointer active:opacity-70 transition-opacity">${ing.nume}</span>
                     <div class="flex items-center gap-2 flex-shrink-0">
                         <span class="text-[9px] font-black px-2 py-0.5 rounded-md border ${ing.available >= ing.qty ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : ing.available > 0 ? 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20' : 'text-red-400 bg-red-500/10 border-red-500/20'}">
                             ${+ing.available.toFixed(3)} ${ing.unit.toUpperCase()} → ${+ing.qty.toFixed(3)} ${ing.unit.toUpperCase()}
                         </span>
                     </div>
-                </div>`).join('');
+                </div>`;
+            }).join('');
 
             container.innerHTML += `
                 <div class="glass-card no-glow fridge-card-available p-4 mb-3">
@@ -761,7 +1014,7 @@ function renderFridgeResults() {
                         <div class="flex-grow min-w-0">
                             <div class="flex items-center gap-2 mb-1">
                                 <span class="text-[9px] font-black text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-md px-2 py-0.5 uppercase">#${idx+1}</span>
-                                <p class="font-extrabold text-white text-sm truncate">${r.nume}</p>
+                                <p onclick="openAuchan('${numeEscJS}')" class="font-extrabold text-white text-sm truncate cursor-pointer active:opacity-70 transition-opacity">${r.nume}</p>
                                 ${singleBadge}
                             </div>
                             <div class="efficiency-bar"><div class="efficiency-bar-fill" style="width:${barW}%"></div></div>
@@ -802,15 +1055,24 @@ function renderFridgeResults() {
             const maxLipsa = Math.max(...unavailable.map(x => x.leiLipsaPerOra === Infinity ? 0 : x.leiLipsaPerOra), 0.001);
             const barW = res.leiLipsaPerOra === Infinity ? 5 : Math.min(100, Math.round((1 - res.leiLipsaPerOra / (maxLipsa * 1.2)) * 100 + 5));
 
-            const ingredienteHTML = res.ingredienteComplet.map(ing => `
+            const numeEscJS = r.nume.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+
+            const lipsescTotal = res.missingFor1Portie.length;
+            const areTotal = res.nrIngrediente;
+            const areInFrigider = areTotal - lipsescTotal;
+
+            const ingredienteHTML = res.ingredienteComplet.map(ing => {
+                const ingNumeEsc = ing.nume.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+                return `
                 <div class="fridge-ing-row">
-                    <span class="text-xs ${ing.ok ? 'text-white' : 'text-red-300/80'} font-semibold truncate flex-grow">${ing.nume}</span>
+                    <span onclick="openAuchan('${ingNumeEsc}')" class="text-xs ${ing.ok ? 'text-white' : 'text-red-300/80'} font-semibold truncate flex-grow cursor-pointer active:opacity-70 transition-opacity">${ing.nume}</span>
                     <div class="flex items-center gap-2 flex-shrink-0">
                         <span class="text-[9px] font-black px-2 py-0.5 rounded-md border ${ing.ok ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : ing.available > 0 ? 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20' : 'text-red-400 bg-red-500/10 border-red-500/20'}">
                             ${+ing.available.toFixed(3)} ${ing.unit.toUpperCase()} → ${+ing.qty.toFixed(3)} ${ing.unit.toUpperCase()}
                         </span>
                     </div>
-                </div>`).join('');
+                </div>`;
+            }).join('');
 
             container.innerHTML += `
                 <div class="glass-card no-glow fridge-card-unavailable p-4 mb-3">
@@ -818,15 +1080,22 @@ function renderFridgeResults() {
                         <div class="flex-grow min-w-0">
                             <div class="flex items-center gap-2 mb-1">
                                 <span class="text-[9px] font-black text-red-400 bg-red-500/10 border border-red-500/20 rounded-md px-2 py-0.5 uppercase">#${idx+1}</span>
-                                <p class="font-extrabold text-white/70 text-sm truncate">${r.nume}</p>
+                                <p onclick="openAuchan('${numeEscJS}')" class="font-extrabold text-white/70 text-sm truncate cursor-pointer active:opacity-70 transition-opacity">${r.nume}</p>
                             </div>
-                            <div class="efficiency-bar"><div class="efficiency-bar-fill" style="width:${barW}%; opacity:0.5;"></div></div>
+                            <div class="flex items-center gap-2 ml-1 mt-1">
+                                <span class="text-[8px] font-black px-2 py-0.5 rounded-md border border-white/10 text-gray-400 bg-white/5">
+                                    ${areInFrigider}/${areTotal} ingrediente în frigider
+                                </span>
+                                ${lipsescTotal > 0 ? `<span class="text-[8px] font-black px-2 py-0.5 rounded-md border border-red-500/20 text-red-400 bg-red-500/5">lipsesc ${lipsescTotal}</span>` : ''}
+                            </div>
+                            <div class="efficiency-bar mt-2"><div class="efficiency-bar-fill" style="width:${barW}%; opacity:0.5;"></div></div>
                         </div>
                         <div class="text-right flex-shrink-0">
                             <p class="text-sm font-black text-white/60 leading-none">${res.costPer1Portie.toFixed(2)} LEI</p>
                             <p class="text-[9px] font-bold text-gray-600">/ porție</p>
+                            ${res.totalCostLipsa > 0 ? `
                             <p class="text-sm font-black text-red-400 leading-none mt-1">${res.totalCostLipsa.toFixed(2)} LEI</p>
-                            <p class="text-[9px] font-bold text-red-500/60">de cumpărat</p>
+                            <p class="text-[9px] font-bold text-red-500/60">de cumpărat</p>` : ''}
                         </div>
                     </div>
                     <div class="flex gap-2 mt-2 mb-3">
@@ -840,7 +1109,7 @@ function renderFridgeResults() {
                         </div>
                         <div class="flex-1 bg-white/5 rounded-xl p-2 text-center border border-white/5">
                             <p class="text-[7px] font-black text-gray-500 uppercase tracking-widest">Lipsesc</p>
-                            <p class="text-sm font-black text-red-400 leading-tight">${res.missingFor1Portie.length}</p>
+                            <p class="text-sm font-black text-red-400 leading-tight">${lipsescTotal}</p>
                         </div>
                     </div>
                     <div class="bg-red-500/5 border border-red-500/15 rounded-xl p-3">
@@ -852,7 +1121,7 @@ function renderFridgeResults() {
     }
 
     if (available.length === 0 && unavailable.length === 0) {
-        container.innerHTML += `<p class="text-center text-gray-600 py-4 font-black text-[10px] uppercase tracking-widest">Niciun meniu cu 2+ ingrediente configurat</p>`;
+        container.innerHTML += `<p class="text-center text-gray-600 py-4 font-black text-[10px] uppercase tracking-widest">Niciun meniu configurat</p>`;
     }
 }
 
@@ -871,7 +1140,9 @@ function handleCardClick(event, rIdx) {
     toggleSelectReteta(rIdx, !retete[rIdx].selectat);
 }
 
-let lastScrollPos = 0;
+function preparePersonInput(input) {
+    input.value = '';
+}
 
 function prepareInput(input) {
     lastScrollPos = window.scrollY;
@@ -881,19 +1152,20 @@ function prepareInput(input) {
 
 function validarePersoane(input) {
     let val = input.value.replace(/[^1-9]/g, '');
-    if (val !== "") { 
-        input.value = val; 
+    if (val !== "") {
+        input.value = val;
         input.blur();
     }
 }
 
 async function resetDacaEGol(input) {
     if (input.value.trim() === "" || input.value === "0") input.value = "1";
+    const scrollY = window.scrollY;
     await db_saveNumPersoane(input.value);
-    setTimeout(() => { 
-        window.scrollTo({ top: lastScrollPos, behavior: 'smooth' }); 
+    setTimeout(() => {
         render();
         if (currentTab === 'fridge') renderFridgeResults();
+        window.scrollTo({ top: scrollY, behavior: 'instant' });
     }, 50);
 }
 
@@ -1068,7 +1340,7 @@ function openShoppingList() {
                                   class="flex-shrink-0 bg-white/10 text-white px-2 py-0.5 rounded-md text-[11px] font-black border border-white/5 uppercase cursor-pointer active:scale-95 transition-transform select-none">
                                 ${Number(item.totalQty.toFixed(3))} ${item.unitDisplay}
                             </span>
-                            <p onclick="openAuchan('${numeEscaped}')" 
+                            <p onclick="openAuchan('${numeEscaped}')"
                                class="font-bold text-white text-sm truncate cursor-pointer active:opacity-70 transition-opacity">
                                 ${pReal.nume}
                             </p>
@@ -1233,23 +1505,23 @@ function render() {
         const textLockCls = isUnlocked ? '' : 'pointer-events-none';
 
         list.innerHTML += `
-            <div id="recipe-${reteta.id}" 
+            <div id="recipe-${reteta.id}"
                  onclick="handleCardClick(event, ${rIdx})"
                  class="glass-card p-5 relative transition-all duration-300 ${reteta.selectat ? '' : 'inactive'}">
-                
+
                 <div class="flex items-center gap-4 mb-1">
-                    <input type="checkbox" ${reteta.selectat ? 'checked' : ''} 
-                           onchange="toggleSelectReteta(${rIdx}, this.checked)" 
+                    <input type="checkbox" ${reteta.selectat ? 'checked' : ''}
+                           onchange="toggleSelectReteta(${rIdx}, this.checked)"
                            class="w-6 h-6 accent-purple-500">
-                    <input class="font-extrabold text-xl flex-grow text-white bg-transparent outline-none border-none ${textLockCls}" 
+                    <input class="font-extrabold text-xl flex-grow text-white bg-transparent outline-none border-none ${textLockCls}"
                            value="${reteta.nume}" ${isUnlocked ? '' : 'readonly'}
                            onchange="updateRetetaField(${rIdx}, 'nume', this.value)">
                 </div>
-                
+
                 <div class="recipe-content-wrapper">
                     <div class="flex items-center gap-2 mb-4 ml-10">
                         <span class="text-purple-500 font-bold text-[10px]">#</span>
-                        <input class="text-[10px] font-bold text-gray-500 bg-transparent border-none outline-none w-full uppercase tracking-widest ${textLockCls}" 
+                        <input class="text-[10px] font-bold text-gray-500 bg-transparent border-none outline-none w-full uppercase tracking-widest ${textLockCls}"
                                placeholder="taguri..."
                                value="${reteta.tags || ''}" ${isUnlocked ? '' : 'readonly'}
                                onchange="updateRetetaField(${rIdx}, 'tags', this.value)">
@@ -1259,6 +1531,7 @@ function render() {
                         ${reteta.ingrediente.map((ing, iIdx) => {
                             const p = catalog.find(x => x.id === ing.idProd);
                             const qtyCurat = Number(parseFloat(ing.qty).toFixed(3));
+                            const numeIngEsc = p ? p.nume.replace(/\\/g, '\\\\').replace(/'/g, "\\'") : '';
                             return `
                             <div class="flex items-center gap-2 bg-white/5 p-2 pr-3 rounded-2xl border border-white/5">
                                 ${isUnlocked ? `
@@ -1283,7 +1556,7 @@ function render() {
                                     <span class="text-[10px] font-black text-purple-400/70">${p ? p.unit : ''}</span>
                                 </div>
                                 ${isUnlocked ? `
-                                <button onclick="confirmDeleteIngredient(${rIdx}, ${iIdx})" 
+                                <button onclick="confirmDeleteIngredient(${rIdx}, ${iIdx})"
                                         class="w-6 h-6 flex items-center justify-center bg-red-500/20 text-red-500 rounded-full">
                                     <span class="text-[10px]">✕</span>
                                 </button>` : ''}
@@ -1328,7 +1601,7 @@ function render() {
                         <p class="text-lg font-black text-white leading-none">${reteta.costLeiCalculat.toFixed(2)}</p>
                         <p class="text-[9px] font-black text-purple-400 leading-none">LEI</p>
                     </div>
-                    
+
                     <div class="flex flex-col items-center">
                         <p class="text-[7px] font-black text-gray-500 uppercase tracking-widest">Porții</p>
                         <input id="inline-input-${rIdx}-portii"
@@ -1379,10 +1652,12 @@ function render() {
     }
 
     if (lastEditedId) {
+        const idToScroll = lastEditedId;
+        lastEditedId = null;
         setTimeout(() => {
-            const el = document.getElementById(`recipe-${lastEditedId}`);
-            if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); lastEditedId = null; }
-        }, 100);
+            const el = document.getElementById(`recipe-${idToScroll}`);
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 500);
     }
 
     renderCatalog();
@@ -1396,44 +1671,57 @@ function renderCatalog() {
     cat.innerHTML = '';
     const textLockCls = isUnlocked ? '' : 'pointer-events-none';
 
-    catalog
+    const sortedCatalog = catalog
         .filter(p => normalizeText(p.nume).includes(catSearch))
-        .sort((a, b) => a.pretLei - b.pretLei)
-        .forEach((prod) => {
-            const cIdx = catalog.findIndex(x => x.id === prod.id);
-            const numeEscJS = prod.nume.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-            cat.innerHTML += `
-                <div class="glass-card p-5 flex justify-between items-center">
-                    <div class="flex-grow">
-                        <input class="font-bold text-sm block text-white bg-transparent outline-none border-none w-full ${textLockCls}" 
-                               value="${prod.nume}" ${isUnlocked ? '' : 'readonly'}
-                               onchange="updateCatalogField(${cIdx}, 'nume', this.value)">
-                        <input class="text-[10px] font-black text-gray-600 uppercase bg-transparent outline-none border-none w-full ${textLockCls}" 
-                               value="${prod.unit}" ${isUnlocked ? '' : 'readonly'}
-                               onchange="updateCatalogField(${cIdx}, 'unit', this.value)">
+        .sort((a, b) => a.pretLei - b.pretLei);
+
+    sortedCatalog.forEach((prod) => {
+        const cIdx = catalog.findIndex(x => x.id === prod.id);
+        const numeEscJS = prod.nume.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        cat.innerHTML += `
+            <div id="catalog-item-${prod.id}" class="glass-card p-5 flex justify-between items-center">
+                <div class="flex-grow">
+                    ${isUnlocked ? `
+                    <input class="font-bold text-sm block text-white bg-transparent outline-none border-none w-full"
+                           value="${prod.nume}"
+                           onchange="updateCatalogField(${cIdx}, 'nume', this.value)">` : `
+                    <span onclick="openAuchan('${numeEscJS}')" class="font-bold text-sm block text-white cursor-pointer active:opacity-70 transition-opacity">${prod.nume}</span>`}
+                    <input class="text-[10px] font-black text-gray-600 uppercase bg-transparent outline-none border-none w-full ${textLockCls}"
+                           value="${prod.unit}" ${isUnlocked ? '' : 'readonly'}
+                           onchange="updateCatalogField(${cIdx}, 'unit', this.value)">
+                </div>
+                <div class="flex items-center gap-2">
+                    <div class="bg-white/5 px-3 py-2 rounded-xl flex items-center gap-2 border border-white/5">
+                        <input type="number" step="0.01"
+                               inputmode="decimal"
+                               class="w-16 text-right font-black text-emerald-400 bg-transparent outline-none ${isUnlocked ? '' : 'pointer-events-none'}"
+                               value="${prod.pretLei}" ${isUnlocked ? '' : 'readonly'}
+                               onfocus="this.select()"
+                               onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}"
+                               onblur="updateCatalogFieldAndScroll('${prod.id}', ${cIdx}, 'pretLei', parseFloat(this.value) || 0)">
+                        <span class="text-[9px] font-bold text-gray-500">LEI</span>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <div class="bg-white/5 px-3 py-2 rounded-xl flex items-center gap-2 border border-white/5">
-                            <input type="number" step="0.01" 
-                                   class="w-16 text-right font-black text-emerald-400 bg-transparent outline-none ${isUnlocked ? '' : 'pointer-events-none'}" 
-                                   value="${prod.pretLei}" ${isUnlocked ? '' : 'readonly'}
-                                   onfocus="this.select()"
-                                   onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}"
-                                   onblur="updateCatalogField(${cIdx}, 'pretLei', parseFloat(this.value) || 0)">
-                            <span class="text-[9px] font-bold text-gray-500">LEI</span>
-                        </div>
-                        ${isUnlocked ? `
-                        <button onclick="openAuchan('${numeEscJS}')" 
-                                class="w-8 h-8 flex items-center justify-center bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-full active:scale-90 transition-all">
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="11" cy="11" r="8"></circle>
-                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                            </svg>
-                        </button>
-                        <button onclick="confirmDeleteCatalogItem(${cIdx})" class="w-8 h-8 flex items-center justify-center bg-red-500/10 text-red-500 border border-red-500/20 rounded-full">✕</button>` : ''}
-                    </div>
-                </div>`;
-        });
+                    ${isUnlocked ? `
+                    <button onclick="openAuchan('${numeEscJS}')"
+                            class="w-8 h-8 flex items-center justify-center bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-full active:scale-90 transition-all">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                    </button>
+                    <button onclick="confirmDeleteCatalogItem(${cIdx})" class="w-8 h-8 flex items-center justify-center bg-red-500/10 text-red-500 border border-red-500/20 rounded-full">✕</button>` : ''}
+                </div>
+            </div>`;
+    });
+
+    if (lastEditedCatalogId) {
+        const idToScroll = lastEditedCatalogId;
+        lastEditedCatalogId = null;
+        setTimeout(() => {
+            const el = document.getElementById(`catalog-item-${idToScroll}`);
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 500);
+    }
 }
 
 // ============================================================
@@ -1442,6 +1730,13 @@ function renderCatalog() {
 
 async function updateCatalogField(cIdx, field, value) {
     catalog[cIdx][field] = value;
+    await db_upsertCatalogItem(catalog[cIdx]);
+    render();
+}
+
+async function updateCatalogFieldAndScroll(prodId, cIdx, field, value) {
+    catalog[cIdx][field] = value;
+    lastEditedCatalogId = prodId;
     await db_upsertCatalogItem(catalog[cIdx]);
     render();
 }
@@ -1455,11 +1750,11 @@ async function addNewProductToCatalog() {
 
 async function confirmDeleteCatalogItem(idx) {
     const prod = catalog[idx];
-    if (confirm(`ATENȚIE: Ștergerea produsului "${prod.nume}" din catalog îl va elimina din toate calculele. Continui?`)) {
-        await db_deleteCatalogItem(prod.id);
-        catalog.splice(idx, 1);
-        render();
-    }
+    if (!confirm(`Ștergi "${prod.nume}" din catalog?\n\nAcest produs va fi eliminat din toate calculele!`)) return;
+    if (!confirm(`A DOUA CONFIRMARE: Ești absolut sigur că vrei să ștergi "${prod.nume}"?`)) return;
+    await db_deleteCatalogItem(prod.id);
+    catalog.splice(idx, 1);
+    render();
 }
 
 async function toggleSelectReteta(rIdx, checked) {
@@ -1489,11 +1784,11 @@ async function addRecipe() {
 
 async function confirmDeleteRecipe(idx) {
     const reteta = retete[idx];
-    if (confirm(`Ești sigur că vrei să ștergi "${reteta.nume}"?`)) {
-        await db_deleteReteta(reteta.id);
-        retete.splice(idx, 1);
-        render();
-    }
+    if (!confirm(`Ștergi meniul "${reteta.nume}"?`)) return;
+    if (!confirm(`A DOUA CONFIRMARE: Ești sigur că vrei să ștergi definitiv "${reteta.nume}"?`)) return;
+    await db_deleteReteta(reteta.id);
+    retete.splice(idx, 1);
+    render();
 }
 
 async function confirmDeleteIngredient(rIdx, iIdx) {
@@ -1561,11 +1856,34 @@ function closeSheets() {
 // ============================================================
 
 window.onload = async function () {
+    document.querySelectorAll('.bottom-sheet').forEach(s => s.classList.remove('active'));
+
+    // FIX: blochează keyboard-open în primele 2.5s ca să nu ascundă UI-ul la load
+    document.body.classList.add('suppress-keyboard');
+    setTimeout(() => document.body.classList.remove('suppress-keyboard'), 2500);
+
     await db_loadCatalog();
     await db_loadRetete();
     await db_loadNumPersoane();
     await db_loadFrigider();
+
     render();
+
+    // Animații de intrare staggered
+    setTimeout(() => {
+        const nav = document.querySelector('.tab-bar');
+        if (nav) nav.classList.add('ui-visible');
+    }, 1000);
+
+    setTimeout(() => {
+        const hud = document.querySelector('.hud-status');
+        if (hud) hud.classList.add('ui-visible');
+    }, 1500);
+
+    setTimeout(() => {
+        const picker = document.querySelector('.person-picker');
+        if (picker) picker.classList.add('ui-visible');
+    }, 2000);
 };
 
 </script>
