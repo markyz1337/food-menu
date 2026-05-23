@@ -1071,7 +1071,7 @@ function formatDateCompact(ts) {
 
         const currentScrollY = window.scrollY;
 
-        if (currentScrollY > lastScrollY + 40) {
+        if (currentScrollY > lastScrollY + 10) {
             hideNav();
         }
 
@@ -1862,7 +1862,7 @@ function switchTab(tab) {
 
         currentTab = tab;
     window._ignoreScroll = true;
-    setTimeout(() => { window._ignoreScroll = false; }, 1000);
+    setTimeout(() => { window._ignoreScroll = false; }, 2000);
 
 
     const hud = document.getElementById('hud-status') || document.querySelector('.hud-status');
