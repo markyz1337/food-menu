@@ -2304,11 +2304,13 @@ function generateMenuPDF() {
         <p style="font-size:16px;font-weight:900;color:#fff;line-height:1;">${totalLei.toFixed(2)}</p>
         <p style="font-size:8px;font-weight:900;color:#c084fc;">LEI</p>
     </div>
-    <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:12px;text-align:center;">
-        <p style="font-size:6px;font-weight:900;color:#6b7280;text-transform:uppercase;letter-spacing:2px;margin-bottom:4px;">Autonomie</p>
-        <p style="font-size:22px;font-weight:900;color:#fff;line-height:1;">${zileAuto.toFixed(1)}</p>
-        <p style="font-size:8px;font-weight:900;color:#c084fc;">ZILE</p>
+    <div style="background:rgba(192,132,252,0.08);border:1px solid rgba(192,132,252,0.25);border-radius:14px;padding:12px;text-align:center;">
+        <p style="font-size:6px;font-weight:900;color:#6b7280;text-transform:uppercase;letter-spacing:2px;margin-bottom:4px;">Ajunge până pe</p>
+        <p style="font-size:16px;font-weight:900;color:#fff;line-height:1.1;">${fmt(dateEnd)}</p>
+        <p style="font-size:8px;font-weight:900;color:#c084fc;">${zileAuto.toFixed(1)} zile</p>
     </div>
+
+
 </div>
 <div style="display:flex;gap:8px;margin-bottom:24px;">
     <div style="flex:1;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:10px;text-align:center;">
@@ -2328,8 +2330,20 @@ ${cardsHTML}
 <div style="text-align:center;padding-top:16px;border-top:1px solid rgba(255,255,255,0.06);">
     <p style="font-size:8px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:2px;">GastroGlass · ${dateStr} – ${fmt(dateEnd)}</p>
 </div>
+<div style="position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:999;pointer-events:auto;">
+    <button onclick="window.print()" style="display:flex;align-items:center;gap:8px;padding:14px 28px;background:#c084fc;color:#000;border:none;border-radius:999px;font-family:'Plus Jakarta Sans',sans-serif;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:2px;cursor:pointer;box-shadow:0 8px 24px rgba(192,132,252,0.5);white-space:nowrap;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 6 2 18 2 18 9"></polyline>
+            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+            <rect x="6" y="14" width="12" height="8"></rect>
+        </svg>
+        Printează / Salvează PDF
+    </button>
+</div>
+<style>@media print { button { display:none !important; } }</style>
 </body>
 </html>`;
+
 
     // Creăm un iframe ascuns în pagina curentă pentru a putea folosi html2canvas
     const iframe = document.createElement('iframe');
