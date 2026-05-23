@@ -478,6 +478,8 @@
         const tag = el.tagName;
         if (tag !== 'INPUT' && tag !== 'TEXTAREA') return;
         if (el.id === 'hidden-password-input') return;
+        // *** FIX: ignoră inputurile readonly — nu deschid tastatura ***
+        if (el.readOnly) return;
 
         if (isPersonPickerInput(el)) {
             document.body.classList.add('person-picker-focus');
@@ -501,6 +503,8 @@
         const tag = el.tagName;
         if (tag !== 'INPUT' && tag !== 'TEXTAREA') return;
         if (el.id === 'hidden-password-input') return;
+        // *** FIX: ignoră inputurile readonly ***
+        if (el.readOnly) return;
 
         if (isPersonPickerInput(el)) {
             document.body.classList.remove('person-picker-focus');
@@ -613,7 +617,6 @@ function formatDateCompact(ts) {
     if (diffMin < 60) return `${diffMin}min`;
     if (diffH < 24) return `${diffH}h`;
     if (diffD < 7) return `${diffD}z`;
-    // same year: show day.month
     if (d.getFullYear() === now.getFullYear()) {
         return `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}`;
     }
@@ -628,7 +631,6 @@ function onFridgeStockSearch(val) {
     fridgeStockSearchTerm = val.trim().toLowerCase();
     const clearBtn = document.getElementById('fridge-stock-clear');
     if (clearBtn) clearBtn.classList.toggle('visible', val.length > 0);
-    // when searching, auto-expand
     if (fridgeStockSearchTerm.length > 0) fridgeStockExpanded = true;
     renderFridge();
 }
@@ -784,7 +786,7 @@ async function deleteFridgeItem(prodId) {
     const nume = prod ? prod.nume : prodId;
     if (!confirm(`Ștergi "${nume}" din frigider?`)) return;
     frigider = frigider.filter(f => f.id !== prodId);
-    await db_deleteFridgeItem(prodId);
+    await db_deleteFrigiderItem(prodId);
     renderFridge();
 }
 
@@ -799,7 +801,6 @@ function renderFridge() {
         return;
     }
 
-    // Filter by search
     const sortedAll = frigider
         .slice()
         .sort((a, b) => (b.addedAt || 0) - (a.addedAt || 0));
@@ -822,7 +823,6 @@ function renderFridge() {
         const safeId = prod.id.replace(/[^a-zA-Z0-9_-]/g, '_');
         const numeEscJS = prod.nume.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 
-        // Date display
         const wasModified = item.modifiedAt && item.modifiedAt !== item.addedAt;
         const dateTs = wasModified ? item.modifiedAt : item.addedAt;
         const dateLabel = formatDateCompact(dateTs);
@@ -855,7 +855,6 @@ function renderFridge() {
             </div>`;
     });
 
-    // Expand / collapse button
     if (!fridgeStockSearchTerm) {
         if (total > FRIDGE_PREVIEW_COUNT) {
             const expandedCls = fridgeStockExpanded ? 'expanded' : '';
@@ -1858,7 +1857,6 @@ function closeSheets() {
 window.onload = async function () {
     document.querySelectorAll('.bottom-sheet').forEach(s => s.classList.remove('active'));
 
-    // FIX: blochează keyboard-open în primele 2.5s ca să nu ascundă UI-ul la load
     document.body.classList.add('suppress-keyboard');
     setTimeout(() => document.body.classList.remove('suppress-keyboard'), 2500);
 
@@ -1869,7 +1867,6 @@ window.onload = async function () {
 
     render();
 
-    // Animații de intrare staggered
     setTimeout(() => {
         const nav = document.querySelector('.tab-bar');
         if (nav) nav.classList.add('ui-visible');
