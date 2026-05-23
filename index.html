@@ -1809,7 +1809,7 @@ function switchTab(tab) {
         render();
     }
 
-    setTimeout(() => window.scrollTo({ top: scrollPositions[tab] || 0, behavior: 'instant' }), 5);
+    setTimeout(() => window.scrollTo({ top: scrollPositions[tab] || 0, behavior: 'smooth' }), 5);
 }
 
 // ============================================================
