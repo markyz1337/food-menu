@@ -2201,7 +2201,13 @@ function closeSheets() {
 // ============================================================
 
 async function generateMenuPDF() {
-    const { jsPDF } = window.jspdf;
+    // Fix: jsPDF poate fi pe window.jspdf.jsPDF sau direct window.jsPDF
+    const jsPDFClass = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+    if (!jsPDFClass) {
+        alert('Librăria PDF nu s-a încărcat. Verifică conexiunea și reîncarcă pagina.');
+        return;
+    }
+    const jsPDF = jsPDFClass;
 
     function cleanText(text) {
         if (!text) return '';
