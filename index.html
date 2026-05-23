@@ -1541,17 +1541,18 @@ function render() {
                                     ${p ? p.nume : 'Alege Produs...'}
                                 </span>`}
                                 <div class="ing-qty-wrap ${isUnlocked ? '' : 'opacity-60'}">
-                                    <input id="inline-input-${rIdx}-${iIdx}"
-                                           type="number"
-                                           inputmode="decimal"
-                                           min="0" step="any"
-                                           value="${qtyCurat}"
-                                           ${isUnlocked ? '' : 'readonly'}
-                                           onfocus="this.select()"
-                                           onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}"
-                                           onblur="confirmInlineInput(${rIdx},'ingQty',${iIdx},this)"
-                                           class="w-12 text-center text-[10px] font-black text-purple-300 bg-transparent outline-none border-none"
-                                           style="-moz-appearance:textfield;-webkit-appearance:none;">
+<input id="inline-input-${rIdx}-${iIdx}"
+       type="number"
+       inputmode="decimal"
+       min="0" step="any"
+       value="${qtyCurat}"
+       ${isUnlocked ? '' : 'readonly tabindex="-1"'}
+       ${isUnlocked ? 'onfocus="this.select()"' : ''}
+       onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}"
+       onblur="confirmInlineInput(${rIdx},'ingQty',${iIdx},this)"
+       class="w-12 text-center text-[10px] font-black text-purple-300 bg-transparent outline-none border-none"
+       style="-moz-appearance:textfield;-webkit-appearance:none;${isUnlocked ? '' : 'pointer-events:none;user-select:none;'}">
+
                                     <span class="text-[10px] font-black text-purple-400/70">${p ? p.unit : ''}</span>
                                 </div>
                                 ${isUnlocked ? `
