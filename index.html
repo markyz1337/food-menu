@@ -1064,11 +1064,17 @@ function formatDateCompact(ts) {
     }
 
     window.addEventListener('scroll', () => {
+        if (window._ignoreScroll) {
+            lastScrollY = window.scrollY;
+            return;
+        }
+
         const currentScrollY = window.scrollY;
 
-        if (currentScrollY > lastScrollY + 45) {
+        if (currentScrollY > lastScrollY + 40) {
             hideNav();
         }
+
 
         lastScrollY = currentScrollY;
 
@@ -1854,7 +1860,10 @@ function switchTab(tab) {
         bulkBtn.style.display = '';
     }
 
-    currentTab = tab;
+        currentTab = tab;
+    window._ignoreScroll = true;
+    setTimeout(() => { window._ignoreScroll = false; }, 1000);
+
 
     const hud = document.getElementById('hud-status') || document.querySelector('.hud-status');
     const personPicker = document.querySelector('.person-picker');
