@@ -1449,20 +1449,21 @@ function switchTab(tab) {
     document.getElementById('nav-catalog').classList.toggle('active', tab === 'catalog');
     document.getElementById('nav-fridge').classList.toggle('active', tab === 'fridge');
 
-    const titles = { home: 'Planificator', catalog: 'Catalog', fridge: '❄️ Frigider' };
+    const titles = { home: 'Planificator', catalog: '📙 Catalog', fridge: '❄️ Frigider' };
     const subtitles = { home: 'Configurator Mese', catalog: 'Baza de Date', fridge: 'Stoc & Meniuri' };
     document.getElementById('view-title').innerText = titles[tab];
     document.getElementById('view-subtitle').innerText = subtitles[tab];
 
     const collapseBtn = document.getElementById('collapse-btn');
     const bulkBtn = document.getElementById('bulk-select-btn');
-    if (tab === 'fridge') {
-        collapseBtn.style.display = 'none';
-        bulkBtn.style.display = 'none';
-    } else {
-        collapseBtn.style.display = '';
-        bulkBtn.style.display = '';
-    }
+if (tab === 'fridge' || tab === 'catalog') {
+    collapseBtn.style.display = 'none';
+    bulkBtn.style.display = 'none';
+} else {
+    collapseBtn.style.display = '';
+    bulkBtn.style.display = '';
+}
+
 
     currentTab = tab;
 
