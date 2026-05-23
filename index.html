@@ -341,7 +341,7 @@
 
     <div id="search-container" class="mb-6">
         <div class="relative flex items-center">
-            <input type="text" id="main-search" oninput="updateSearch(this.value)" placeholder="Caută în meniu..."
+<input type="text" id="main-search" oninput="updateSearch(this.value)" onfocus="this.select()" placeholder="Caută în meniu..."
                    class="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 pr-12 text-sm font-semibold text-white placeholder:text-gray-600 focus:outline-none focus:border-purple-500/50 transition-all">
             <button id="clear-search" onclick="clearSearch()"
                     class="hidden absolute right-4 w-8 h-8 flex items-center justify-center bg-white/10 hover:bg-white/20 rounded-full transition-all">
@@ -357,7 +357,7 @@
 
     <div id="page-catalog" class="hidden space-y-4">
         <div class="px-2 mb-4">
-            <input type="text" id="catalog-search" oninput="renderCatalog()" placeholder="Caută în catalog..." class="search-pill">
+<input type="text" id="catalog-search" oninput="renderCatalog()" onfocus="this.select()" placeholder="Caută în catalog..." class="search-pill">
         </div>
         <div class="flex justify-between items-center px-2 mb-4">
             <h3 class="text-xs font-black text-gray-400 uppercase tracking-widest">Baza de Date Produse</h3>
@@ -381,9 +381,11 @@
 
         <!-- Search bar frigider -->
         <div class="fridge-search-wrap">
-            <input type="text" id="fridge-stock-search"
-                   placeholder="Caută în stoc..."
-                   oninput="onFridgeStockSearch(this.value)">
+<input type="text" id="fridge-stock-search"
+       placeholder="Caută în stoc..."
+       onfocus="this.select()"
+       oninput="onFridgeStockSearch(this.value)">
+
             <span id="fridge-stock-clear" class="fridge-search-clear" onclick="clearFridgeSearch()">✕</span>
         </div>
 
