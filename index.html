@@ -1025,7 +1025,8 @@ function formatDateCompact(ts) {
 // ============================================================
 
 (function() {
-    let lastScrollY = window.scrollY;
+window._navResetScroll = function() { lastScrollY = window.scrollY; };
+let lastScrollY = window.scrollY;
     let scrollTimer = null;
     let isHidden = false;
 
@@ -1861,8 +1862,14 @@ function switchTab(tab) {
     }
 
         currentTab = tab;
-    window._ignoreScroll = true;
-    setTimeout(() => { window._ignoreScroll = false; }, 2000);
+window._ignoreScroll = true;
+setTimeout(() => {
+    window.scrollTo({ top: scrollPositions[tab] || 0, behavior: 'instant' });
+    window._ignoreScroll = false;
+    window._navResetScroll();
+}, 50);
+
+
 
 
     const hud = document.getElementById('hud-status') || document.querySelector('.hud-status');
@@ -1881,7 +1888,6 @@ function switchTab(tab) {
         render();
     }
 
-    setTimeout(() => window.scrollTo({ top: scrollPositions[tab] || 0, behavior: 'instant' }), 10);
 }
 
 // ============================================================
