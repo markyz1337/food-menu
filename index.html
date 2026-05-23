@@ -128,7 +128,7 @@
         .fridge-card-unavailable { border-left: 4px solid rgba(239,68,68,0.6); box-shadow: inset 12px 0 18px -6px rgba(239,68,68,0.20), -4px 0 15px -3px rgba(239,68,68,0.15); opacity: 0.85; }
         .fridge-section-title { font-size: 9px; font-weight: 900; letter-spacing: 3px; text-transform: uppercase; padding: 6px 0 10px 2px; }
         .missing-badge { background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3); color: #fca5a5; border-radius: 8px; padding: 2px 7px; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px; }
-        .fridge-qty-btn { background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3); color: #6ee7b7; border-radius: 12px; padding: 4px 10px; font-size: 10px; font-weight: 900; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 4px; }
+.fridge-qty-btn { background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3); color: #6ee7b7; border-radius: 10px; padding: 0 6px; height: 28px; font-size: 10px; font-weight: 900; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 2px; }
         .fridge-qty-btn:active { transform: scale(0.93); background: rgba(16,185,129,0.3); }
         .score-badge { background: rgba(192,132,252,0.15); border: 1px solid rgba(192,132,252,0.3); color: #e9d5ff; border-radius: 10px; padding: 2px 8px; font-size: 9px; font-weight: 900; }
         .fridge-product-row { display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 18px; padding: 7px 10px; margin-bottom: 10px; }
@@ -478,7 +478,7 @@
         const tag = el.tagName;
         if (tag !== 'INPUT' && tag !== 'TEXTAREA') return;
         if (el.id === 'hidden-password-input') return;
-        // *** FIX: ignoră inputurile readonly — nu deschid tastatura ***
+        // *** FIX: ignoră inputurile readonly -- nu deschid tastatura ***
         if (el.readOnly) return;
 
         if (isPersonPickerInput(el)) {
@@ -801,9 +801,14 @@ function renderFridge() {
         return;
     }
 
-    const sortedAll = frigider
-        .slice()
-        .sort((a, b) => (b.addedAt || 0) - (a.addedAt || 0));
+const sortedAll = frigider
+    .slice()
+.sort((a, b) => {
+    const tsA = Math.max(a.modifiedAt || 0, a.addedAt || 0);
+    const tsB = Math.max(b.modifiedAt || 0, b.addedAt || 0);
+    return tsB - tsA;
+});
+
 
     const filtered = fridgeStockSearchTerm
         ? sortedAll.filter(item => {
@@ -847,7 +852,7 @@ function renderFridge() {
                            onfocus="this.select()"
                            onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}"
                            onblur="confirmFridgeQtyInput('${prod.id}', this)"
-                           class="w-14 text-center text-[10px] font-black text-emerald-400 bg-transparent outline-none border-none"
+class="w-8 text-center text-[10px] font-black text-emerald-400 bg-transparent outline-none border-none"
                            style="-moz-appearance:textfield; -webkit-appearance:none;">
                     <span class="text-[10px] font-black text-emerald-400">${prod.unit}</span>
                 </div>
@@ -860,7 +865,7 @@ function renderFridge() {
             const expandedCls = fridgeStockExpanded ? 'expanded' : '';
             const btnLabel = fridgeStockExpanded
                 ? `Restrânge`
-                : `Vezi toate — ${hidden} mai multe`;
+                : `Vezi toate -- ${hidden} mai multe`;
             list.innerHTML += `
                 <button onclick="toggleFridgeExpand()" class="fridge-expand-btn ${expandedCls}">
                     <span>${btnLabel}</span>
@@ -1871,12 +1876,12 @@ window.onload = async function () {
     setTimeout(() => {
         const nav = document.querySelector('.tab-bar');
         if (nav) nav.classList.add('ui-visible');
-    }, 1000);
+    }, 750);
 
     setTimeout(() => {
         const hud = document.querySelector('.hud-status');
         if (hud) hud.classList.add('ui-visible');
-    }, 1500);
+    }, 1000);
 
     setTimeout(() => {
         const picker = document.querySelector('.person-picker');
