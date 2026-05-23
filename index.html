@@ -521,10 +521,10 @@
     </div>
 
     <div id="page-home" class="space-y-6">
-<div class="mb-4 flex items-center gap-3">
-    <div class="person-picker-inline flex items-center gap-2 px-3 py-2 glass-card no-glow border border-purple-500/25 rounded-2xl cursor-pointer"
-         onclick="document.getElementById('num-persoane-input-inline').focus()"
-         style="background: rgba(192,132,252,0.06); flex-shrink:0;">
+<div class="mb-4" style="display:flex;align-items:stretch;gap:12px;">
+    <div class="person-picker-inline"
+         onclick="document.getElementById('num-persoane-input').focus()"
+         style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:rgba(192,132,252,0.06);border:1px solid rgba(192,132,252,0.25);border-radius:18px;cursor:pointer;flex-shrink:0;">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c084fc" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
             <circle cx="12" cy="7" r="4"></circle>
@@ -534,8 +534,7 @@
                style="background:transparent;border:none;color:white;font-weight:800;font-size:16px;width:15px;text-align:center;outline:none;">
     </div>
     <button onclick="generateMenuPDF()"
-            class="flex-1 py-4 flex items-center justify-center gap-2 glass-card no-glow border border-purple-500/25 text-purple-300 font-black text-[11px] uppercase tracking-widest active:scale-[0.98] transition-all"
-            style="background: rgba(192,132,252,0.06);">
+            style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;background:rgba(192,132,252,0.06);border:1px solid rgba(192,132,252,0.25);border-radius:18px;color:#d8b4fe;font-family:'Plus Jakarta Sans',sans-serif;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:2px;cursor:pointer;transition:all 0.2s;">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
             <polyline points="14 2 14 8 20 8"></polyline>
@@ -545,6 +544,7 @@
         Exportă PDF
     </button>
 </div>
+
 
         <div id="recipes-list" class="space-y-6"></div>
         <button onclick="addRecipe()" class="locked-only-block w-full py-5 glass-card border-dashed border-2 border-white/10 text-gray-400 font-black text-xs tracking-widest uppercase">+ Adaugă Meniu Nou</button>
