@@ -1019,6 +1019,71 @@ function formatDateCompact(ts) {
     return `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getFullYear()).slice(-2)}`;
 }
 
+
+// ============================================================
+// NAV BAR SCROLL HIDE/SHOW
+// ============================================================
+
+(function() {
+    let lastScrollY = window.scrollY;
+    let scrollTimer = null;
+    let isHidden = false;
+
+    function hideNav() {
+        const nav = document.querySelector('.tab-bar');
+        if (!nav || isHidden) return;
+        isHidden = true;
+        nav.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+        nav.style.opacity = '0';
+        nav.style.transform = 'translateX(-50%) translateY(18px)';
+        nav.style.pointerEvents = 'none';
+
+        const hud = document.querySelector('.hud-status');
+        if (hud && currentTab === 'home') {
+            hud.style.transition = 'bottom 0.3s ease';
+            hud.style.bottom = '18px';
+        }
+
+    }
+
+    function showNav() {
+        const nav = document.querySelector('.tab-bar');
+        if (!nav) return;
+        isHidden = false;
+        nav.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+        nav.style.opacity = '1';
+        nav.style.transform = 'translateX(-50%) translateY(0)';
+        nav.style.pointerEvents = 'auto';
+
+        const hud = document.querySelector('.hud-status');
+        if (hud && currentTab === 'home') {
+            hud.style.transition = 'bottom 0.4s ease';
+            hud.style.bottom = '90px';
+        }
+
+    }
+
+    window.addEventListener('scroll', () => {
+        const currentScrollY = window.scrollY;
+
+        if (currentScrollY > lastScrollY + 5) {
+            hideNav();
+        }
+
+        lastScrollY = currentScrollY;
+
+        clearTimeout(scrollTimer);
+        scrollTimer = setTimeout(() => {
+            showNav();
+        }, 500);
+    }, { passive: true });
+})();
+
+
+
+
+
+
 // ============================================================
 // FRIDGE SEARCH
 // ============================================================
@@ -1791,11 +1856,22 @@ function switchTab(tab) {
 
     currentTab = tab;
 
+    const hud = document.getElementById('hud-status') || document.querySelector('.hud-status');
+    const personPicker = document.querySelector('.person-picker');
+    if (tab === 'home') {
+        if (hud) hud.style.display = '';
+        if (personPicker) personPicker.style.display = '';
+    } else {
+        if (hud) hud.style.display = 'none';
+        if (personPicker) personPicker.style.display = 'none';
+    }
+
     if (tab === 'fridge') {
         renderFridge();
     } else {
         render();
     }
+
     setTimeout(() => window.scrollTo({ top: scrollPositions[tab] || 0, behavior: 'instant' }), 10);
 }
 
