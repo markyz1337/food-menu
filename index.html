@@ -2200,9 +2200,6 @@ function closeSheets() {
 // ============================================================
 
 function generateMenuPDF() {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-
     const nrPers = parseInt(document.getElementById('num-persoane-input').value) || 1;
     const meniuriActive = retete.filter(r => r.selectat);
 
@@ -2211,8 +2208,8 @@ function generateMenuPDF() {
         return;
     }
 
-    // --- Calcule globale ---
-    let totalLeiGlobal = 0, totalOreGlobal = 0;
+    // Calcule globale
+    let totalLei = 0, totalOre = 0;
     meniuriActive.forEach(r => {
         let cost = 0;
         r.ingrediente.forEach(ing => {
@@ -2221,250 +2218,169 @@ function generateMenuPDF() {
         });
         r._costTotal = cost * r.portii;
         r._oreTotal = r.ore * r.portii;
-        totalLeiGlobal += r._costTotal;
-        totalOreGlobal += r._oreTotal;
+        totalLei += r._costTotal;
+        totalOre += r._oreTotal;
     });
 
     const orePerZi = 12;
-    const zileAutonomie = (totalOreGlobal / nrPers) / orePerZi;
-    const pretPeZi = totalOreGlobal > 0 ? (totalLeiGlobal / totalOreGlobal) * (orePerZi * nrPers) : 0;
+    const zileAuto = (totalOre / nrPers) / orePerZi;
+    const pretPeZi = totalOre > 0 ? (totalLei / totalOre) * (orePerZi * nrPers) : 0;
 
-    // Interval date
     const now = new Date();
-    const dateEnd = new Date(now.getTime() + zileAutonomie * 24 * 3600 * 1000);
     const fmt = d => `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()}`;
     const dateStr = fmt(now);
-    const dateEndStr = fmt(dateEnd);
+    const dateEnd = new Date(now.getTime() + zileAuto * 24 * 3600 * 1000);
 
-    const PAGE_W = 210, PAGE_H = 297;
-    const ML = 12, MR = 12;
-    const CW = PAGE_W - ML - MR;
-
-    // Culori
-    const C_BG        = [8,   7,  16];
-    const C_CARD      = [20,  18,  36];
-    const C_CARD2     = [14,  13,  26];
-    const C_PURPLE    = [192, 132, 252];
-    const C_PURPLE_DIM= [100,  65, 160];
-    const C_EMERALD   = [ 16, 185, 129];
-    const C_WHITE     = [255, 255, 255];
-    const C_GRAY      = [120, 115, 150];
-    const C_GRAY2     = [ 60,  58,  85];
-
-    // Helpers
-    function rrect(x, y, w, h, r, fill, stroke) {
-        if (fill)  doc.setFillColor(...fill);
-        if (stroke) doc.setDrawColor(...stroke);
-        const mode = fill && stroke ? 'FD' : fill ? 'F' : 'D';
-        doc.roundedRect(x, y, w, h, r, r, mode);
-    }
-
-    function fitText(text, maxW, fontSize) {
-        // Strip emoji for helvetica (jsPDF built-in can't render them)
-        text = text.replace(/[\u{1F000}-\u{1FFFF}]/gu, '').replace(/[\u2600-\u27BF]/g, '').trim();
-        doc.setFontSize(fontSize);
-        while (doc.getTextWidth(text) > maxW && text.length > 3)
-            text = text.slice(0, -2) + '…';
-        return text;
-    }
-
-    function gradBar(x, y, w, h, c1, c2) {
-        const steps = 10;
-        for (let i = 0; i < steps; i++) {
-            const t = i / (steps - 1);
-            doc.setFillColor(
-                Math.round(c1[0] + (c2[0]-c1[0]) * t),
-                Math.round(c1[1] + (c2[1]-c1[1]) * t),
-                Math.round(c1[2] + (c2[2]-c1[2]) * t)
-            );
-            doc.rect(x + (w/steps)*i, y, w/steps + 0.5, h, 'F');
-        }
-    }
-
-    function hline(y) {
-        doc.setDrawColor(...C_GRAY2);
-        doc.setLineWidth(0.2);
-        doc.line(ML, y, ML + CW, y);
-    }
-
-    function newPage() {
-        doc.addPage();
-        doc.setFillColor(...C_BG);
-        doc.rect(0, 0, PAGE_W, PAGE_H, 'F');
-        return 12;
-    }
-
-    // ── PAGINA 1 ──────────────────────────────────────────────
-    doc.setFillColor(...C_BG);
-    doc.rect(0, 0, PAGE_W, PAGE_H, 'F');
-
-    gradBar(0, 0, PAGE_W, 30, [30, 10, 60], [8, 7, 16]);
-
-    // Titlu
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(20);
-    doc.setTextColor(...C_WHITE);
-    doc.text('PLAN MENIURI', ML, 13, { baseline: 'top' });
-
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7);
-    doc.setTextColor(...C_GRAY);
-    doc.text('GASTROGLASS  ·  PLANIFICATOR ALIMENTAR', ML, 21, { baseline: 'top' });
-
-    // Data + interval dreapta
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(7);
-    doc.setTextColor(...C_PURPLE);
-    doc.text(`${dateStr} - ${dateEndStr}`, PAGE_W - MR, 11, { align: 'right', baseline: 'top' });
-    doc.setTextColor(...C_GRAY);
-    doc.text(`${nrPers} ${nrPers === 1 ? 'PERSOANA' : 'PERSOANE'}  ·  ${zileAutonomie.toFixed(1)} ZILE`, PAGE_W - MR, 17, { align: 'right', baseline: 'top' });
-
-    gradBar(0, 29, PAGE_W, 1.2, C_PURPLE_DIM, [8, 7, 16]);
-
-    // ── CARDURI SUMAR (3 cifre, mai compact) ─────────────────
-    let cy = 34;
-    const statCards = [
-        { label: 'MENIURI ACTIVE', val: meniuriActive.length.toString(), unit: 'meniuri', color: C_PURPLE },
-        { label: 'BUGET TOTAL',    val: totalLeiGlobal.toFixed(2),        unit: 'LEI',     color: C_EMERALD },
-        { label: 'COST / ZI',      val: pretPeZi.toFixed(2),              unit: 'LEI/ZI',  color: C_PURPLE },
-    ];
-    const scW = (CW - 6) / 3;
-    statCards.forEach((sc, i) => {
-        const sx = ML + i * (scW + 3);
-        rrect(sx, cy, scW, 18, 3, C_CARD);
-        doc.setFillColor(...sc.color);
-        doc.roundedRect(sx, cy, 2, 18, 1, 1, 'F');
-        doc.setFontSize(5.5);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(...C_GRAY);
-        doc.text(sc.label, sx + scW/2, cy + 3.5, { align: 'center', baseline: 'top' });
-        doc.setFontSize(11);
-        doc.setTextColor(...C_WHITE);
-        doc.text(sc.val, sx + scW/2, cy + 8, { align: 'center', baseline: 'top' });
-        doc.setFontSize(5.5);
-        doc.setTextColor(...sc.color);
-        doc.text(sc.unit, sx + scW/2, cy + 15, { align: 'center', baseline: 'top' });
-    });
-    cy += 22;
-
-    hline(cy);
-    cy += 4;
-
-    doc.setFontSize(6.5);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(...C_GRAY);
-    doc.text('DETALIU MENIURI', ML, cy, { baseline: 'top' });
-    cy += 5;
-
-    // ── MENIURI ───────────────────────────────────────────────
-    meniuriActive.forEach((r, mIdx) => {
+    // Build cards HTML
+    let cardsHTML = '';
+    meniuriActive.forEach((r, idx) => {
         const ingFiltrate = r.ingrediente.filter(i => i.idProd);
-        // Înălțime card: header(14) + header-tabel(6) + rânduri(6.5*n) + padding(4)
-        const cardH = 14 + (ingFiltrate.length > 0 ? 6 + ingFiltrate.length * 6.5 + 2 : 8);
+        const ingRows = ingFiltrate.map(ing => {
+            const p = catalog.find(x => x.id === ing.idProd);
+            if (!p) return '';
+            return `
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+                <span style="font-size:12px;font-weight:600;color:#e2e8f0;">${p.nume}</span>
+                <span style="font-size:11px;font-weight:900;color:#c084fc;white-space:nowrap;margin-left:8px;">${+ing.qty.toFixed(3)} <span style="color:#a855f7;font-size:9px;text-transform:uppercase;">${p.unit}</span></span>
+            </div>`;
+        }).join('');
 
-        if (cy + cardH > PAGE_H - 12) {
-            cy = newPage();
-        }
+        const portiiLabel = `${r.portii} port${r.portii === 1 ? 'ie' : 'ii'}`;
+        const orePerP = (r.ore / nrPers).toFixed(1);
 
-        // Card bg
-        rrect(ML, cy, CW, cardH, 4, C_CARD);
-        doc.setFillColor(...C_PURPLE);
-        doc.roundedRect(ML, cy, 2, cardH, 1, 1, 'F');
+        cardsHTML += `
+        <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:18px;margin-bottom:18px;border-left:4px solid rgba(192,132,252,0.7);box-shadow:inset 12px 0 18px -6px rgba(192,132,252,0.30),-6px 0 20px -4px rgba(192,132,252,0.15);">
+            <!-- Header card -->
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;">
+                <div style="flex-grow:1;min-width:0;">
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+                        <span style="font-size:8px;font-weight:900;color:#c084fc;background:rgba(192,132,252,0.12);border:1px solid rgba(192,132,252,0.3);border-radius:6px;padding:2px 7px;text-transform:uppercase;">#${idx+1}</span>
+                        <span style="font-size:16px;font-weight:800;color:#ffffff;letter-spacing:-0.5px;">${r.nume}</span>
+                    </div>
+                    ${r.tags ? `<p style="font-size:9px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:2px;margin:0 0 0 2px;"># ${r.tags}</p>` : ''}
+                </div>
+            </div>
 
-        // Număr
-        doc.setFontSize(6);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(...C_PURPLE);
-        doc.text(`#${mIdx + 1}`, ML + 5, cy + 5, { baseline: 'top' });
+            <!-- Ingrediente -->
+            ${ingFiltrate.length > 0 ? `
+            <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:12px 14px;margin-bottom:12px;">
+                <p style="font-size:7px;font-weight:900;color:#6b7280;text-transform:uppercase;letter-spacing:2px;margin-bottom:8px;">Ingrediente</p>
+                ${ingRows}
+            </div>` : '<p style="font-size:10px;color:#4b5563;padding:8px 0;">— fără ingrediente —</p>'}
 
-        // Nume meniu (fără emoji, jsPDF helvetica nu suportă)
-        const numeClean = r.nume.replace(/[\u{1F000}-\u{1FFFF}]/gu, '').replace(/[\u2600-\u27BF]/g, '').trim();
-        doc.setFontSize(9.5);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(...C_WHITE);
-        doc.text(fitText(numeClean, CW - 65, 9.5), ML + 14, cy + 5, { baseline: 'top' });
+            <!-- Divider -->
+            <div style="height:1px;background:linear-gradient(to right,transparent,rgba(192,132,252,0.4) 20%,rgba(192,132,252,0.4) 80%,transparent);margin:10px 0;"></div>
 
-        // Mini stats dreapta (portii + ore/pers)
-        const statsRight = ML + CW - 2;
-        const miniW = 24;
-        const miniStats = [
-            { label: 'PORTII', val: r.portii.toString(), color: C_WHITE },
-            { label: `ORE/${nrPers > 1 ? nrPers+'P' : 'P'}`, val: (r.ore/nrPers).toFixed(1)+'h', color: C_PURPLE },
-        ];
-        miniStats.forEach((ms, si) => {
-            const mx = statsRight - (2-si)*miniW - (2-si-1)*2;
-            rrect(mx, cy + 1.5, miniW - 1, 10, 2, C_CARD2);
-            doc.setFontSize(5);
-            doc.setFont('helvetica', 'bold');
-            doc.setTextColor(...C_GRAY);
-            doc.text(ms.label, mx + (miniW-1)/2, cy + 3.5, { align: 'center', baseline: 'top' });
-            doc.setFontSize(7.5);
-            doc.setTextColor(...ms.color);
-            doc.text(ms.val, mx + (miniW-1)/2, cy + 7.5, { align: 'center', baseline: 'top' });
-        });
-
-        // Separator + header ingrediente
-        const ingStartY = cy + 13;
-        doc.setDrawColor(...C_GRAY2);
-        doc.setLineWidth(0.2);
-        doc.line(ML + 3, ingStartY - 1, ML + CW - 3, ingStartY - 1);
-
-        if (ingFiltrate.length > 0) {
-            doc.setFontSize(5.5);
-            doc.setFont('helvetica', 'bold');
-            doc.setTextColor(...C_GRAY);
-            doc.text('INGREDIENT', ML + 6, ingStartY + 1.5, { baseline: 'top' });
-            doc.text('CANT. / PORTIE', ML + CW * 0.62, ingStartY + 1.5, { baseline: 'top' });
-
-            let iy = ingStartY + 6;
-            ingFiltrate.forEach((ing, idx) => {
-                const p = catalog.find(x => x.id === ing.idProd);
-                if (!p) return;
-
-                if (idx % 2 === 0) {
-                    doc.setFillColor(26, 24, 46);
-                    doc.roundedRect(ML + 3, iy - 1.2, CW - 6, 6, 1.2, 1.2, 'F');
-                }
-
-                doc.setFont('helvetica', 'bold');
-                doc.setFontSize(7);
-                doc.setTextColor(...C_WHITE);
-                doc.text(fitText(p.nume, CW * 0.52, 7), ML + 6, iy + 1.8, { baseline: 'middle' });
-
-                doc.setFont('helvetica', 'normal');
-                doc.setFontSize(7);
-                doc.setTextColor(...C_PURPLE);
-                doc.text(`${+ing.qty.toFixed(3)} ${p.unit}`, ML + CW * 0.62, iy + 1.8, { baseline: 'middle' });
-
-                iy += 6.5;
-            });
-        } else {
-            doc.setFontSize(6.5);
-            doc.setTextColor(...C_GRAY);
-            doc.text('-- fara ingrediente --', ML + CW/2, ingStartY + 5, { align: 'center', baseline: 'top' });
-        }
-
-        cy += cardH + 3;
+            <!-- Footer stats -->
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center;">
+                <div>
+                    <p style="font-size:7px;font-weight:900;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;">Ore</p>
+                    <p style="font-size:15px;font-weight:800;color:#ffffff;margin:0;">${r.ore}<span style="font-size:10px;color:#9ca3af;">h</span></p>
+                    ${nrPers > 1 ? `<p style="font-size:9px;color:#c084fc;font-weight:700;margin:0;">${orePerP}h / pers</p>` : ''}
+                </div>
+                <div style="background:rgba(192,132,252,0.1);border:1px solid rgba(192,132,252,0.2);border-radius:12px;padding:6px 4px;">
+                    <p style="font-size:7px;font-weight:900;color:#10b981;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px;">Preț Total</p>
+                    <p style="font-size:18px;font-weight:900;color:#ffffff;margin:0;line-height:1;">${r._costTotal.toFixed(2)}</p>
+                    <p style="font-size:8px;font-weight:900;color:#c084fc;margin:0;">LEI</p>
+                </div>
+                <div>
+                    <p style="font-size:7px;font-weight:900;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;">Porții</p>
+                    <p style="font-size:15px;font-weight:800;color:#ffffff;margin:0;">${r.portii}</p>
+                </div>
+            </div>
+        </div>`;
     });
 
-    // ── FOOTER pe fiecare pagina ──────────────────────────────
-    const pageCount = doc.getNumberOfPages();
-    for (let i = 1; i <= pageCount; i++) {
-        doc.setPage(i);
-        doc.setFillColor(...C_BG);
-        doc.rect(0, PAGE_H - 9, PAGE_W, 9, 'F');
-        gradBar(0, PAGE_H - 9, PAGE_W, 9, [8, 7, 16], [30, 10, 60]);
-        doc.setFontSize(5.5);
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(...C_GRAY);
-        doc.text(`GastroGlass  |  ${dateStr} - ${dateEndStr}  |  ${nrPers} ${nrPers===1?'persoana':'persoane'}  |  ${zileAutonomie.toFixed(1)} zile autonomie`, PAGE_W/2, PAGE_H - 3, { align: 'center', baseline: 'middle' });
-        doc.setTextColor(...C_PURPLE);
-        doc.text(`${i} / ${pageCount}`, PAGE_W - MR, PAGE_H - 3, { align: 'right', baseline: 'middle' });
-    }
+    const html = `<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Plan Meniuri - ${dateStr}</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background: #020205;
+    color: #fff;
+    padding: 20px 16px 60px;
+    max-width: 430px;
+    margin: 0 auto;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  @page { size: 430px auto; margin: 0; }
+  @media print {
+    body { padding: 20px 16px 40px; }
+    .no-print { display: none !important; }
+  }
+</style>
+</head>
+<body>
 
-    const fname = `plan-meniuri-${dateStr.replace(/\./g,'-')}.pdf`;
-    doc.save(fname);
+<!-- Header -->
+<div style="margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid rgba(255,255,255,0.08);">
+    <h1 style="font-size:28px;font-weight:800;letter-spacing:-1px;color:#fff;">Planificator</h1>
+    <p style="font-size:9px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:3px;margin-top:3px;">Configurator Mese</p>
+</div>
+
+<!-- Sumar stats -->
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:24px;">
+    <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:12px;text-align:center;">
+        <p style="font-size:6px;font-weight:900;color:#6b7280;text-transform:uppercase;letter-spacing:2px;margin-bottom:4px;">Meniuri</p>
+        <p style="font-size:22px;font-weight:900;color:#fff;line-height:1;">${meniuriActive.length}</p>
+    </div>
+    <div style="background:rgba(192,132,252,0.08);border:1px solid rgba(192,132,252,0.2);border-radius:14px;padding:12px;text-align:center;">
+        <p style="font-size:6px;font-weight:900;color:#10b981;text-transform:uppercase;letter-spacing:2px;margin-bottom:4px;">Total</p>
+        <p style="font-size:16px;font-weight:900;color:#fff;line-height:1;">${totalLei.toFixed(2)}</p>
+        <p style="font-size:8px;font-weight:900;color:#c084fc;">LEI</p>
+    </div>
+    <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:12px;text-align:center;">
+        <p style="font-size:6px;font-weight:900;color:#6b7280;text-transform:uppercase;letter-spacing:2px;margin-bottom:4px;">Autonomie</p>
+        <p style="font-size:22px;font-weight:900;color:#fff;line-height:1;">${zileAuto.toFixed(1)}</p>
+        <p style="font-size:8px;font-weight:900;color:#c084fc;">ZILE</p>
+    </div>
+</div>
+
+<!-- Sub-stats -->
+<div style="display:flex;gap:8px;margin-bottom:24px;">
+    <div style="flex:1;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:10px;text-align:center;">
+        <p style="font-size:6px;font-weight:900;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px;">Cost / zi</p>
+        <p style="font-size:13px;font-weight:900;color:#10b981;">${pretPeZi.toFixed(2)} <span style="font-size:9px;color:#6b7280;">LEI</span></p>
+    </div>
+    <div style="flex:1;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:10px;text-align:center;">
+        <p style="font-size:6px;font-weight:900;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px;">Persoane</p>
+        <p style="font-size:13px;font-weight:900;color:#c084fc;">${nrPers}</p>
+    </div>
+    <div style="flex:1;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:10px;text-align:center;">
+        <p style="font-size:6px;font-weight:900;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px;">Generat</p>
+        <p style="font-size:11px;font-weight:900;color:#fff;">${dateStr}</p>
+    </div>
+</div>
+
+<!-- Cards meniuri -->
+${cardsHTML}
+
+<!-- Footer -->
+<div style="text-align:center;padding-top:16px;border-top:1px solid rgba(255,255,255,0.06);">
+    <p style="font-size:8px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:2px;">GastroGlass · ${dateStr} – ${fmt(dateEnd)}</p>
+</div>
+
+<div class="no-print" style="position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:999;">
+    <button onclick="window.print()" style="padding:14px 32px;background:#c084fc;color:#000;border:none;border-radius:999px;font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:2px;cursor:pointer;box-shadow:0 8px 24px rgba(192,132,252,0.5);">
+        💾 Salvează / Printează PDF
+    </button>
+</div>
+
+</body>
+</html>`;
+
+    const win = window.open('', '_blank');
+    win.document.write(html);
+    win.document.close();
 }
+
 
 
 
