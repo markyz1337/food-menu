@@ -2208,7 +2208,6 @@ function generateMenuPDF() {
         return;
     }
 
-    // Calcule globale
     let totalLei = 0, totalOre = 0;
     meniuriActive.forEach(r => {
         let cost = 0;
@@ -2225,13 +2224,11 @@ function generateMenuPDF() {
     const orePerZi = 12;
     const zileAuto = (totalOre / nrPers) / orePerZi;
     const pretPeZi = totalOre > 0 ? (totalLei / totalOre) * (orePerZi * nrPers) : 0;
-
     const now = new Date();
     const fmt = d => `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()}`;
     const dateStr = fmt(now);
     const dateEnd = new Date(now.getTime() + zileAuto * 24 * 3600 * 1000);
 
-    // Build cards HTML
     let cardsHTML = '';
     meniuriActive.forEach((r, idx) => {
         const ingFiltrate = r.ingrediente.filter(i => i.idProd);
@@ -2244,13 +2241,10 @@ function generateMenuPDF() {
                 <span style="font-size:11px;font-weight:900;color:#c084fc;white-space:nowrap;margin-left:8px;">${+ing.qty.toFixed(3)} <span style="color:#a855f7;font-size:9px;text-transform:uppercase;">${p.unit}</span></span>
             </div>`;
         }).join('');
-
-        const portiiLabel = `${r.portii} port${r.portii === 1 ? 'ie' : 'ii'}`;
         const orePerP = (r.ore / nrPers).toFixed(1);
 
         cardsHTML += `
         <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:18px;margin-bottom:18px;border-left:4px solid rgba(192,132,252,0.7);box-shadow:inset 12px 0 18px -6px rgba(192,132,252,0.30),-6px 0 20px -4px rgba(192,132,252,0.15);">
-            <!-- Header card -->
             <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;">
                 <div style="flex-grow:1;min-width:0;">
                     <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
@@ -2260,23 +2254,17 @@ function generateMenuPDF() {
                     ${r.tags ? `<p style="font-size:9px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:2px;margin:0 0 0 2px;"># ${r.tags}</p>` : ''}
                 </div>
             </div>
-
-            <!-- Ingrediente -->
             ${ingFiltrate.length > 0 ? `
             <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:12px 14px;margin-bottom:12px;">
                 <p style="font-size:7px;font-weight:900;color:#6b7280;text-transform:uppercase;letter-spacing:2px;margin-bottom:8px;">Ingrediente</p>
                 ${ingRows}
-            </div>` : '<p style="font-size:10px;color:#4b5563;padding:8px 0;">— fără ingrediente —</p>'}
-
-            <!-- Divider -->
+            </div>` : '<p style="font-size:10px;color:#4b5563;padding:8px 0;">-- fără ingrediente --</p>'}
             <div style="height:1px;background:linear-gradient(to right,transparent,rgba(192,132,252,0.4) 20%,rgba(192,132,252,0.4) 80%,transparent);margin:10px 0;"></div>
-
-            <!-- Footer stats -->
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center;">
                 <div>
                     <p style="font-size:7px;font-weight:900;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;">Ore</p>
                     <p style="font-size:15px;font-weight:800;color:#ffffff;margin:0;">${r.ore}<span style="font-size:10px;color:#9ca3af;">h</span></p>
-                    ${nrPers > 1 ? `<p style="font-size:9px;color:#c084fc;font-weight:700;margin:0;">${orePerP}h / pers</p>` : ''}
+                    ${nrPers > 1 ? `<p style="font-size:9px;color:#c084fc;font-weight:700;margin:2px 0 0;">${orePerP}h / pers</p>` : ''}
                 </div>
                 <div style="background:rgba(192,132,252,0.1);border:1px solid rgba(192,132,252,0.2);border-radius:12px;padding:6px 4px;">
                     <p style="font-size:7px;font-weight:900;color:#10b981;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px;">Preț Total</p>
@@ -2291,42 +2279,22 @@ function generateMenuPDF() {
         </div>`;
     });
 
-    const html = `<!DOCTYPE html>
-<html lang="ro">
+    const htmlContent = `<!DOCTYPE html>
+<html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Plan Meniuri - ${dateStr}</title>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    font-family: 'Plus Jakarta Sans', sans-serif;
-    background: #020205;
-    color: #fff;
-    padding: 20px 16px 60px;
-    max-width: 430px;
-    margin: 0 auto;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-  @page { size: 430px auto; margin: 0; }
-  @media print {
-    body { padding: 20px 16px 40px; }
-    .no-print { display: none !important; }
-  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Plus Jakarta Sans',sans-serif; background:#020205; color:#fff; padding:24px 16px 48px; width:430px; }
 </style>
 </head>
 <body>
-
-<!-- Header -->
 <div style="margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid rgba(255,255,255,0.08);">
     <h1 style="font-size:28px;font-weight:800;letter-spacing:-1px;color:#fff;">Planificator</h1>
     <p style="font-size:9px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:3px;margin-top:3px;">Configurator Mese</p>
 </div>
-
-<!-- Sumar stats -->
-<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:24px;">
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px;">
     <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:12px;text-align:center;">
         <p style="font-size:6px;font-weight:900;color:#6b7280;text-transform:uppercase;letter-spacing:2px;margin-bottom:4px;">Meniuri</p>
         <p style="font-size:22px;font-weight:900;color:#fff;line-height:1;">${meniuriActive.length}</p>
@@ -2337,13 +2305,11 @@ function generateMenuPDF() {
         <p style="font-size:8px;font-weight:900;color:#c084fc;">LEI</p>
     </div>
     <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:12px;text-align:center;">
-        <p style="font-size:6px;font-weight:900;color:#6b7280;text-transform:uppercase;letter-spacing:2px;margin-bottom:4px;">Ajunge până pe</p>
-        <p style="font-size:16px;font-weight:900;color:#fff;line-height:1.1;">${fmt(dateEnd)}</p>
-        <p style="font-size:8px;font-weight:900;color:#c084fc;">${zileAuto.toFixed(1)} ZILE</p>
+        <p style="font-size:6px;font-weight:900;color:#6b7280;text-transform:uppercase;letter-spacing:2px;margin-bottom:4px;">Autonomie</p>
+        <p style="font-size:22px;font-weight:900;color:#fff;line-height:1;">${zileAuto.toFixed(1)}</p>
+        <p style="font-size:8px;font-weight:900;color:#c084fc;">ZILE</p>
     </div>
 </div>
-
-<!-- Sub-stats -->
 <div style="display:flex;gap:8px;margin-bottom:24px;">
     <div style="flex:1;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:10px;text-align:center;">
         <p style="font-size:6px;font-weight:900;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px;">Cost / zi</p>
@@ -2358,28 +2324,74 @@ function generateMenuPDF() {
         <p style="font-size:11px;font-weight:900;color:#fff;">${dateStr}</p>
     </div>
 </div>
-
-<!-- Cards meniuri -->
 ${cardsHTML}
-
-<!-- Footer -->
 <div style="text-align:center;padding-top:16px;border-top:1px solid rgba(255,255,255,0.06);">
     <p style="font-size:8px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:2px;">GastroGlass · ${dateStr} – ${fmt(dateEnd)}</p>
 </div>
-
-<div class="no-print" style="position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:999;">
-    <button onclick="window.print()" style="padding:14px 32px;background:#c084fc;color:#000;border:none;border-radius:999px;font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:2px;cursor:pointer;box-shadow:0 8px 24px rgba(192,132,252,0.5);">
-        💾 Salvează / Printează PDF
-    </button>
-</div>
-
 </body>
 </html>`;
 
-    const win = window.open('', '_blank');
-    win.document.write(html);
-    win.document.close();
+    // Creăm un iframe ascuns în pagina curentă pentru a putea folosi html2canvas
+    const iframe = document.createElement('iframe');
+    iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:430px;height:1px;border:none;visibility:hidden;';
+    document.body.appendChild(iframe);
+
+    iframe.onload = async function() {
+        try {
+            const iDoc = iframe.contentDocument;
+            // Așteptăm fonturile
+            await iDoc.fonts.ready;
+            // Mic delay pentru render complet
+            await new Promise(r => setTimeout(r, 600));
+
+            const body = iDoc.body;
+            const fullHeight = body.scrollHeight;
+
+            // html2canvas pe întregul body
+            const canvas = await html2canvas(body, {
+                backgroundColor: '#020205',
+                scale: 2,
+                width: 430,
+                height: fullHeight,
+                windowWidth: 430,
+                windowHeight: fullHeight,
+                scrollX: 0,
+                scrollY: 0,
+                useCORS: true,
+                logging: false
+            });
+
+            const imgData = canvas.toDataURL('image/png');
+
+            // PDF cu dimensiuni exacte (în mm, 1px = 0.2646mm la 96dpi)
+            const pxToMm = 0.2646;
+            const pdfW = 430 * pxToMm;        // ~113.8mm
+            const pdfH = fullHeight * pxToMm;  // înălțime exactă
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({
+                orientation: 'portrait',
+                unit: 'mm',
+                format: [pdfW, pdfH]
+            });
+
+            doc.addImage(imgData, 'PNG', 0, 0, pdfW, pdfH);
+
+            const fname = `plan-meniuri-${dateStr.replace(/\./g,'-')}.pdf`;
+            doc.save(fname);
+
+        } catch(err) {
+            console.error('Eroare generare PDF:', err);
+            alert('Eroare la generare. Verifică consola.');
+        } finally {
+            document.body.removeChild(iframe);
+        }
+    };
+
+    // Scriem HTML în iframe
+    iframe.srcdoc = htmlContent;
 }
+
 
 
 
