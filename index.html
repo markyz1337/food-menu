@@ -2262,22 +2262,25 @@ function generateMenuPDF() {
                 ${ingRows}
             </div>` : '<p style="font-size:10px;color:#4b5563;padding:8px 0;">-- fără ingrediente --</p>'}
             <div style="height:1px;background:linear-gradient(to right,transparent,rgba(192,132,252,0.4) 20%,rgba(192,132,252,0.4) 80%,transparent);margin:10px 0;"></div>
-            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center;">
-                <div>
-                    <p style="font-size:7px;font-weight:900;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;">Ore</p>
-                    <p style="font-size:15px;font-weight:800;color:#ffffff;margin:0;">${r.ore}<span style="font-size:10px;color:#9ca3af;">h</span></p>
-                    ${nrPers > 1 ? `<p style="font-size:9px;color:#c084fc;font-weight:700;margin:2px 0 0;">${orePerP}h / pers</p>` : ''}
-                </div>
-                <div style="background:rgba(192,132,252,0.1);border:1px solid rgba(192,132,252,0.2);border-radius:12px;padding:6px 4px;">
-                    <p style="font-size:7px;font-weight:900;color:#10b981;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px;">Preț Total</p>
-                    <p style="font-size:18px;font-weight:900;color:#ffffff;margin:0;line-height:1;">${r._costTotal.toFixed(2)}</p>
-                    <p style="font-size:8px;font-weight:900;color:#c084fc;margin:0;">LEI</p>
-                </div>
-                <div>
-                    <p style="font-size:7px;font-weight:900;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;">Porții</p>
-                    <p style="font-size:15px;font-weight:800;color:#ffffff;margin:0;">${r.portii}</p>
-                </div>
-            </div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:24px;">
+    <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:10px;text-align:center;">
+        <p style="font-size:6px;font-weight:900;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px;">Cost / zi</p>
+        <p style="font-size:13px;font-weight:900;color:#10b981;">${pretPeZi.toFixed(2)} <span style="font-size:9px;color:#6b7280;">LEI</span></p>
+    </div>
+    <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:10px;text-align:center;">
+        <p style="font-size:6px;font-weight:900;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px;">Persoane</p>
+        <p style="font-size:13px;font-weight:900;color:#c084fc;">${nrPers}</p>
+    </div>
+    <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:10px;text-align:center;">
+        <p style="font-size:6px;font-weight:900;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px;">Generat pe</p>
+        <p style="font-size:13px;font-weight:900;color:#fff;">${dateStr}</p>
+    </div>
+    <div style="background:rgba(192,132,252,0.12);border:1px solid rgba(192,132,252,0.35);border-radius:12px;padding:10px;text-align:center;">
+        <p style="font-size:6px;font-weight:900;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px;">Ajunge până pe</p>
+        <p style="font-size:13px;font-weight:900;color:#fff;">${fmt(dateEnd)}</p>
+    </div>
+</div>
+
         </div>`;
     });
 
