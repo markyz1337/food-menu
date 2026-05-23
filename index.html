@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>GastroGlass HUD Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -121,7 +122,7 @@
         .fridge-card-unavailable { border-left: 4px solid rgba(239,68,68,0.6); box-shadow: inset 12px 0 18px -6px rgba(239,68,68,0.20), -4px 0 15px -3px rgba(239,68,68,0.15); opacity: 0.85; }
         .fridge-section-title { font-size: 9px; font-weight: 900; letter-spacing: 3px; text-transform: uppercase; padding: 6px 0 10px 2px; }
         .missing-badge { background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3); color: #fca5a5; border-radius: 8px; padding: 2px 7px; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px; }
-.fridge-qty-btn { background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3); color: #6ee7b7; border-radius: 10px; padding: 0 6px; height: 28px; font-size: 10px; font-weight: 900; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 2px; }
+        .fridge-qty-btn { background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3); color: #6ee7b7; border-radius: 10px; padding: 0 6px; height: 28px; font-size: 10px; font-weight: 900; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 2px; }
         .fridge-qty-btn:active { transform: scale(0.93); background: rgba(16,185,129,0.3); }
         .score-badge { background: rgba(192,132,252,0.15); border: 1px solid rgba(192,132,252,0.3); color: #e9d5ff; border-radius: 10px; padding: 2px 8px; font-size: 9px; font-weight: 900; }
         .fridge-product-row { display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 18px; padding: 7px 10px; margin-bottom: 10px; }
@@ -236,36 +237,177 @@
         .fridge-expand-btn:active { background: rgba(255,255,255,0.07); transform: scale(0.98); }
         .fridge-expand-btn svg { transition: transform 0.3s ease; }
         .fridge-expand-btn.expanded svg { transform: rotate(180deg); }
-    
-    
-.app-ready .tab-bar {
-    opacity: 1;
-    pointer-events: auto;
-    transform: translateX(-50%) translateY(0);
-    transition: opacity 0.35s ease, transform 0.35s ease;
-}
 
-.app-ready .hud-status {
-    animation: fadeInScale 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
-    opacity: 1;
-}
+        /* ============================================================
+           SHOPPING LIST CONFIRMATION STYLES
+           ============================================================ */
 
-.app-ready .person-picker {
-    animation: fadeInScale 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
-    opacity: 1;
-}
+        /* Card confirmat - border stânga verde */
+        .shopping-card-confirmed {
+            border-left: 4px solid #10b981 !important;
+            box-shadow: inset 12px 0 18px -6px rgba(16,185,129,0.25),
+                        -4px 0 15px -3px rgba(16,185,129,0.15) !important;
+            opacity: 0.72;
+        }
 
+        /* Card neconfirmat - border stânga purple normal */
+        .shopping-card-pending {
+            border-left: 4px solid #c084fc !important;
+            box-shadow: inset 12px 0 18px -6px rgba(192,132,252,0.25),
+                        -4px 0 15px -3px rgba(192,132,252,0.15) !important;
+        }
 
+        /* Buton confirmare */
+        .confirm-cart-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            width: 100%;
+            padding: 7px 10px;
+            border-radius: 12px;
+            font-size: 9px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            transition: all 0.18s ease;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+        .confirm-cart-btn.pending {
+            background: rgba(16,185,129,0.1);
+            border: 1px solid rgba(16,185,129,0.25);
+            color: #6ee7b7;
+        }
+        .confirm-cart-btn.pending:active {
+            background: rgba(16,185,129,0.25);
+            transform: scale(0.97);
+        }
+        .confirm-cart-btn.confirmed {
+            background: rgba(16,185,129,0.18);
+            border: 1px solid rgba(16,185,129,0.4);
+            color: #34d399;
+        }
+        .confirm-cart-btn.confirmed:active {
+            background: rgba(239,68,68,0.15);
+            border-color: rgba(239,68,68,0.3);
+            color: #fca5a5;
+            transform: scale(0.97);
+        }
 
+        /* ============================================================
+           FAB - Coș indicator (vizibil doar în shopping sheet)
+           ============================================================ */
+        #shopping-fab {
+            position: absolute;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 22px;
+            background: rgba(10, 10, 16, 0.92);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(192,132,252,0.35);
+            border-radius: 40px;
+            z-index: 10;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.6), 0 0 0 1px rgba(192,132,252,0.1);
+            pointer-events: none;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+        #shopping-fab.all-done {
+            border-color: rgba(16,185,129,0.5);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.6), 0 0 20px rgba(16,185,129,0.2);
+        }
+        .fab-badge {
+            min-width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(192,132,252,0.2);
+            border: 1px solid rgba(192,132,252,0.4);
+            border-radius: 50%;
+            font-size: 13px;
+            font-weight: 900;
+            color: #e9d5ff;
+            transition: all 0.3s ease;
+        }
+        #shopping-fab.all-done .fab-badge {
+            background: rgba(16,185,129,0.2);
+            border-color: rgba(16,185,129,0.5);
+            color: #6ee7b7;
+        }
+        .fab-label {
+            font-size: 10px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: rgba(255,255,255,0.6);
+            line-height: 1.2;
+        }
+        .fab-sublabel {
+            font-size: 8px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: rgba(192,132,252,0.7);
+            line-height: 1;
+        }
+        #shopping-fab.all-done .fab-sublabel {
+            color: rgba(16,185,129,0.9);
+        }
 
-</style>
+        /* Progress bar în FAB */
+        .fab-progress-wrap {
+            width: 60px;
+            height: 3px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .fab-progress-fill {
+            height: 100%;
+            border-radius: 2px;
+            background: linear-gradient(to right, #c084fc, #10b981);
+            transition: width 0.4s ease;
+        }
+
+        /* Animatie la confirmare */
+        @keyframes confirmPop {
+            0%   { transform: scale(1); }
+            40%  { transform: scale(1.04); }
+            100% { transform: scale(1); }
+        }
+        .confirm-pop {
+            animation: confirmPop 0.25s ease;
+        }
+
+        .app-ready .tab-bar {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateX(-50%) translateY(0);
+            transition: opacity 0.35s ease, transform 0.35s ease;
+        }
+        .app-ready .hud-status {
+            animation: fadeInScale 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+            opacity: 1;
+        }
+        .app-ready .person-picker {
+            animation: fadeInScale 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+            opacity: 1;
+        }
+    </style>
 </head>
 
 <body class="pb-44">
 
 <!-- 1. SHEET LISTA CUMPĂRĂTURI -->
-<div id="shopping-sheet" class="bottom-sheet full overflow-hidden">
-    <div class="p-6 border-b border-white/10 flex justify-between items-center bg-black/50">
+<div id="shopping-sheet" class="bottom-sheet full overflow-hidden" style="position: fixed;">
+    <div class="p-6 border-b border-white/10 flex justify-between items-center bg-black/50" style="flex-shrink: 0;">
         <div>
             <h3 class="text-xl font-black tracking-tighter text-white">LISTĂ CUMPĂRĂTURI</h3>
             <p id="shopping-summary-count" class="text-[9px] font-bold text-purple-400 uppercase tracking-[2px]">0 PRODUSE TOTAL</p>
@@ -277,7 +419,19 @@
             <button onclick="closeSheets()" class="w-10 h-10 flex items-center justify-center bg-white/5 rounded-full text-white font-bold">✕</button>
         </div>
     </div>
-    <div id="shopping-list-content" class="flex-grow overflow-y-auto p-6 space-y-3 pb-32"></div>
+    <div id="shopping-list-content" class="flex-grow overflow-y-auto p-6 space-y-3 pb-36"></div>
+
+    <!-- FAB indicator coș -->
+    <div id="shopping-fab">
+        <div class="fab-badge" id="fab-badge-count">0</div>
+        <div style="display: flex; flex-direction: column; gap: 3px;">
+            <span class="fab-label" id="fab-label-text">de adăugat în coș</span>
+            <div class="fab-progress-wrap">
+                <div class="fab-progress-fill" id="fab-progress-fill" style="width: 0%"></div>
+            </div>
+            <span class="fab-sublabel" id="fab-sublabel-text">0 / 0 confirmate</span>
+        </div>
+    </div>
 </div>
 
 <!-- 2. SHEET GESTIONARE MENIURI -->
@@ -356,7 +510,7 @@
 
     <div id="search-container" class="mb-6">
         <div class="relative flex items-center">
-<input type="text" id="main-search" oninput="updateSearch(this.value)" onfocus="this.select()" placeholder="Caută în meniu..."
+            <input type="text" id="main-search" oninput="updateSearch(this.value)" onfocus="this.select()" placeholder="Caută în meniu..."
                    class="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 pr-12 text-sm font-semibold text-white placeholder:text-gray-600 focus:outline-none focus:border-purple-500/50 transition-all">
             <button id="clear-search" onclick="clearSearch()"
                     class="hidden absolute right-4 w-8 h-8 flex items-center justify-center bg-white/10 hover:bg-white/20 rounded-full transition-all">
@@ -370,9 +524,24 @@
         <button onclick="addRecipe()" class="locked-only-block w-full py-5 glass-card border-dashed border-2 border-white/10 text-gray-400 font-black text-xs tracking-widest uppercase">+ Adaugă Meniu Nou</button>
     </div>
 
+<div id="pdf-btn-wrap" class="mt-2">
+    <button onclick="generateMenuPDF()"
+            class="w-full py-4 flex items-center justify-center gap-3 glass-card no-glow border border-purple-500/25 text-purple-300 font-black text-[11px] uppercase tracking-widest active:scale-[0.98] transition-all"
+            style="background: rgba(192,132,252,0.06);">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="12" y1="18" x2="12" y2="12"></line>
+            <line x1="9" y1="15" x2="15" y2="15"></line>
+        </svg>
+        Exportă Plan ca PDF
+    </button>
+</div>
+
+
     <div id="page-catalog" class="hidden space-y-4">
         <div class="px-2 mb-4">
-<input type="text" id="catalog-search" oninput="renderCatalog()" onfocus="this.select()" placeholder="Caută în catalog..." class="search-pill">
+            <input type="text" id="catalog-search" oninput="renderCatalog()" onfocus="this.select()" placeholder="Caută în catalog..." class="search-pill">
         </div>
         <div class="flex justify-between items-center px-2 mb-4">
             <h3 class="text-xs font-black text-gray-400 uppercase tracking-widest">Baza de Date Produse</h3>
@@ -383,7 +552,6 @@
 
     <!-- TAB FRIGIDER -->
     <div id="page-fridge" class="hidden space-y-4">
-        <!-- Header stoc -->
         <div class="flex justify-between items-center px-1 mb-2">
             <div>
                 <p class="text-[9px] font-black text-emerald-400 uppercase tracking-[3px]">Stoc disponibil</p>
@@ -394,13 +562,11 @@
             </button>
         </div>
 
-        <!-- Search bar frigider -->
         <div class="fridge-search-wrap">
-<input type="text" id="fridge-stock-search"
-       placeholder="Caută în stoc..."
-       onfocus="this.select()"
-       oninput="onFridgeStockSearch(this.value)">
-
+            <input type="text" id="fridge-stock-search"
+                   placeholder="Caută în stoc..."
+                   onfocus="this.select()"
+                   oninput="onFridgeStockSearch(this.value)">
             <span id="fridge-stock-clear" class="fridge-search-clear" onclick="clearFridgeSearch()">✕</span>
         </div>
 
@@ -495,7 +661,6 @@
         const tag = el.tagName;
         if (tag !== 'INPUT' && tag !== 'TEXTAREA') return;
         if (el.id === 'hidden-password-input') return;
-        // *** FIX: ignoră inputurile readonly -- nu deschid tastatura ***
         if (el.readOnly) return;
 
         if (isPersonPickerInput(el)) {
@@ -520,7 +685,6 @@
         const tag = el.tagName;
         if (tag !== 'INPUT' && tag !== 'TEXTAREA') return;
         if (el.id === 'hidden-password-input') return;
-        // *** FIX: ignoră inputurile readonly ***
         if (el.readOnly) return;
 
         if (isPersonPickerInput(el)) {
@@ -599,6 +763,217 @@ let fridgeStockExpanded = false;
 
 const FRIDGE_PREVIEW_COUNT = 4;
 
+// ============================================================
+// SHOPPING CONFIRMARI STATE
+// ============================================================
+// { [prodId]: true/false }
+let shoppingConfirmari = {};
+
+// ============================================================
+// SUPABASE - CONFIRMARI
+// ============================================================
+
+async function db_loadConfirmari() {
+    if (!USE_SUPABASE) return;
+    try {
+        const { data, error } = await supabaseClient.from('shopping_confirmari').select('*');
+        if (error) { console.error('Eroare confirmari:', error); return; }
+        shoppingConfirmari = {};
+        (data || []).forEach(r => {
+            shoppingConfirmari[r.prod_id] = r.confirmat;
+        });
+    } catch (e) {
+        console.error('Eroare load confirmari:', e);
+    }
+}
+
+async function db_upsertConfirmare(prodId, confirmat) {
+    if (!USE_SUPABASE) return;
+    try {
+        await supabaseClient.from('shopping_confirmari').upsert({
+            prod_id: prodId,
+            confirmat: confirmat,
+            updated_at: new Date().toISOString()
+        });
+    } catch (e) {
+        console.error('Eroare salvare confirmare:', e);
+    }
+}
+
+async function toggleConfirmare(prodId) {
+    const wasConfirmed = !!shoppingConfirmari[prodId];
+    shoppingConfirmari[prodId] = !wasConfirmed;
+    await db_upsertConfirmare(prodId, shoppingConfirmari[prodId]);
+    refreshShoppingListUI();
+}
+
+// ============================================================
+// SHOPPING FAB UPDATE
+// ============================================================
+
+function updateShoppingFab(totalItems, confirmedCount) {
+    const remaining = totalItems - confirmedCount;
+    const fab = document.getElementById('shopping-fab');
+    const badge = document.getElementById('fab-badge-count');
+    const labelEl = document.getElementById('fab-label-text');
+    const sublabel = document.getElementById('fab-sublabel-text');
+    const progressFill = document.getElementById('fab-progress-fill');
+
+    if (!fab) return;
+
+    badge.textContent = remaining;
+    const pct = totalItems > 0 ? Math.round((confirmedCount / totalItems) * 100) : 0;
+    progressFill.style.width = pct + '%';
+    sublabel.textContent = `${confirmedCount} / ${totalItems} confirmate`;
+
+    if (remaining === 0 && totalItems > 0) {
+        fab.classList.add('all-done');
+        labelEl.textContent = 'totul în coș! ✓';
+        badge.textContent = '✓';
+    } else if (remaining === 1) {
+        fab.classList.remove('all-done');
+        labelEl.textContent = 'mai rămâne 1 produs';
+    } else {
+        fab.classList.remove('all-done');
+        labelEl.textContent = remaining === 0 ? 'coș gol' : 'de adăugat în coș';
+    }
+}
+
+// ============================================================
+// REFRESH SHOPPING LIST (fără rebuild complet)
+// ============================================================
+
+function refreshShoppingListUI() {
+    // Re-render lista completă pentru a sorta corect confirmed/pending
+    buildShoppingListContent();
+}
+
+// ============================================================
+// BUILD SHOPPING LIST CONTENT
+// ============================================================
+
+function buildShoppingListContent() {
+    const listContent = document.getElementById('shopping-list-content');
+    const summaryCount = document.getElementById('shopping-summary-count');
+    listContent.innerHTML = '';
+
+    let cumparaturi = {};
+    let detaliiCalcul = {};
+
+    retete.forEach(r => {
+        if (r.selectat) {
+            r.ingrediente.forEach(ing => {
+                if (!ing.idProd) return;
+                const qtyReteta = ing.qty;
+                const nrPortii = r.portii;
+                const qtyTotalaMeniu = qtyReteta * nrPortii;
+                const produs = catalog.find(p => p.id === ing.idProd);
+                const unit = produs ? produs.unit : '';
+                const textLinie = `${r.nume}:\n${Number(qtyReteta.toFixed(3))} ${unit} x ${nrPortii} porții = ${Number(qtyTotalaMeniu.toFixed(3))} ${unit}`;
+                if (cumparaturi[ing.idProd]) {
+                    cumparaturi[ing.idProd] += qtyTotalaMeniu;
+                    detaliiCalcul[ing.idProd].push(textLinie);
+                } else {
+                    cumparaturi[ing.idProd] = qtyTotalaMeniu;
+                    detaliiCalcul[ing.idProd] = [textLinie];
+                }
+            });
+        }
+    });
+
+    const sortableItems = Object.keys(cumparaturi).map(id => {
+        const produs = catalog.find(p => p.id === id);
+        return {
+            id,
+            totalQty: cumparaturi[id],
+            calcule: detaliiCalcul[id],
+            unitDisplay: produs ? produs.unit : '',
+            confirmat: !!shoppingConfirmari[id]
+        };
+    }).sort((a, b) => {
+        // Confirmed items go last
+        if (a.confirmat !== b.confirmat) return a.confirmat ? 1 : -1;
+
+        // Within same group, sort by unit priority then qty desc
+        const unitA = (a.unitDisplay || '').toLowerCase().replace(/[^a-z]/g, '');
+        const unitB = (b.unitDisplay || '').toLowerCase().replace(/[^a-z]/g, '');
+        const prioritati = { 'kg': 6, 'l': 5, 'g': 4, 'ml': 3, 'leg': 2, 'buc': 1 };
+        const pA = prioritati[unitA] || 0, pB = prioritati[unitB] || 0;
+        if (pB !== pA) return pB - pA;
+        if (pA === 0 && pB === 0 && unitA !== unitB) return unitA.localeCompare(unitB);
+        if (b.totalQty !== a.totalQty) return b.totalQty - a.totalQty;
+        const nA = catalog.find(x => x.id === a.id)?.nume || '';
+        const nB = catalog.find(x => x.id === b.id)?.nume || '';
+        return nA.localeCompare(nB);
+    });
+
+    const totalItems = sortableItems.length;
+    const confirmedCount = sortableItems.filter(i => i.confirmat).length;
+
+    summaryCount.innerText = `${totalItems} PRODUSE UNICE`;
+
+    if (totalItems === 0) {
+        listContent.innerHTML = '<p class="text-center text-gray-500 py-10 font-bold uppercase text-xs tracking-widest">Nicio rețetă selectată</p>';
+        updateShoppingFab(0, 0);
+        return;
+    }
+
+    sortableItems.forEach(item => {
+        const pReal = catalog.find(x => x.id === item.id);
+        if (!pReal) return;
+        const pretTotalLei = pReal.pretLei * item.totalQty;
+        const textDialog = `PRODUS: ${pReal.nume}\n----------------------------\n\n` +
+            item.calcule.join('\n\n') +
+            `\n\n----------------------------\nTOTAL GENERAL: ${Number(item.totalQty.toFixed(3))} ${item.unitDisplay}`;
+        const countMeniuri = item.calcule.length;
+        const numeEscaped = pReal.nume.replace(/'/g, "\\'").replace(/`/g, '\\`');
+        const isConfirmed = item.confirmat;
+
+        const cardBorderClass = isConfirmed ? 'shopping-card-confirmed' : 'shopping-card-pending';
+        const btnClass = isConfirmed ? 'confirmed' : 'pending';
+        const btnIcon = isConfirmed
+            ? `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`
+            : `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 01-8 0"></path></svg>`;
+        const btnText = isConfirmed ? 'În coș ✓ (apasă pentru anulare)' : 'Adaugă în coș';
+
+        listContent.innerHTML += `
+            <div id="shopping-item-${item.id}" class="glass-card p-4 ${cardBorderClass}" style="transition: all 0.3s ease;">
+                <div class="flex justify-between items-start gap-3">
+                    <div class="min-w-0 flex-grow">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span onclick="event.stopPropagation(); alert(\`${textDialog}\`)"
+                                  class="flex-shrink-0 bg-white/10 text-white px-2 py-0.5 rounded-md text-[11px] font-black border border-white/5 uppercase cursor-pointer active:scale-95 transition-transform select-none">
+                                ${Number(item.totalQty.toFixed(3))} ${item.unitDisplay}
+                            </span>
+                            <p onclick="openAuchan('${numeEscaped}')"
+                               class="font-bold text-white text-sm truncate cursor-pointer active:opacity-70 transition-opacity ${isConfirmed ? 'line-through opacity-50' : ''}">
+                                ${pReal.nume}
+                            </p>
+                            ${countMeniuri > 1 ? `<span class="w-5 h-5 flex items-center justify-center bg-emerald-500/20 text-emerald-400 rounded-full text-[10px] font-black border border-emerald-500/30">${countMeniuri}</span>` : ''}
+                        </div>
+                        <p class="text-[10px] font-bold text-gray-500 uppercase tracking-tight ml-1">${pReal.pretLei.toFixed(2)} LEI / ${item.unitDisplay}</p>
+                    </div>
+                    <div class="text-right flex-shrink-0">
+                        <p class="text-base font-black ${isConfirmed ? 'text-emerald-400' : 'text-white'} leading-none">${pretTotalLei.toFixed(2)} LEI</p>
+                    </div>
+                </div>
+                <!-- Buton confirmare coș -->
+                <button class="confirm-cart-btn ${btnClass}"
+                        onclick="toggleConfirmare('${item.id}')"
+                        id="confirm-btn-${item.id}">
+                    ${btnIcon}
+                    <span>${btnText}</span>
+                </button>
+            </div>`;
+    });
+
+    updateShoppingFab(totalItems, confirmedCount);
+}
+
+// ============================================================
+// CATALOG DATA
+// ============================================================
+
 let catalog = [
     { id: 'c1', nume: 'Icre roșii', pretLei: 761.00, unit: 'Kg' },
     { id: 'c2', nume: 'Pătrunjel', pretLei: 148.75, unit: 'Kg' },
@@ -671,17 +1046,23 @@ async function confirmInlineInput(rIdx, type, iIdx, inputEl) {
     if ((type === 'portii' || type === 'ore') && finalVal < 1) finalVal = 1;
     if (type === 'ingQty' && finalVal < 0) finalVal = 0;
 
+    let changed = false;
     if (type === 'ore') {
+        changed = retete[rIdx].ore !== Math.round(finalVal);
         retete[rIdx].ore = Math.round(finalVal);
         inputEl.value = Math.round(finalVal);
     } else if (type === 'portii') {
+        changed = retete[rIdx].portii !== Math.round(finalVal);
         retete[rIdx].portii = Math.round(finalVal);
         inputEl.value = Math.round(finalVal);
     } else if (type === 'ingQty') {
+        changed = retete[rIdx].ingrediente[iIdx].qty !== finalVal;
         retete[rIdx].ingrediente[iIdx].qty = finalVal;
         inputEl.value = +finalVal.toFixed(3);
     }
+
     lastEditedId = retete[rIdx].id;
+    if (changed) await resetConfirmari();
     render();
     if (USE_SUPABASE) db_upsertReteta(retete[rIdx]).catch(err => console.error("Eroare salvare:", err));
 }
@@ -818,14 +1199,13 @@ function renderFridge() {
         return;
     }
 
-const sortedAll = frigider
-    .slice()
-.sort((a, b) => {
-    const tsA = Math.max(a.modifiedAt || 0, a.addedAt || 0);
-    const tsB = Math.max(b.modifiedAt || 0, b.addedAt || 0);
-    return tsB - tsA;
-});
-
+    const sortedAll = frigider
+        .slice()
+        .sort((a, b) => {
+            const tsA = Math.max(a.modifiedAt || 0, a.addedAt || 0);
+            const tsB = Math.max(b.modifiedAt || 0, b.addedAt || 0);
+            return tsB - tsA;
+        });
 
     const filtered = fridgeStockSearchTerm
         ? sortedAll.filter(item => {
@@ -869,7 +1249,7 @@ const sortedAll = frigider
                            onfocus="this.select()"
                            onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}"
                            onblur="confirmFridgeQtyInput('${prod.id}', this)"
-class="w-8 text-center text-[10px] font-black text-emerald-400 bg-transparent outline-none border-none"
+                           class="w-8 text-center text-[10px] font-black text-emerald-400 bg-transparent outline-none border-none"
                            style="-moz-appearance:textfield; -webkit-appearance:none;">
                     <span class="text-[10px] font-black text-emerald-400">${prod.unit}</span>
                 </div>
@@ -897,18 +1277,15 @@ class="w-8 text-center text-[10px] font-black text-emerald-400 bg-transparent ou
 }
 
 function toggleFridgeExpand() {
-   if (fridgeStockExpanded) {
-       fridgeStockExpanded = false;
-       renderFridge();
-       window.scrollTo({ top: 0, behavior: 'smooth' });
-   } else {
-       fridgeStockExpanded = true;
-       renderFridge();
-   }
+    if (fridgeStockExpanded) {
+        fridgeStockExpanded = false;
+        renderFridge();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+        fridgeStockExpanded = true;
+        renderFridge();
+    }
 }
-
-
-
 
 // ============================================================
 // FRIGIDER -- CALCUL MENIURI POSIBILE
@@ -1203,6 +1580,7 @@ async function toggleSelectAll() {
     if (retete.length === 0) return;
     const allSel = retete.every(r => r.selectat);
     retete.forEach(r => r.selectat = !allSel);
+    await resetConfirmari();
     render();
     if (USE_SUPABASE) {
         try { await Promise.all(retete.map(r => db_upsertReteta(r))); }
@@ -1303,88 +1681,7 @@ function applyLockState(shouldUnlock) {
 // ============================================================
 
 function openShoppingList() {
-    const listContent = document.getElementById('shopping-list-content');
-    const summaryCount = document.getElementById('shopping-summary-count');
-    listContent.innerHTML = '';
-
-    let cumparaturi = {};
-    let detaliiCalcul = {};
-
-    retete.forEach(r => {
-        if (r.selectat) {
-            r.ingrediente.forEach(ing => {
-                if (!ing.idProd) return;
-                const qtyReteta = ing.qty;
-                const nrPortii = r.portii;
-                const qtyTotalaMeniu = qtyReteta * nrPortii;
-                const produs = catalog.find(p => p.id === ing.idProd);
-                const unit = produs ? produs.unit : '';
-                const textLinie = `${r.nume}:\n${Number(qtyReteta.toFixed(3))} ${unit} x ${nrPortii} porții = ${Number(qtyTotalaMeniu.toFixed(3))} ${unit}`;
-                if (cumparaturi[ing.idProd]) {
-                    cumparaturi[ing.idProd] += qtyTotalaMeniu;
-                    detaliiCalcul[ing.idProd].push(textLinie);
-                } else {
-                    cumparaturi[ing.idProd] = qtyTotalaMeniu;
-                    detaliiCalcul[ing.idProd] = [textLinie];
-                }
-            });
-        }
-    });
-
-    const sortableItems = Object.keys(cumparaturi).map(id => {
-        const produs = catalog.find(p => p.id === id);
-        return { id, totalQty: cumparaturi[id], calcule: detaliiCalcul[id], unitDisplay: produs ? produs.unit : '' };
-    }).sort((a, b) => {
-        const unitA = (a.unitDisplay || '').toLowerCase().replace(/[^a-z]/g, '');
-        const unitB = (b.unitDisplay || '').toLowerCase().replace(/[^a-z]/g, '');
-        const prioritati = { 'kg': 6, 'l': 5, 'g': 4, 'ml': 3, 'leg': 2, 'buc': 1 };
-        const pA = prioritati[unitA] || 0, pB = prioritati[unitB] || 0;
-        if (pB !== pA) return pB - pA;
-        if (pA === 0 && pB === 0 && unitA !== unitB) return unitA.localeCompare(unitB);
-        if (b.totalQty !== a.totalQty) return b.totalQty - a.totalQty;
-        const nA = catalog.find(x => x.id === a.id)?.nume || '';
-        const nB = catalog.find(x => x.id === b.id)?.nume || '';
-        return nA.localeCompare(nB);
-    });
-
-    summaryCount.innerText = `${sortableItems.length} PRODUSE UNICE`;
-
-    if (sortableItems.length === 0) {
-        listContent.innerHTML = '<p class="text-center text-gray-500 py-10 font-bold uppercase text-xs tracking-widest">Nicio rețetă selectată</p>';
-    } else {
-        sortableItems.forEach(item => {
-            const pReal = catalog.find(x => x.id === item.id);
-            if (!pReal) return;
-            const pretTotalLei = pReal.pretLei * item.totalQty;
-            const textDialog = `PRODUS: ${pReal.nume}\n----------------------------\n\n` +
-                item.calcule.join('\n\n') +
-                `\n\n----------------------------\nTOTAL GENERAL: ${Number(item.totalQty.toFixed(3))} ${item.unitDisplay}`;
-            const countMeniuri = item.calcule.length;
-            const numeEscaped = pReal.nume.replace(/'/g, "\\'").replace(/`/g, '\\`');
-
-            listContent.innerHTML += `
-                <div class="glass-card p-4 flex justify-between items-center border-l-4 border-purple-500 gap-3">
-                    <div class="min-w-0 flex-grow">
-                        <div class="flex items-center gap-2 mb-1">
-                            <span onclick="event.stopPropagation(); alert(\`${textDialog}\`)"
-                                  class="flex-shrink-0 bg-white/10 text-white px-2 py-0.5 rounded-md text-[11px] font-black border border-white/5 uppercase cursor-pointer active:scale-95 transition-transform select-none">
-                                ${Number(item.totalQty.toFixed(3))} ${item.unitDisplay}
-                            </span>
-                            <p onclick="openAuchan('${numeEscaped}')"
-                               class="font-bold text-white text-sm truncate cursor-pointer active:opacity-70 transition-opacity">
-                                ${pReal.nume}
-                            </p>
-                            ${countMeniuri > 1 ? `<span class="w-5 h-5 flex items-center justify-center bg-emerald-500/20 text-emerald-400 rounded-full text-[10px] font-black border border-emerald-500/30">${countMeniuri}</span>` : ''}
-                        </div>
-                        <p class="text-[10px] font-bold text-gray-500 uppercase tracking-tight ml-1">${pReal.pretLei.toFixed(2)} LEI / ${item.unitDisplay}</p>
-                    </div>
-                    <div class="text-right flex-shrink-0">
-                        <p class="text-base font-black text-white leading-none">${pretTotalLei.toFixed(2)} LEI</p>
-                    </div>
-                </div>`;
-        });
-    }
-
+    buildShoppingListContent();
     document.getElementById('shopping-sheet').classList.add('active');
 }
 
@@ -1480,14 +1777,13 @@ function switchTab(tab) {
 
     const collapseBtn = document.getElementById('collapse-btn');
     const bulkBtn = document.getElementById('bulk-select-btn');
-if (tab === 'fridge' || tab === 'catalog') {
-    collapseBtn.style.display = 'none';
-    bulkBtn.style.display = 'none';
-} else {
-    collapseBtn.style.display = '';
-    bulkBtn.style.display = '';
-}
-
+    if (tab === 'fridge' || tab === 'catalog') {
+        collapseBtn.style.display = 'none';
+        bulkBtn.style.display = 'none';
+    } else {
+        collapseBtn.style.display = '';
+        bulkBtn.style.display = '';
+    }
 
     currentTab = tab;
 
@@ -1573,18 +1869,17 @@ function render() {
                                     ${p ? p.nume : 'Alege Produs...'}
                                 </span>`}
                                 <div class="ing-qty-wrap ${isUnlocked ? '' : 'opacity-60'}">
-<input id="inline-input-${rIdx}-${iIdx}"
-       type="number"
-       inputmode="decimal"
-       min="0" step="any"
-       value="${qtyCurat}"
-       ${isUnlocked ? '' : 'readonly tabindex="-1"'}
-       ${isUnlocked ? 'onfocus="this.select()"' : ''}
-       onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}"
-       onblur="confirmInlineInput(${rIdx},'ingQty',${iIdx},this)"
-       class="w-12 text-center text-[10px] font-black text-purple-300 bg-transparent outline-none border-none"
-       style="-moz-appearance:textfield;-webkit-appearance:none;${isUnlocked ? '' : 'pointer-events:none;user-select:none;'}">
-
+                                    <input id="inline-input-${rIdx}-${iIdx}"
+                                           type="number"
+                                           inputmode="decimal"
+                                           min="0" step="any"
+                                           value="${qtyCurat}"
+                                           ${isUnlocked ? '' : 'readonly tabindex="-1"'}
+                                           ${isUnlocked ? 'onfocus="this.select()"' : ''}
+                                           onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}"
+                                           onblur="confirmInlineInput(${rIdx},'ingQty',${iIdx},this)"
+                                           class="w-12 text-center text-[10px] font-black text-purple-300 bg-transparent outline-none border-none"
+                                           style="-moz-appearance:textfield;-webkit-appearance:none;${isUnlocked ? '' : 'pointer-events:none;user-select:none;'}">
                                     <span class="text-[10px] font-black text-purple-400/70">${p ? p.unit : ''}</span>
                                 </div>
                                 ${isUnlocked ? `
@@ -1789,9 +2084,23 @@ async function confirmDeleteCatalogItem(idx) {
     render();
 }
 
+
+async function resetConfirmari() {
+    shoppingConfirmari = {};
+    if (!USE_SUPABASE) return;
+    try {
+        await supabaseClient.from('shopping_confirmari').delete().neq('prod_id', '');
+    } catch (e) {
+        console.error('Eroare reset confirmari:', e);
+    }
+}
+
+
+
 async function toggleSelectReteta(rIdx, checked) {
     retete[rIdx].selectat = checked;
     await db_upsertReteta(retete[rIdx]);
+    await resetConfirmari();
     render();
 }
 
@@ -1875,13 +2184,345 @@ async function selectProduct(id) {
     retete[activeCtx.rIdx].ingrediente[activeCtx.iIdx].idProd = id;
     lastEditedId = retete[activeCtx.rIdx].id;
     await db_upsertReteta(retete[activeCtx.rIdx]);
+    await resetConfirmari();
     closeSheets();
     render();
 }
 
+
 function closeSheets() {
     document.querySelectorAll('.bottom-sheet').forEach(s => s.classList.remove('active'));
 }
+
+
+// ============================================================
+// GENERARE PDF PLAN MENIURI
+// ============================================================
+
+function generateMenuPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+    const nrPers = parseInt(document.getElementById('num-persoane-input').value) || 1;
+    const meniuriActive = retete.filter(r => r.selectat);
+
+    if (meniuriActive.length === 0) {
+        alert('Niciun meniu selectat! Bifează cel puțin un meniu.');
+        return;
+    }
+
+    // --- Calcule globale ---
+    let totalLeiGlobal = 0, totalOreGlobal = 0;
+    meniuriActive.forEach(r => {
+        let cost = 0;
+        r.ingrediente.forEach(ing => {
+            const p = catalog.find(x => x.id === ing.idProd);
+            if (p) cost += p.pretLei * ing.qty;
+        });
+        r._costTotal = cost * r.portii;
+        r._oreTotal = r.ore * r.portii;
+        totalLeiGlobal += r._costTotal;
+        totalOreGlobal += r._oreTotal;
+    });
+    const orePerZi = 12;
+    const zileAutonomie = (totalOreGlobal / nrPers) / orePerZi;
+    const pretPeZi = totalOreGlobal > 0 ? (totalLeiGlobal / totalOreGlobal) * (orePerZi * nrPers) : 0;
+
+    const PAGE_W = 210, PAGE_H = 297;
+    const ML = 14, MR = 14, MT = 0;
+    const CW = PAGE_W - ML - MR; // 182mm
+
+    // ─── Culori ───────────────────────────────────────────────
+    const C_BG        = [8,   7,  16];   // fundal pagină
+    const C_CARD      = [20,  18,  36];  // card meniu
+    const C_CARD2     = [14,  13,  26];  // card ingredient
+    const C_PURPLE    = [192, 132, 252]; // purple
+    const C_PURPLE_DIM= [100,  65, 160]; // purple întunecat
+    const C_EMERALD   = [ 16, 185, 129]; // verde
+    const C_WHITE     = [255, 255, 255];
+    const C_GRAY      = [120, 115, 150];
+    const C_GRAY2     = [ 60,  58,  85];
+
+    // ─── Helper: rounded rect ────────────────────────────────
+    function rrect(x, y, w, h, r, fill, stroke) {
+        if (fill)  { doc.setFillColor(...fill);   }
+        if (stroke){ doc.setDrawColor(...stroke); }
+        const mode = fill && stroke ? 'FD' : fill ? 'F' : 'D';
+        doc.roundedRect(x, y, w, h, r, r, mode);
+    }
+
+    // ─── Helper: text cu ellipsis ────────────────────────────
+    function fitText(text, maxW, fontSize) {
+        doc.setFontSize(fontSize);
+        while (doc.getTextWidth(text) > maxW && text.length > 3)
+            text = text.slice(0, -2) + '…';
+        return text;
+    }
+
+    // ─── Helper: badge mic ───────────────────────────────────
+    function badge(text, x, y, bgColor, textColor) {
+        doc.setFontSize(6.5);
+        const tw = doc.getTextWidth(text);
+        const bw = tw + 4, bh = 5;
+        rrect(x, y - bh + 1.2, bw, bh, 1.2, bgColor);
+        doc.setTextColor(...textColor);
+        doc.text(text, x + 2, y, { baseline: 'bottom' });
+        return bw + 2;
+    }
+
+    // ─── Helper: linie orizontală ────────────────────────────
+    function hline(y, alpha, color) {
+        doc.setDrawColor(...(color || C_GRAY2));
+        doc.setLineWidth(0.25);
+        doc.line(ML, y, ML + CW, y);
+    }
+
+    // ─── Helper: gradient simulat (dreptunghiuri stacked) ────
+    function gradBar(x, y, w, h, c1, c2) {
+        const steps = 12;
+        for (let i = 0; i < steps; i++) {
+            const t = i / (steps - 1);
+            const r = Math.round(c1[0] + (c2[0]-c1[0]) * t);
+            const g = Math.round(c1[1] + (c2[1]-c1[1]) * t);
+            const b = Math.round(c1[2] + (c2[2]-c1[2]) * t);
+            doc.setFillColor(r, g, b);
+            doc.rect(x + (w/steps)*i, y, w/steps + 0.5, h, 'F');
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // PAGINA 1 -- HEADER + SUMAR
+    // ═══════════════════════════════════════════════════════════
+
+    // Fundal negru total
+    doc.setFillColor(...C_BG);
+    doc.rect(0, 0, PAGE_W, PAGE_H, 'F');
+
+    // Gradient header bar (top)
+    gradBar(0, 0, PAGE_W, 38, [30, 10, 60], [8, 7, 16]);
+
+    // Decor cerc purple stânga
+    doc.setFillColor(80, 40, 130);
+    doc.circle(ML + 5, 19, 22, 'F');
+    doc.setFillColor(...C_BG);
+    doc.circle(ML + 5, 19, 19, 'F');
+
+    // Titlu principal
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(26);
+    doc.setTextColor(...C_WHITE);
+    doc.text('PLAN MENIURI', ML + 32, 16, { baseline: 'top' });
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(...C_GRAY);
+    doc.text('GASTROGLASS  ·  PLANIFICATOR ALIMENTAR', ML + 32, 26, { baseline: 'top' });
+
+    // Data
+    const now = new Date();
+    const dateStr = `${String(now.getDate()).padStart(2,'0')}.${String(now.getMonth()+1).padStart(2,'0')}.${now.getFullYear()}`;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7);
+    doc.setTextColor(...C_PURPLE);
+    doc.text(dateStr, PAGE_W - MR, 14, { align: 'right', baseline: 'top' });
+
+    doc.setTextColor(...C_GRAY);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`${nrPers} ${nrPers === 1 ? 'PERSOANĂ' : 'PERSOANE'}`, PAGE_W - MR, 20, { align: 'right', baseline: 'top' });
+
+    // Linie separator header
+    gradBar(0, 37, PAGE_W, 1.5, C_PURPLE_DIM, [8, 7, 16]);
+
+    // ─── CARDURI SUMAR (4 cifre) ─────────────────────────────
+    let cy = 46;
+    const statCards = [
+        { label: 'MENIURI ACTIVE', val: meniuriActive.length.toString(), unit: 'meniuri', color: C_PURPLE },
+        { label: 'TOTAL BUGET',    val: totalLeiGlobal.toFixed(2),        unit: 'LEI',     color: C_EMERALD },
+        { label: 'AUTONOMIE',      val: zileAutonomie.toFixed(1),         unit: 'ZILE',    color: C_PURPLE },
+        { label: 'COST / ZI',      val: pretPeZi.toFixed(2),              unit: 'LEI/ZI',  color: C_EMERALD },
+    ];
+    const scW = (CW - 9) / 4;
+    statCards.forEach((sc, i) => {
+        const sx = ML + i * (scW + 3);
+        rrect(sx, cy, scW, 24, 4, C_CARD);
+        // Border stânga colorat
+        doc.setFillColor(...sc.color);
+        doc.roundedRect(sx, cy, 2, 24, 1, 1, 'F');
+        doc.setFontSize(6);
+        doc.setTextColor(...C_GRAY);
+        doc.setFont('helvetica', 'bold');
+        doc.text(sc.label, sx + scW/2, cy + 5, { align: 'center', baseline: 'top' });
+        doc.setFontSize(13);
+        doc.setTextColor(...C_WHITE);
+        doc.setFont('helvetica', 'bold');
+        doc.text(sc.val, sx + scW/2, cy + 12, { align: 'center', baseline: 'top' });
+        doc.setFontSize(6);
+        doc.setTextColor(...sc.color);
+        doc.text(sc.unit, sx + scW/2, cy + 20, { align: 'center', baseline: 'top' });
+    });
+    cy += 32;
+
+    // Separator
+    hline(cy, 1, C_GRAY2);
+    cy += 6;
+
+    // Titlu sectiune
+    doc.setFontSize(7.5);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...C_GRAY);
+    doc.text('DETALIU MENIURI SELECTATE', ML, cy, { baseline: 'top' });
+    cy += 7;
+
+    // ═══════════════════════════════════════════════════════════
+    // MENIURI -- render pe pagini
+    // ═══════════════════════════════════════════════════════════
+
+    meniuriActive.forEach((r, mIdx) => {
+        const nrIng = r.ingrediente.filter(i => i.idProd).length;
+        const cardH = 22 + nrIng * 9 + (nrIng > 0 ? 6 : 0) + 6;
+
+        // Page break dacă nu mai încape
+        if (cy + cardH > PAGE_H - 16) {
+            doc.addPage();
+            doc.setFillColor(...C_BG);
+            doc.rect(0, 0, PAGE_W, PAGE_H, 'F');
+            cy = MT + 14;
+        }
+
+        // Card background
+        rrect(ML, cy, CW, cardH, 5, C_CARD);
+
+        // Border stânga purple
+        doc.setFillColor(...C_PURPLE);
+        doc.roundedRect(ML, cy, 2.5, cardH, 1.2, 1.2, 'F');
+
+        // Număr meniu (badge)
+        const mBadgeX = ML + 5;
+        badge(`#${mIdx + 1}`, mBadgeX, cy + 8, [50, 20, 100], C_PURPLE);
+
+        // Nume meniu
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(11);
+        doc.setTextColor(...C_WHITE);
+        const numeClean = r.nume.replace(/[\u{1F300}-\u{1FAFF}]/gu, '').trim();
+        doc.text(fitText(numeClean, CW - 70, 11), ML + 22, cy + 8, { baseline: 'bottom' });
+
+        // Tags
+        if (r.tags) {
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(6);
+            doc.setTextColor(...C_GRAY);
+            doc.text('#' + r.tags, ML + 22, cy + 11, { baseline: 'top' });
+        }
+
+        // Stats dreapta: 3 mini-carduri
+        const statsRight = PAGE_W - MR;
+        const miniW = 28;
+        const miniStats = [
+            { label: 'PORȚII', val: r.portii.toString(), color: C_WHITE },
+            { label: `ORE/${nrPers > 1 ? nrPers+'P' : 'P'}`, val: (r.ore/nrPers).toFixed(1)+'h', color: C_PURPLE },
+            { label: 'TOTAL', val: r._costTotal.toFixed(2)+' LEI', color: C_EMERALD },
+        ];
+        miniStats.forEach((ms, si) => {
+            const mx = statsRight - (3-si)*miniW - (3-si-1)*2;
+            rrect(mx, cy + 2, miniW - 1, 13, 3, C_CARD2);
+            doc.setFontSize(5.5);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(...C_GRAY);
+            doc.text(ms.label, mx + (miniW-1)/2, cy + 4.5, { align: 'center', baseline: 'top' });
+            doc.setFontSize(8);
+            doc.setTextColor(...ms.color);
+            doc.text(ms.val, mx + (miniW-1)/2, cy + 9.5, { align: 'center', baseline: 'top' });
+        });
+
+        // Linie separator ingrediente
+        const ingStartY = cy + 18;
+        hline(ingStartY - 1, 1, C_GRAY2);
+
+        // Header tabel ingrediente
+        doc.setFontSize(6);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(...C_GRAY);
+        doc.text('INGREDIENT', ML + 6, ingStartY + 2, { baseline: 'top' });
+        doc.text('CANTITATE / PORȚIE', ML + CW * 0.52, ingStartY + 2, { baseline: 'top' });
+        doc.text('TOTAL', ML + CW * 0.72, ingStartY + 2, { baseline: 'top' });
+        doc.text('PREȚ UNIT.', ML + CW * 0.85, ingStartY + 2, { baseline: 'top' });
+
+        let iy = ingStartY + 8;
+        const ingFiltrate = r.ingrediente.filter(i => i.idProd);
+        ingFiltrate.forEach((ing, idx) => {
+            const p = catalog.find(x => x.id === ing.idProd);
+            if (!p) return;
+
+            // Alternating row bg
+            if (idx % 2 === 0) {
+                doc.setFillColor(26, 24, 46);
+                doc.roundedRect(ML + 3, iy - 1.5, CW - 6, 8, 1.5, 1.5, 'F');
+            }
+
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(7.5);
+            doc.setTextColor(...C_WHITE);
+            doc.text(fitText(p.nume, CW * 0.45, 7.5), ML + 6, iy + 3, { baseline: 'middle' });
+
+            // Qty / porție
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(7.5);
+            doc.setTextColor(...C_PURPLE);
+            doc.text(`${+ing.qty.toFixed(3)} ${p.unit}`, ML + CW * 0.52, iy + 3, { baseline: 'middle' });
+
+            // Qty totală
+            const qtyTotal = ing.qty * r.portii;
+            doc.setTextColor(...C_EMERALD);
+            doc.text(`${+qtyTotal.toFixed(3)} ${p.unit}`, ML + CW * 0.72, iy + 3, { baseline: 'middle' });
+
+            // Preț unitar
+            doc.setTextColor(...C_GRAY);
+            doc.text(`${p.pretLei.toFixed(2)} LEI/${p.unit}`, ML + CW * 0.85, iy + 3, { baseline: 'middle' });
+
+            iy += 9;
+        });
+
+        if (ingFiltrate.length === 0) {
+            doc.setFontSize(7);
+            doc.setTextColor(...C_GRAY);
+            doc.text('-- fără ingrediente --', ML + CW/2, ingStartY + 10, { align: 'center', baseline: 'middle' });
+            iy = ingStartY + 15;
+        }
+
+        cy += cardH + 5;
+    });
+
+    // ═══════════════════════════════════════════════════════════
+    // FOOTER pe ultima pagină
+    // ═══════════════════════════════════════════════════════════
+    gradBar(0, PAGE_H - 10, PAGE_W, 10, [8, 7, 16], [30, 10, 60]);
+    doc.setFontSize(6);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...C_GRAY);
+    doc.text(`GastroGlass · Plan generat ${dateStr} · ${nrPers} ${nrPers===1?'persoană':'persoane'} · ${meniuriActive.length} meniuri active`, PAGE_W/2, PAGE_H - 3.5, { align: 'center', baseline: 'middle' });
+
+    // Footer pe fiecare pagina (numar pagina)
+    const pageCount = doc.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFillColor(...C_BG);
+        doc.rect(0, PAGE_H - 10, PAGE_W, 10, 'F');
+        gradBar(0, PAGE_H - 10, PAGE_W, 10, [8, 7, 16], [30, 10, 60]);
+        doc.setFontSize(6);
+        doc.setTextColor(...C_GRAY);
+        doc.text(`GastroGlass · ${dateStr} · ${nrPers} ${nrPers===1?'persoană':'persoane'}`, PAGE_W/2, PAGE_H - 3.5, { align: 'center', baseline: 'middle' });
+        doc.setTextColor(...C_PURPLE);
+        doc.text(`${i} / ${pageCount}`, PAGE_W - MR, PAGE_H - 3.5, { align: 'right', baseline: 'middle' });
+    }
+
+    // Salvare
+    const fname = `plan-meniuri-${dateStr.replace(/\./g,'-')}.pdf`;
+    doc.save(fname);
+}
+
+
+
 
 // ============================================================
 // INIT
@@ -1897,11 +2538,11 @@ window.onload = async function () {
     await db_loadRetete();
     await db_loadNumPersoane();
     await db_loadFrigider();
+    await db_loadConfirmari();
 
     render();
     document.body.classList.add('app-ready');
 };
-
 
 </script>
 </body>
