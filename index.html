@@ -882,9 +882,17 @@ class="w-8 text-center text-[10px] font-black text-emerald-400 bg-transparent ou
 }
 
 function toggleFridgeExpand() {
-    fridgeStockExpanded = !fridgeStockExpanded;
-    renderFridge();
+    if (fridgeStockExpanded) {
+        const scrollBefore = window.scrollY;
+        fridgeStockExpanded = false;
+        renderFridge();
+        setTimeout(() => window.scrollTo({ top: scrollBefore, behavior: 'instant' }), 0);
+    } else {
+        fridgeStockExpanded = true;
+        renderFridge();
+    }
 }
+
 
 // ============================================================
 // FRIGIDER -- CALCUL MENIURI POSIBILE
