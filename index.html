@@ -5,8 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>GastroGlass HUD Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -2200,25 +2199,9 @@ function closeSheets() {
 // GENERARE PDF PLAN MENIURI
 // ============================================================
 
-async function generateMenuPDF() {
-    // Fix: jsPDF poate fi pe window.jspdf.jsPDF sau direct window.jsPDF
-    const jsPDFClass = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
-    if (!jsPDFClass) {
-        alert('Librăria PDF nu s-a încărcat. Verifică conexiunea și reîncarcă pagina.');
-        return;
-    }
-    const jsPDF = jsPDFClass;
-
-    function cleanText(text) {
-        if (!text) return '';
-        return text
-            .replace(/\p{Emoji_Presentation}/gu, '')
-            .replace(/\p{Extended_Pictographic}/gu, '')
-            .replace(/[\u{FE00}-\u{FE0F}]/gu, '')
-            .replace(/[\u{1F000}-\u{1FFFF}]/gu, '')
-            .replace(/\s+/g, ' ')
-            .trim();
-    }
+function generateMenuPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
     const nrPers = parseInt(document.getElementById('num-persoane-input').value) || 1;
     const meniuriActive = retete.filter(r => r.selectat);
@@ -2228,7 +2211,7 @@ async function generateMenuPDF() {
         return;
     }
 
-    // Calcule globale
+    // --- Calcule globale ---
     let totalLeiGlobal = 0, totalOreGlobal = 0;
     meniuriActive.forEach(r => {
         let cost = 0;
@@ -2245,350 +2228,298 @@ async function generateMenuPDF() {
     const zileAutonomie = (totalOreGlobal / nrPers) / orePerZi;
     const pretPeZi = totalOreGlobal > 0 ? (totalLeiGlobal / totalOreGlobal) * (orePerZi * nrPers) : 0;
 
-    // Încarcă fonturi cu suport românesc
-    let fontLoaded = false;
-    try {
-        const doc_temp = new jsPDF();
-
-        const [fontResp, fontBoldResp] = await Promise.all([
-            fetch('https://cdn.jsdelivr.net/npm/@fontsource/noto-sans@5.0.1/files/noto-sans-latin-ext-400-normal.woff2'),
-            fetch('https://cdn.jsdelivr.net/npm/@fontsource/noto-sans@5.0.1/files/noto-sans-latin-ext-700-normal.woff2')
-        ]);
-
-        const [fontBuf, fontBoldBuf] = await Promise.all([
-            fontResp.arrayBuffer(),
-            fontBoldResp.arrayBuffer()
-        ]);
-
-        const toB64 = (buf) => {
-            const bytes = new Uint8Array(buf);
-            let binary = '';
-            for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
-            return btoa(binary);
-        };
-
-        const fontB64     = toB64(fontBuf);
-        const fontBoldB64 = toB64(fontBoldBuf);
-
-        // Vom adăuga fonturile pe doc-ul real mai jos
-        window._pdfFontNormal = fontB64;
-        window._pdfFontBold   = fontBoldB64;
-        fontLoaded = true;
-    } catch(e) {
-        console.warn('Font load failed, fallback to helvetica:', e);
-    }
-
-    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-
-    if (fontLoaded) {
-        doc.addFileToVFS('NotoSans.woff2',     window._pdfFontNormal);
-        doc.addFileToVFS('NotoSans-Bold.woff2', window._pdfFontBold);
-        doc.addFont('NotoSans.woff2',      'NotoSans', 'normal');
-        doc.addFont('NotoSans-Bold.woff2', 'NotoSans', 'bold');
-    }
-
-    const FONT = fontLoaded ? 'NotoSans' : 'helvetica';
-
     const PAGE_W = 210, PAGE_H = 297;
     const ML = 14, MR = 14, MT = 0;
-    const CW = PAGE_W - ML - MR;
+    const CW = PAGE_W - ML - MR; // 182mm
 
-    const C_BG         = [8,   7,  16];
-    const C_CARD       = [20,  18,  36];
-    const C_CARD2      = [14,  13,  26];
-    const C_PURPLE     = [192, 132, 252];
-    const C_PURPLE_DIM = [100,  65, 160];
-    const C_EMERALD    = [ 16, 185, 129];
-    const C_WHITE      = [255, 255, 255];
-    const C_GRAY       = [120, 115, 150];
-    const C_GRAY2      = [ 60,  58,  85];
+    // ─── Culori ───────────────────────────────────────────────
+    const C_BG        = [8,   7,  16];   // fundal pagină
+    const C_CARD      = [20,  18,  36];  // card meniu
+    const C_CARD2     = [14,  13,  26];  // card ingredient
+    const C_PURPLE    = [192, 132, 252]; // purple
+    const C_PURPLE_DIM= [100,  65, 160]; // purple întunecat
+    const C_EMERALD   = [ 16, 185, 129]; // verde
+    const C_WHITE     = [255, 255, 255];
+    const C_GRAY      = [120, 115, 150];
+    const C_GRAY2     = [ 60,  58,  85];
 
-    function setFont(style) {
-        doc.setFont(FONT, style === 'bold' ? 'bold' : 'normal');
-    }
-
+    // ─── Helper: rounded rect ────────────────────────────────
     function rrect(x, y, w, h, r, fill, stroke) {
-        if (fill)   doc.setFillColor(...fill);
-        if (stroke) doc.setDrawColor(...stroke);
+        if (fill)  { doc.setFillColor(...fill);   }
+        if (stroke){ doc.setDrawColor(...stroke); }
         const mode = fill && stroke ? 'FD' : fill ? 'F' : 'D';
         doc.roundedRect(x, y, w, h, r, r, mode);
     }
 
+    // ─── Helper: text cu ellipsis ────────────────────────────
     function fitText(text, maxW, fontSize) {
         doc.setFontSize(fontSize);
-        let t = cleanText(text);
-        while (doc.getTextWidth(t) > maxW && t.length > 3)
-            t = t.slice(0, -2) + '…';
-        return t;
+        while (doc.getTextWidth(text) > maxW && text.length > 3)
+            text = text.slice(0, -2) + '…';
+        return text;
     }
 
+    // ─── Helper: badge mic ───────────────────────────────────
     function badge(text, x, y, bgColor, textColor) {
-        const t = cleanText(text);
         doc.setFontSize(6.5);
-        setFont('bold');
-        const tw = doc.getTextWidth(t);
+        const tw = doc.getTextWidth(text);
         const bw = tw + 4, bh = 5;
         rrect(x, y - bh + 1.2, bw, bh, 1.2, bgColor);
         doc.setTextColor(...textColor);
-        doc.text(t, x + 2, y, { baseline: 'bottom' });
+        doc.text(text, x + 2, y, { baseline: 'bottom' });
         return bw + 2;
     }
 
-    function hline(y, color) {
+    // ─── Helper: linie orizontală ────────────────────────────
+    function hline(y, alpha, color) {
         doc.setDrawColor(...(color || C_GRAY2));
         doc.setLineWidth(0.25);
         doc.line(ML, y, ML + CW, y);
     }
 
+    // ─── Helper: gradient simulat (dreptunghiuri stacked) ────
     function gradBar(x, y, w, h, c1, c2) {
-        const steps = 14;
+        const steps = 12;
         for (let i = 0; i < steps; i++) {
             const t = i / (steps - 1);
-            const r = Math.round(c1[0] + (c2[0] - c1[0]) * t);
-            const g = Math.round(c1[1] + (c2[1] - c1[1]) * t);
-            const b = Math.round(c1[2] + (c2[2] - c1[2]) * t);
+            const r = Math.round(c1[0] + (c2[0]-c1[0]) * t);
+            const g = Math.round(c1[1] + (c2[1]-c1[1]) * t);
+            const b = Math.round(c1[2] + (c2[2]-c1[2]) * t);
             doc.setFillColor(r, g, b);
-            doc.rect(x + (w / steps) * i, y, w / steps + 0.5, h, 'F');
+            doc.rect(x + (w/steps)*i, y, w/steps + 0.5, h, 'F');
         }
     }
 
-    function addPageBackground() {
-        doc.setFillColor(...C_BG);
-        doc.rect(0, 0, PAGE_W, PAGE_H, 'F');
-    }
-
     // ═══════════════════════════════════════════════════════════
-    // PAGINA 1 -- HEADER
+    // PAGINA 1 -- HEADER + SUMAR
     // ═══════════════════════════════════════════════════════════
 
-    addPageBackground();
-
-    // Gradient header
-    gradBar(0, 0, PAGE_W, 40, [30, 10, 60], [8, 7, 16]);
-
-    // Cerc decor
-    doc.setFillColor(70, 35, 120);
-    doc.circle(ML + 6, 20, 24, 'F');
+    // Fundal negru total
     doc.setFillColor(...C_BG);
-    doc.circle(ML + 6, 20, 21, 'F');
+    doc.rect(0, 0, PAGE_W, PAGE_H, 'F');
 
-    // Titlu
-    setFont('bold');
-    doc.setFontSize(27);
+    // Gradient header bar (top)
+    gradBar(0, 0, PAGE_W, 38, [30, 10, 60], [8, 7, 16]);
+
+    // Decor cerc purple stânga
+    doc.setFillColor(80, 40, 130);
+    doc.circle(ML + 5, 19, 22, 'F');
+    doc.setFillColor(...C_BG);
+    doc.circle(ML + 5, 19, 19, 'F');
+
+    // Titlu principal
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(26);
     doc.setTextColor(...C_WHITE);
-    doc.text('PLAN MENIURI', ML + 34, 15, { baseline: 'top' });
+    doc.text('PLAN MENIURI', ML + 32, 16, { baseline: 'top' });
 
-    setFont('normal');
-    doc.setFontSize(7.5);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
     doc.setTextColor(...C_GRAY);
-    doc.text('GASTROGLASS  ·  PLANIFICATOR ALIMENTAR', ML + 34, 27, { baseline: 'top' });
+    doc.text('GASTROGLASS  ·  PLANIFICATOR ALIMENTAR', ML + 32, 26, { baseline: 'top' });
 
+    // Data
     const now = new Date();
     const dateStr = `${String(now.getDate()).padStart(2,'0')}.${String(now.getMonth()+1).padStart(2,'0')}.${now.getFullYear()}`;
-
-    setFont('bold');
-    doc.setFontSize(7.5);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7);
     doc.setTextColor(...C_PURPLE);
     doc.text(dateStr, PAGE_W - MR, 14, { align: 'right', baseline: 'top' });
 
-    setFont('normal');
-    doc.setFontSize(7);
     doc.setTextColor(...C_GRAY);
-    doc.text(`${nrPers} ${nrPers === 1 ? 'PERSOANA' : 'PERSOANE'}`, PAGE_W - MR, 21, { align: 'right', baseline: 'top' });
+    doc.setFont('helvetica', 'normal');
+    doc.text(`${nrPers} ${nrPers === 1 ? 'PERSOANĂ' : 'PERSOANE'}`, PAGE_W - MR, 20, { align: 'right', baseline: 'top' });
 
-    gradBar(0, 38, PAGE_W, 1.5, C_PURPLE_DIM, [8, 7, 16]);
+    // Linie separator header
+    gradBar(0, 37, PAGE_W, 1.5, C_PURPLE_DIM, [8, 7, 16]);
 
-    // ─── CARDURI SUMAR ────────────────────────────────────────
-    let cy = 48;
-
+    // ─── CARDURI SUMAR (4 cifre) ─────────────────────────────
+    let cy = 46;
     const statCards = [
-        { label: 'MENIURI ACTIVE', val: meniuriActive.length.toString(),  unit: 'meniuri', color: C_PURPLE  },
-        { label: 'TOTAL BUGET',    val: totalLeiGlobal.toFixed(2),         unit: 'LEI',     color: C_EMERALD },
-        { label: 'AUTONOMIE',      val: zileAutonomie.toFixed(1),          unit: 'ZILE',    color: C_PURPLE  },
-        { label: 'COST / ZI',      val: pretPeZi.toFixed(2),               unit: 'LEI/ZI',  color: C_EMERALD },
+        { label: 'MENIURI ACTIVE', val: meniuriActive.length.toString(), unit: 'meniuri', color: C_PURPLE },
+        { label: 'TOTAL BUGET',    val: totalLeiGlobal.toFixed(2),        unit: 'LEI',     color: C_EMERALD },
+        { label: 'AUTONOMIE',      val: zileAutonomie.toFixed(1),         unit: 'ZILE',    color: C_PURPLE },
+        { label: 'COST / ZI',      val: pretPeZi.toFixed(2),              unit: 'LEI/ZI',  color: C_EMERALD },
     ];
-
     const scW = (CW - 9) / 4;
     statCards.forEach((sc, i) => {
         const sx = ML + i * (scW + 3);
-        rrect(sx, cy, scW, 26, 4, C_CARD);
+        rrect(sx, cy, scW, 24, 4, C_CARD);
+        // Border stânga colorat
         doc.setFillColor(...sc.color);
-        doc.roundedRect(sx, cy, 2.5, 26, 1.2, 1.2, 'F');
-
-        setFont('bold');
+        doc.roundedRect(sx, cy, 2, 24, 1, 1, 'F');
         doc.setFontSize(6);
         doc.setTextColor(...C_GRAY);
-        doc.text(cleanText(sc.label), sx + scW / 2, cy + 5, { align: 'center', baseline: 'top' });
-
+        doc.setFont('helvetica', 'bold');
+        doc.text(sc.label, sx + scW/2, cy + 5, { align: 'center', baseline: 'top' });
         doc.setFontSize(13);
         doc.setTextColor(...C_WHITE);
-        doc.text(sc.val, sx + scW / 2, cy + 12, { align: 'center', baseline: 'top' });
-
-        doc.setFontSize(6.5);
+        doc.setFont('helvetica', 'bold');
+        doc.text(sc.val, sx + scW/2, cy + 12, { align: 'center', baseline: 'top' });
+        doc.setFontSize(6);
         doc.setTextColor(...sc.color);
-        doc.text(sc.unit, sx + scW / 2, cy + 21, { align: 'center', baseline: 'top' });
+        doc.text(sc.unit, sx + scW/2, cy + 20, { align: 'center', baseline: 'top' });
     });
+    cy += 32;
 
-    cy += 34;
-    hline(cy, C_GRAY2);
-    cy += 7;
+    // Separator
+    hline(cy, 1, C_GRAY2);
+    cy += 6;
 
-    setFont('bold');
+    // Titlu sectiune
     doc.setFontSize(7.5);
+    doc.setFont('helvetica', 'bold');
     doc.setTextColor(...C_GRAY);
     doc.text('DETALIU MENIURI SELECTATE', ML, cy, { baseline: 'top' });
-    cy += 8;
+    cy += 7;
 
     // ═══════════════════════════════════════════════════════════
-    // MENIURI
+    // MENIURI -- render pe pagini
     // ═══════════════════════════════════════════════════════════
 
     meniuriActive.forEach((r, mIdx) => {
-        const ingFiltrate = r.ingrediente.filter(i => i.idProd);
-        const nrIng = ingFiltrate.length;
-        const cardH = 24 + (nrIng > 0 ? 10 + nrIng * 9 + 4 : 14);
+        const nrIng = r.ingrediente.filter(i => i.idProd).length;
+        const cardH = 22 + nrIng * 9 + (nrIng > 0 ? 6 : 0) + 6;
 
-        if (cy + cardH > PAGE_H - 18) {
+        // Page break dacă nu mai încape
+        if (cy + cardH > PAGE_H - 16) {
             doc.addPage();
-            addPageBackground();
-            cy = 16;
+            doc.setFillColor(...C_BG);
+            doc.rect(0, 0, PAGE_W, PAGE_H, 'F');
+            cy = MT + 14;
         }
 
-        // Card principal
+        // Card background
         rrect(ML, cy, CW, cardH, 5, C_CARD);
 
-        // Border stânga purple gradient simulat
+        // Border stânga purple
         doc.setFillColor(...C_PURPLE);
-        doc.roundedRect(ML, cy, 3, cardH, 1.5, 1.5, 'F');
+        doc.roundedRect(ML, cy, 2.5, cardH, 1.2, 1.2, 'F');
 
-        // Număr badge
-        badge(`#${mIdx + 1}`, ML + 6, cy + 9, [55, 22, 110], C_PURPLE);
+        // Număr meniu (badge)
+        const mBadgeX = ML + 5;
+        badge(`#${mIdx + 1}`, mBadgeX, cy + 8, [50, 20, 100], C_PURPLE);
 
         // Nume meniu
-        setFont('bold');
-        doc.setFontSize(11.5);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(11);
         doc.setTextColor(...C_WHITE);
-        doc.text(fitText(r.nume, CW - 72, 11.5), ML + 24, cy + 9, { baseline: 'bottom' });
+        const numeClean = r.nume.replace(/[\u{1F300}-\u{1FAFF}]/gu, '').trim();
+        doc.text(fitText(numeClean, CW - 70, 11), ML + 22, cy + 8, { baseline: 'bottom' });
 
         // Tags
-        if (r.tags && r.tags.trim()) {
-            setFont('normal');
+        if (r.tags) {
+            doc.setFont('helvetica', 'normal');
             doc.setFontSize(6);
             doc.setTextColor(...C_GRAY);
-            doc.text('# ' + cleanText(r.tags), ML + 24, cy + 12.5, { baseline: 'top' });
+            doc.text('#' + r.tags, ML + 22, cy + 11, { baseline: 'top' });
         }
 
-        // Mini carduri stats (dreapta sus)
-        const statsRight = ML + CW - 2;
-        const miniW = 29;
-        const miniH = 15;
-        const miniGap = 2;
+        // Stats dreapta: 3 mini-carduri
+        const statsRight = PAGE_W - MR;
+        const miniW = 28;
         const miniStats = [
-            { label: 'PORTII',                              val: r.portii.toString(),              color: C_WHITE   },
-            { label: `ORE / ${nrPers > 1 ? nrPers + 'P' : 'PERS'}`, val: (r.ore / nrPers).toFixed(1) + 'h', color: C_PURPLE  },
-            { label: 'TOTAL',                               val: r._costTotal.toFixed(2) + ' LEI', color: C_EMERALD },
+            { label: 'PORȚII', val: r.portii.toString(), color: C_WHITE },
+            { label: `ORE/${nrPers > 1 ? nrPers+'P' : 'P'}`, val: (r.ore/nrPers).toFixed(1)+'h', color: C_PURPLE },
+            { label: 'TOTAL', val: r._costTotal.toFixed(2)+' LEI', color: C_EMERALD },
         ];
         miniStats.forEach((ms, si) => {
-            const mx = statsRight - (3 - si) * (miniW + miniGap) + miniGap;
-            rrect(mx, cy + 2, miniW, miniH, 3, C_CARD2);
-            setFont('bold');
+            const mx = statsRight - (3-si)*miniW - (3-si-1)*2;
+            rrect(mx, cy + 2, miniW - 1, 13, 3, C_CARD2);
             doc.setFontSize(5.5);
+            doc.setFont('helvetica', 'bold');
             doc.setTextColor(...C_GRAY);
-            doc.text(cleanText(ms.label), mx + miniW / 2, cy + 4.5, { align: 'center', baseline: 'top' });
+            doc.text(ms.label, mx + (miniW-1)/2, cy + 4.5, { align: 'center', baseline: 'top' });
             doc.setFontSize(8);
             doc.setTextColor(...ms.color);
-            doc.text(ms.val, mx + miniW / 2, cy + 10, { align: 'center', baseline: 'top' });
+            doc.text(ms.val, mx + (miniW-1)/2, cy + 9.5, { align: 'center', baseline: 'top' });
         });
 
-        // Separator ingrediente
-        const ingStartY = cy + 22;
-        hline(ingStartY - 1, C_GRAY2);
+        // Linie separator ingrediente
+        const ingStartY = cy + 18;
+        hline(ingStartY - 1, 1, C_GRAY2);
 
-        // Header tabel
-        setFont('bold');
+        // Header tabel ingrediente
         doc.setFontSize(6);
+        doc.setFont('helvetica', 'bold');
         doc.setTextColor(...C_GRAY);
-        doc.text('INGREDIENT',          ML + 6,          ingStartY + 2, { baseline: 'top' });
-        doc.text('CANT. / PORTIE',      ML + CW * 0.50,  ingStartY + 2, { baseline: 'top' });
-        doc.text('TOTAL',               ML + CW * 0.67,  ingStartY + 2, { baseline: 'top' });
-        doc.text('PRET UNITAR',         ML + CW * 0.83,  ingStartY + 2, { baseline: 'top' });
+        doc.text('INGREDIENT', ML + 6, ingStartY + 2, { baseline: 'top' });
+        doc.text('CANTITATE / PORȚIE', ML + CW * 0.52, ingStartY + 2, { baseline: 'top' });
+        doc.text('TOTAL', ML + CW * 0.72, ingStartY + 2, { baseline: 'top' });
+        doc.text('PREȚ UNIT.', ML + CW * 0.85, ingStartY + 2, { baseline: 'top' });
 
-        let iy = ingStartY + 9;
+        let iy = ingStartY + 8;
+        const ingFiltrate = r.ingrediente.filter(i => i.idProd);
+        ingFiltrate.forEach((ing, idx) => {
+            const p = catalog.find(x => x.id === ing.idProd);
+            if (!p) return;
 
-        if (nrIng === 0) {
-            setFont('normal');
+            // Alternating row bg
+            if (idx % 2 === 0) {
+                doc.setFillColor(26, 24, 46);
+                doc.roundedRect(ML + 3, iy - 1.5, CW - 6, 8, 1.5, 1.5, 'F');
+            }
+
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(7.5);
+            doc.setTextColor(...C_WHITE);
+            doc.text(fitText(p.nume, CW * 0.45, 7.5), ML + 6, iy + 3, { baseline: 'middle' });
+
+            // Qty / porție
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(7.5);
+            doc.setTextColor(...C_PURPLE);
+            doc.text(`${+ing.qty.toFixed(3)} ${p.unit}`, ML + CW * 0.52, iy + 3, { baseline: 'middle' });
+
+            // Qty totală
+            const qtyTotal = ing.qty * r.portii;
+            doc.setTextColor(...C_EMERALD);
+            doc.text(`${+qtyTotal.toFixed(3)} ${p.unit}`, ML + CW * 0.72, iy + 3, { baseline: 'middle' });
+
+            // Preț unitar
+            doc.setTextColor(...C_GRAY);
+            doc.text(`${p.pretLei.toFixed(2)} LEI/${p.unit}`, ML + CW * 0.85, iy + 3, { baseline: 'middle' });
+
+            iy += 9;
+        });
+
+        if (ingFiltrate.length === 0) {
             doc.setFontSize(7);
             doc.setTextColor(...C_GRAY);
-            doc.text('-- fara ingrediente --', ML + CW / 2, iy + 2, { align: 'center', baseline: 'top' });
-        } else {
-            ingFiltrate.forEach((ing, idx) => {
-                const p = catalog.find(x => x.id === ing.idProd);
-                if (!p) return;
-
-                // Row alternating bg
-                if (idx % 2 === 0) {
-                    doc.setFillColor(26, 24, 46);
-                    doc.roundedRect(ML + 3, iy - 1.5, CW - 6, 8.5, 1.5, 1.5, 'F');
-                }
-
-                // Nume produs
-                setFont('bold');
-                doc.setFontSize(7.5);
-                doc.setTextColor(...C_WHITE);
-                doc.text(fitText(p.nume, CW * 0.44, 7.5), ML + 6, iy + 3, { baseline: 'middle' });
-
-                // Cantitate per porție
-                setFont('normal');
-                doc.setFontSize(7.5);
-                doc.setTextColor(...C_PURPLE);
-                doc.text(`${+ing.qty.toFixed(3)} ${cleanText(p.unit)}`, ML + CW * 0.50, iy + 3, { baseline: 'middle' });
-
-                // Cantitate totală
-                const qtyTotal = ing.qty * r.portii;
-                doc.setTextColor(...C_EMERALD);
-                doc.text(`${+qtyTotal.toFixed(3)} ${cleanText(p.unit)}`, ML + CW * 0.67, iy + 3, { baseline: 'middle' });
-
-                // Preț unitar
-                doc.setTextColor(...C_GRAY);
-                doc.text(`${p.pretLei.toFixed(2)} L/${cleanText(p.unit)}`, ML + CW * 0.83, iy + 3, { baseline: 'middle' });
-
-                iy += 9;
-            });
+            doc.text('-- fără ingrediente --', ML + CW/2, ingStartY + 10, { align: 'center', baseline: 'middle' });
+            iy = ingStartY + 15;
         }
 
-        cy += cardH + 6;
+        cy += cardH + 5;
     });
 
     // ═══════════════════════════════════════════════════════════
-    // FOOTER pe toate paginile
+    // FOOTER pe ultima pagină
     // ═══════════════════════════════════════════════════════════
+    gradBar(0, PAGE_H - 10, PAGE_W, 10, [8, 7, 16], [30, 10, 60]);
+    doc.setFontSize(6);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...C_GRAY);
+    doc.text(`GastroGlass · Plan generat ${dateStr} · ${nrPers} ${nrPers===1?'persoană':'persoane'} · ${meniuriActive.length} meniuri active`, PAGE_W/2, PAGE_H - 3.5, { align: 'center', baseline: 'middle' });
 
+    // Footer pe fiecare pagina (numar pagina)
     const pageCount = doc.getNumberOfPages();
     for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
         doc.setFillColor(...C_BG);
-        doc.rect(0, PAGE_H - 11, PAGE_W, 11, 'F');
-        gradBar(0, PAGE_H - 11, PAGE_W, 11, [8, 7, 16], [28, 8, 55]);
-
-        setFont('normal');
+        doc.rect(0, PAGE_H - 10, PAGE_W, 10, 'F');
+        gradBar(0, PAGE_H - 10, PAGE_W, 10, [8, 7, 16], [30, 10, 60]);
         doc.setFontSize(6);
         doc.setTextColor(...C_GRAY);
-        doc.text(
-            `GastroGlass · Plan generat ${dateStr} · ${nrPers} ${nrPers === 1 ? 'persoana' : 'persoane'} · ${meniuriActive.length} meniuri`,
-            PAGE_W / 2, PAGE_H - 4,
-            { align: 'center', baseline: 'middle' }
-        );
-
-        setFont('bold');
-        doc.setFontSize(6.5);
+        doc.text(`GastroGlass · ${dateStr} · ${nrPers} ${nrPers===1?'persoană':'persoane'}`, PAGE_W/2, PAGE_H - 3.5, { align: 'center', baseline: 'middle' });
         doc.setTextColor(...C_PURPLE);
-        doc.text(`${i} / ${pageCount}`, PAGE_W - MR, PAGE_H - 4, { align: 'right', baseline: 'middle' });
+        doc.text(`${i} / ${pageCount}`, PAGE_W - MR, PAGE_H - 3.5, { align: 'right', baseline: 'middle' });
     }
 
-    const fname = `plan-meniuri-${dateStr.replace(/\./g, '-')}.pdf`;
+    // Salvare
+    const fname = `plan-meniuri-${dateStr.replace(/\./g,'-')}.pdf`;
     doc.save(fname);
 }
-
 
 
 
