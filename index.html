@@ -2045,10 +2045,10 @@ function renderCatalog() {
             <div id="catalog-item-${prod.id}" class="glass-card p-5 flex justify-between items-center">
 <div class="flex-grow">
                     ${isUnlocked ? `
-                    <input class="font-bold text-sm block text-white bg-transparent outline-none border-none w-full"
+                    <input class="font-bold text-base block text-white bg-transparent outline-none border-none w-full"
                            value="${prod.nume}"
                            onchange="updateCatalogField(${cIdx}, 'nume', this.value)">` : `
-                    <span onclick="openAuchan('${numeEscJS}')" class="font-bold text-sm block text-white cursor-pointer active:opacity-70 transition-opacity">${prod.nume}</span>`}
+                    <span onclick="openAuchan('${numeEscJS}')" class="font-bold text-base block text-white cursor-pointer active:opacity-70 transition-opacity">${prod.nume}</span>`}
                     ${(prod.modifiedAt || prod.addedAt) ? `<span class="${prod.modifiedAt ? 'date-badge modified' : 'date-badge'}">${prod.modifiedAt ? '✎' : '＋'}${formatDateCompact(prod.modifiedAt || prod.addedAt)}</span>` : ''}
                 </div>
                 <div class="flex items-center gap-2">
