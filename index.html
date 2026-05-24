@@ -1944,9 +1944,8 @@ const unitDisplay = su.unit;
                                    onfocus="this.select()"
                                    onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}"
                                    onblur="confirmInlineInput(${rIdx},'ore',null,this)"
-                                   class="w-10 text-center font-bold text-white leading-none bg-transparent outline-none border-none ${isUnlocked ? '' : 'ore-locked'}"
+class="w-10 text-center text-xl font-black text-white leading-none bg-transparent outline-none border-none ${isUnlocked ? '' : 'ore-locked'}"
                                    style="-moz-appearance:textfield;-webkit-appearance:none;">
-                            <span class="text-xs font-bold text-gray-500">h</span>
                         </div>
                         ${nrPers > 1 ? `
                         <div class="mt-1 flex items-center justify-center opacity-90">
@@ -2307,7 +2306,7 @@ const ingRows = ingFiltrate.map(ing => {
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center;">
                 <div>
                     <p style="font-size:7px;font-weight:900;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;">Ore × masă</p>
-<p style="font-size:15px;font-weight:800;color:#ffffff;margin:0;">${orePerP}<span style="font-size:10px;color:#9ca3af;">h</span></p>
+<p style="font-size:15px;font-weight:800;color:#ffffff;margin:0;">${orePerP}</p>
                 </div>
                 <div style="background:rgba(192,132,252,0.1);border:1px solid rgba(192,132,252,0.2);border-radius:12px;padding:6px 4px;">
                     <p style="font-size:7px;font-weight:900;color:#10b981;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px;">Preț Total</p>
