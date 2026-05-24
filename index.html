@@ -2284,14 +2284,15 @@ const ingRows = ingFiltrate.map(ing => {
         <span style="font-size:11px;font-weight:900;color:#c084fc;white-space:nowrap;margin-left:8px;">${su.val} <span style="color:#a855f7;font-size:9px;text-transform:uppercase;">${su.unit}</span></span>
     </div>`;
 }).join('');
-        const orePerP = (r.ore / nrPers).toFixed(1);
+const orePerP = Math.round(r.ore / nrPers);
+
 
         cardsHTML += `
         <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:18px;margin-bottom:18px;border-left:4px solid rgba(192,132,252,0.9);background:linear-gradient(to right, rgba(192,132,252,0.08) 0%, rgba(255,255,255,0.03) 40%);">
             <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;">
                 <div style="flex-grow:1;min-width:0;">
                     <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
-                        <span style="font-size:8px;font-weight:900;color:#c084fc;background:rgba(192,132,252,0.12);border:1px solid rgba(192,132,252,0.3);border-radius:6px;padding:2px 7px;text-transform:uppercase;">#${idx+1}</span>
+<span style="font-size:8px;font-weight:900;color:#c084fc;background:rgba(192,132,252,0.12);border:1px solid rgba(192,132,252,0.3);border-radius:6px;padding:2px 7px;text-transform:uppercase;display:inline-flex;align-items:center;justify-content:center;line-height:1;">#${idx+1}</span>
                         <span style="font-size:16px;font-weight:800;color:#ffffff;letter-spacing:-0.5px;">${r.nume}</span>
                     </div>
                     ${r.tags ? `<p style="font-size:9px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:2px;margin:0 0 0 2px;"># ${r.tags}</p>` : ''}
