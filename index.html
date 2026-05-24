@@ -551,9 +551,18 @@
     </div>
 
     <div id="page-catalog" class="hidden space-y-4">
-        <div class="px-2 mb-4">
-            <input type="text" id="catalog-search" oninput="renderCatalog()" onfocus="this.select()" placeholder="Caută în catalog..." class="search-pill">
-        </div>
+<div class="px-2 mb-4">
+    <div class="fridge-search-wrap">
+        <input type="text" id="catalog-search"
+               oninput="renderCatalog(); toggleCatalogClear(this.value)"
+               onfocus="this.select()"
+               placeholder="Caută în catalog..."
+               class="search-pill" style="padding-right: 36px;">
+        <span id="catalog-search-clear" class="fridge-search-clear"
+              onclick="clearCatalogSearch()">✕</span>
+    </div>
+</div>
+
         <div class="flex justify-between items-center px-2 mb-4">
             <h3 class="text-xs font-black text-gray-400 uppercase tracking-widest">Baza de Date Produse</h3>
             <button onclick="addNewProductToCatalog()" class="locked-only text-xs font-bold text-purple-400 bg-purple-500/10 px-3 py-1 rounded-full">+ Produs</button>
@@ -1070,8 +1079,22 @@ function clearFridgeSearch() {
     const clearBtn = document.getElementById('fridge-stock-clear');
     if (clearBtn) clearBtn.classList.remove('visible');
     renderFridge();
-    inp && inp.focus();
+inp && inp.blur();
 }
+
+function toggleCatalogClear(val) {
+    const btn = document.getElementById('catalog-search-clear');
+    if (btn) btn.classList.toggle('visible', val.length > 0);
+}
+
+function clearCatalogSearch() {
+    const inp = document.getElementById('catalog-search');
+    if (inp) inp.value = '';
+    toggleCatalogClear('');
+    renderCatalog();
+    inp && inp.blur();
+}
+
 
 // ============================================================
 // INLINE INPUT CONFIRM FUNCTIONS
@@ -1805,8 +1828,9 @@ function updateSearch(val) {
 
 function clearSearch() {
     const input = document.getElementById('main-search');
-    input.value = ""; updateSearch(""); input.focus();
+    input.value = ""; updateSearch(""); input.blur();
 }
+
 
 function switchTab(tab) {
     if (currentTab === tab) return;
