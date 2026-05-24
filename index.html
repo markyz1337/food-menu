@@ -2337,38 +2337,24 @@ const orePerP = Math.round(r.ore / nrPers);
     <h1 style="font-size:28px;font-weight:800;letter-spacing:-1px;color:#fff;">Planificator</h1>
     <p style="font-size:9px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:3px;margin-top:3px;">Configurator Mese</p>
 </div>
-<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px;">
-    <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:12px;text-align:center;">
-        <p style="font-size:6px;font-weight:900;color:#6b7280;text-transform:uppercase;letter-spacing:2px;margin-bottom:4px;">Meniuri</p>
-        <p style="font-size:22px;font-weight:900;color:#fff;line-height:1;">${meniuriActive.length}</p>
+<div style="display:flex;gap:8px;margin-bottom:24px;align-items:stretch;">
+    <div style="flex:1;background:rgba(192,132,252,0.08);border:1px solid rgba(192,132,252,0.2);border-radius:14px;padding:12px;text-align:center;">
+        <p style="font-size:6px;font-weight:900;color:#6b7280;text-transform:uppercase;letter-spacing:2px;margin-bottom:4px;">Total</p>
+        <p style="font-size:20px;font-weight:900;color:#fff;line-height:1;">${totalLei.toFixed(2)}</p>
+        <p style="font-size:8px;font-weight:900;color:#c084fc;margin-top:2px;">${pretPeZi.toFixed(2)} LEI/zi</p>
     </div>
-    <div style="background:rgba(192,132,252,0.08);border:1px solid rgba(192,132,252,0.2);border-radius:14px;padding:12px;text-align:center;">
-        <p style="font-size:6px;font-weight:900;color:#10b981;text-transform:uppercase;letter-spacing:2px;margin-bottom:4px;">Total</p>
-        <p style="font-size:16px;font-weight:900;color:#fff;line-height:1;">${totalLei.toFixed(2)}</p>
-        <p style="font-size:8px;font-weight:900;color:#c084fc;">LEI</p>
+    <div style="flex:1;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:12px;text-align:center;">
+        <p style="font-size:6px;font-weight:900;color:#6b7280;text-transform:uppercase;letter-spacing:2px;margin-bottom:4px;">${meniuriActive.length} meniuri · ${nrPers} pers.</p>
+        <p style="font-size:20px;font-weight:900;color:#fff;line-height:1;">${zileAuto.toFixed(1)}</p>
+        <p style="font-size:8px;font-weight:900;color:#c084fc;margin-top:2px;">zile autonomie</p>
     </div>
-    <div style="background:rgba(192,132,252,0.08);border:1px solid rgba(192,132,252,0.25);border-radius:14px;padding:12px;text-align:center;">
-        <p style="font-size:6px;font-weight:900;color:#6b7280;text-transform:uppercase;letter-spacing:2px;margin-bottom:4px;">Ajunge până pe</p>
-        <p style="font-size:16px;font-weight:900;color:#fff;line-height:1.1;">${fmt(dateEnd)}</p>
-        <p style="font-size:8px;font-weight:900;color:#c084fc;">${zileAuto.toFixed(1)} zile</p>
-    </div>
-
-
-</div>
-<div style="display:flex;gap:8px;margin-bottom:24px;">
-    <div style="flex:1;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:10px;text-align:center;">
-        <p style="font-size:6px;font-weight:900;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px;">Cost / zi</p>
-        <p style="font-size:13px;font-weight:900;color:#10b981;">${pretPeZi.toFixed(2)} <span style="font-size:9px;color:#6b7280;">LEI</span></p>
-    </div>
-    <div style="flex:1;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:10px;text-align:center;">
-        <p style="font-size:6px;font-weight:900;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px;">Persoane</p>
-        <p style="font-size:13px;font-weight:900;color:#c084fc;">${nrPers}</p>
-    </div>
-    <div style="flex:1;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:10px;text-align:center;">
-        <p style="font-size:6px;font-weight:900;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px;">Generat</p>
-        <p style="font-size:11px;font-weight:900;color:#fff;">${dateStr}</p>
+    <div style="flex:1;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:12px;text-align:center;">
+        <p style="font-size:6px;font-weight:900;color:#6b7280;text-transform:uppercase;letter-spacing:2px;margin-bottom:4px;">${dateStr} →</p>
+        <p style="font-size:14px;font-weight:900;color:#fff;line-height:1.1;">${fmt(dateEnd)}</p>
+        <p style="font-size:8px;font-weight:900;color:#10b981;margin-top:2px;">data limită</p>
     </div>
 </div>
+
 ${cardsHTML}
 <div style="text-align:center;padding-top:16px;border-top:1px solid rgba(255,255,255,0.06);">
     <p style="font-size:8px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:2px;">GastroGlass · ${dateStr} – ${fmt(dateEnd)}</p>
