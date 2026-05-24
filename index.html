@@ -595,7 +595,7 @@
             <circle cx="12" cy="7" r="4"></circle>
         </svg>
         <input type="tel" id="fridge-num-persoane-input" value="1" inputmode="numeric"
-               onfocus="this.value=''" onblur="if(!this.value||this.value==='0')this.value='1'; renderFridge();"
+onblur="if(!this.value||this.value==='0')this.value='1'; db_saveFridgeNumPersoane(this.value); renderFridge();"
                oninput="let v=this.value.replace(/[^1-9]/g,''); if(v){this.value=v;this.blur();}"
                maxlength="1"
                style="background:transparent;border:none;color:#10b981;font-weight:800;font-size:15px;width:15px;text-align:center;outline:none;">
@@ -1638,6 +1638,21 @@ async function db_loadNumPersoane() {
     if (data) document.getElementById('num-persoane-input').value = data.valoare;
 }
 
+
+async function db_saveFridgeNumPersoane(val) {
+    if (!USE_SUPABASE) return;
+    await supabaseClient.from('setari').upsert({ id: 'fridge_num_persoane', valoare: val.toString() });
+}
+
+async function db_loadFridgeNumPersoane() {
+    if (!USE_SUPABASE) return;
+    const { data } = await supabaseClient.from('setari').select('valoare').eq('id', 'fridge_num_persoane').single();
+    if (data) document.getElementById('fridge-num-persoane-input').value = data.valoare;
+}
+
+
+
+
 async function db_loadCatalog() {
     if (!USE_SUPABASE) return;
     const { data, error } = await supabaseClient.from('catalog').select('*');
@@ -1723,7 +1738,7 @@ function openShoppingList() {
 function openMenusManager() {
     const container = document.getElementById('menus-manager-content');
     container.innerHTML = '';
-    const nrPers = parseInt(document.getElementById('num-persoane-input').value) || 1;
+const nrPers = parseInt(document.getElementById('fridge-num-persoane-input').value) || 1;
     const meniuriActive = retete.filter(r => r.selectat).sort((a, b) => b.eficienta - a.eficienta);
 
     if (meniuriActive.length === 0) {
@@ -2683,6 +2698,7 @@ window.onload = async function () {
     await db_loadCatalog();
     await db_loadRetete();
     await db_loadNumPersoane();
+  await db_loadFridgeNumPersoane();
     await db_loadFrigider();
     await db_loadConfirmari();
 
