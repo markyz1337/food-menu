@@ -945,17 +945,17 @@ function buildShoppingListContent() {
                 <div class="flex justify-between items-start gap-3">
                     <div class="min-w-0 flex-grow">
                         <div class="flex items-center gap-2 mb-1">
-                            <span onclick="event.stopPropagation(); alert(\`${textDialog}\`)"
-                                  class="flex-shrink-0 bg-white/10 text-white px-2 py-0.5 rounded-md text-[11px] font-black border border-white/5 uppercase cursor-pointer active:scale-95 transition-transform select-none">
-                                ${Number(item.totalQty.toFixed(3))} ${item.unitDisplay}
-                            </span>
+<span onclick="event.stopPropagation(); alert(\`${textDialog}\`)"
+      class="flex-shrink-0 bg-white/10 text-white px-2 py-0.5 rounded-md text-[11px] font-black border border-white/5 uppercase cursor-pointer active:scale-95 transition-transform select-none">
+    ${(su => su.val + ' ' + su.unit)(smartUnit(item.totalQty, item.unitDisplay))}
+</span>
                             <p onclick="openAuchan('${numeEscaped}')"
                                class="font-bold text-white text-sm truncate cursor-pointer active:opacity-70 transition-opacity ${isConfirmed ? 'line-through opacity-50' : ''}">
                                 ${pReal.nume}
                             </p>
                             ${countMeniuri > 1 ? `<span class="w-5 h-5 flex items-center justify-center bg-emerald-500/20 text-emerald-400 rounded-full text-[10px] font-black border border-emerald-500/30">${countMeniuri}</span>` : ''}
                         </div>
-                        <p class="text-[10px] font-bold text-gray-500 uppercase tracking-tight ml-1">${pReal.pretLei.toFixed(2)} LEI / ${item.unitDisplay}</p>
+<p class="text-[10px] font-bold text-gray-500 uppercase tracking-tight ml-1">${pReal.pretLei.toFixed(2)} LEI / ${pReal.unit}</p>
                     </div>
                     <div class="text-right flex-shrink-0">
                         <p class="text-base font-black ${isConfirmed ? 'text-emerald-400' : 'text-white'} leading-none">${pretTotalLei.toFixed(2)} LEI</p>
@@ -1251,13 +1251,14 @@ function renderFridge() {
                            type="number"
                            inputmode="decimal"
                            min="0" step="any"
-                           value="${+item.qty.toFixed(3)}"
+value="${smartUnit(item.qty, prod.unit).val}"
+
                            onfocus="this.select()"
                            onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}"
                            onblur="confirmFridgeQtyInput('${prod.id}', this)"
                            class="w-8 text-center text-[10px] font-black text-emerald-400 bg-transparent outline-none border-none"
                            style="-moz-appearance:textfield; -webkit-appearance:none;">
-                    <span class="text-[10px] font-black text-emerald-400">${prod.unit}</span>
+<span class="text-[10px] font-black text-emerald-400">${smartUnit(item.qty, prod.unit).unit}</span>
                 </div>
                 <button onclick="deleteFridgeItem('${prod.id}')" class="w-7 h-7 flex items-center justify-center bg-red-500/10 text-red-400 rounded-full border border-red-500/15 active:scale-90 transition-all text-xs">✕</button>
             </div>`;
@@ -1415,7 +1416,7 @@ function renderFridgeResults() {
                     <span onclick="openAuchan('${ingNumeEsc}')" class="text-xs text-white font-semibold truncate flex-grow cursor-pointer active:opacity-70 transition-opacity">${ing.nume}</span>
                     <div class="flex items-center gap-2 flex-shrink-0">
                         <span class="text-[9px] font-black px-2 py-0.5 rounded-md border ${ing.available >= ing.qty ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : ing.available > 0 ? 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20' : 'text-red-400 bg-red-500/10 border-red-500/20'}">
-                            ${+ing.available.toFixed(3)} ${ing.unit.toUpperCase()} → ${+ing.qty.toFixed(3)} ${ing.unit.toUpperCase()}
+${(su => su.val)(smartUnit(ing.available, ing.unit))} ${(su => su.unit)(smartUnit(ing.available, ing.unit)).toUpperCase()} → ${(su => su.val)(smartUnit(ing.qty, ing.unit))} ${(su => su.unit)(smartUnit(ing.qty, ing.unit)).toUpperCase()}
                         </span>
                     </div>
                 </div>`;
@@ -1481,7 +1482,7 @@ function renderFridgeResults() {
                     <span onclick="openAuchan('${ingNumeEsc}')" class="text-xs ${ing.ok ? 'text-white' : 'text-red-300/80'} font-semibold truncate flex-grow cursor-pointer active:opacity-70 transition-opacity">${ing.nume}</span>
                     <div class="flex items-center gap-2 flex-shrink-0">
                         <span class="text-[9px] font-black px-2 py-0.5 rounded-md border ${ing.ok ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : ing.available > 0 ? 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20' : 'text-red-400 bg-red-500/10 border-red-500/20'}">
-                            ${+ing.available.toFixed(3)} ${ing.unit.toUpperCase()} → ${+ing.qty.toFixed(3)} ${ing.unit.toUpperCase()}
+${(su => su.val)(smartUnit(ing.available, ing.unit))} ${(su => su.unit)(smartUnit(ing.available, ing.unit)).toUpperCase()} → ${(su => su.val)(smartUnit(ing.qty, ing.unit))} ${(su => su.unit)(smartUnit(ing.qty, ing.unit)).toUpperCase()}
                         </span>
                     </div>
                 </div>`;
@@ -1613,12 +1614,12 @@ async function db_loadCatalog() {
     if (!USE_SUPABASE) return;
     const { data, error } = await supabaseClient.from('catalog').select('*');
     if (error) { console.error('Eroare catalog:', error); return; }
-    catalog = data.map(r => ({ id: r.id, nume: r.nume, pretLei: parseFloat(r.pretLei), unit: r.unit }));
+catalog = data.map(r => ({ id: r.id, nume: r.nume, pretLei: parseFloat(r.pretLei), unit: r.unit, addedAt: r.addedAt || r.added_at || null, modifiedAt: r.modifiedAt || r.modified_at || null }));
 }
 
 async function db_upsertCatalogItem(prod) {
     if (!USE_SUPABASE) return;
-    await supabaseClient.from('catalog').upsert({ id: prod.id, nume: prod.nume, pretLei: prod.pretLei, unit: prod.unit });
+await supabaseClient.from('catalog').upsert({ id: prod.id, nume: prod.nume, pretLei: prod.pretLei, unit: prod.unit, addedAt: prod.addedAt || Date.now(), modifiedAt: Date.now() });
 }
 
 async function db_loadRetete() {
@@ -1812,9 +1813,25 @@ function switchTab(tab) {
     setTimeout(() => window.scrollTo({ top: scrollPositions[tab] || 0, behavior: 'smooth' }), 5);
 }
 
+
+
+function smartUnit(qty, unit) {
+    if (!unit) return { val: qty, unit: unit };
+    const u = unit.toLowerCase().trim();
+    if ((u === 'kg' || u === 'kg.') && qty < 1 && qty > 0) {
+        return { val: +(qty * 1000).toFixed(0), unit: 'g' };
+    }
+    if ((u === 'l' || u === 'litri') && qty < 1 && qty > 0) {
+        return { val: +(qty * 1000).toFixed(0), unit: 'ml' };
+    }
+    return { val: +qty.toFixed(qty < 10 ? 3 : qty < 100 ? 2 : 1), unit: unit };
+}
+
+
 // ============================================================
 // RENDER PRINCIPAL
 // ============================================================
+
 
 function render() {
     const list = document.getElementById('recipes-list');
@@ -1874,7 +1891,9 @@ function render() {
                     <div class="space-y-2 mb-4">
                         ${reteta.ingrediente.map((ing, iIdx) => {
                             const p = catalog.find(x => x.id === ing.idProd);
-                            const qtyCurat = Number(parseFloat(ing.qty).toFixed(3));
+const su = smartUnit(ing.qty, p ? p.unit : '');
+const qtyCurat = su.val;
+const unitDisplay = su.unit;
                             const numeIngEsc = p ? p.nume.replace(/\\/g, '\\\\').replace(/'/g, "\\'") : '';
                             return `
                             <div class="flex items-center gap-2 bg-white/5 p-2 pr-3 rounded-2xl border border-white/5">
@@ -1897,7 +1916,7 @@ function render() {
                                            onblur="confirmInlineInput(${rIdx},'ingQty',${iIdx},this)"
                                            class="w-12 text-center text-[10px] font-black text-purple-300 bg-transparent outline-none border-none"
                                            style="-moz-appearance:textfield;-webkit-appearance:none;${isUnlocked ? '' : 'pointer-events:none;user-select:none;'}">
-                                    <span class="text-[10px] font-black text-purple-400/70">${p ? p.unit : ''}</span>
+<span class="text-[10px] font-black text-purple-400/70">${unitDisplay}</span>
                                 </div>
                                 ${isUnlocked ? `
                                 <button onclick="confirmDeleteIngredient(${rIdx}, ${iIdx})"
@@ -2024,26 +2043,31 @@ function renderCatalog() {
         const numeEscJS = prod.nume.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
         cat.innerHTML += `
             <div id="catalog-item-${prod.id}" class="glass-card p-5 flex justify-between items-center">
-                <div class="flex-grow">
+<div class="flex-grow">
                     ${isUnlocked ? `
                     <input class="font-bold text-sm block text-white bg-transparent outline-none border-none w-full"
                            value="${prod.nume}"
                            onchange="updateCatalogField(${cIdx}, 'nume', this.value)">` : `
                     <span onclick="openAuchan('${numeEscJS}')" class="font-bold text-sm block text-white cursor-pointer active:opacity-70 transition-opacity">${prod.nume}</span>`}
-                    <input class="text-[10px] font-black text-gray-600 uppercase bg-transparent outline-none border-none w-full ${textLockCls}"
-                           value="${prod.unit}" ${isUnlocked ? '' : 'readonly'}
-                           onchange="updateCatalogField(${cIdx}, 'unit', this.value)">
+                    ${(prod.modifiedAt || prod.addedAt) ? `<span class="${prod.modifiedAt ? 'date-badge modified' : 'date-badge'}">${prod.modifiedAt ? '✎' : '＋'}${formatDateCompact(prod.modifiedAt || prod.addedAt)}</span>` : ''}
                 </div>
                 <div class="flex items-center gap-2">
-                    <div class="bg-white/5 px-3 py-2 rounded-xl flex items-center gap-2 border border-white/5">
+            <div class="bg-white/5 px-3 py-2 rounded-xl flex flex-col items-center border border-white/5" style="min-width:fit-content;">
                         <input type="number" step="0.01"
                                inputmode="decimal"
-                               class="w-16 text-right font-black text-emerald-400 bg-transparent outline-none ${isUnlocked ? '' : 'pointer-events-none'}"
+class="text-center font-black text-emerald-400 bg-transparent outline-none border-none ${isUnlocked ? '' : 'pointer-events-none'}"
                                value="${prod.pretLei}" ${isUnlocked ? '' : 'readonly'}
                                onfocus="this.select()"
                                onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}"
-                               onblur="updateCatalogFieldAndScroll('${prod.id}', ${cIdx}, 'pretLei', parseFloat(this.value) || 0)">
-                        <span class="text-[9px] font-bold text-gray-500">LEI</span>
+                               onblur="updateCatalogFieldAndScroll('${prod.id}', ${cIdx}, 'pretLei', parseFloat(this.value) || 0)"
+                               style="width: ${String(prod.pretLei).length + 2}ch; -moz-appearance:textfield; -webkit-appearance:none;">
+                        <div class="flex items-center gap-1">
+                            <span class="text-[8px] font-bold text-gray-600">LEI /</span>
+                            <input class="text-[8px] font-black text-gray-500 uppercase bg-transparent outline-none border-none ${textLockCls}"
+                                   value="${prod.unit}" ${isUnlocked ? '' : 'readonly'}
+                                   onchange="updateCatalogField(${cIdx}, 'unit', this.value)"
+                                   style="width: ${prod.unit.length + 1}ch;">
+                        </div>
                     </div>
                     ${isUnlocked ? `
                     <button onclick="openAuchan('${numeEscJS}')"
@@ -2073,20 +2097,22 @@ function renderCatalog() {
 // ============================================================
 
 async function updateCatalogField(cIdx, field, value) {
-    catalog[cIdx][field] = value;
-    await db_upsertCatalogItem(catalog[cIdx]);
+catalog[cIdx][field] = value;
+catalog[cIdx].modifiedAt = Date.now();
+await db_upsertCatalogItem(catalog[cIdx]);
     render();
 }
 
 async function updateCatalogFieldAndScroll(prodId, cIdx, field, value) {
-    catalog[cIdx][field] = value;
-    lastEditedCatalogId = prodId;
-    await db_upsertCatalogItem(catalog[cIdx]);
+catalog[cIdx][field] = value;
+catalog[cIdx].modifiedAt = Date.now();
+lastEditedCatalogId = prodId;
+await db_upsertCatalogItem(catalog[cIdx]);
     render();
 }
 
 async function addNewProductToCatalog() {
-    const newProd = { id: 'c' + Date.now(), nume: 'Produs Nou', pretLei: 0, unit: 'Kg' };
+const newProd = { id: 'c' + Date.now(), nume: 'Produs Nou', pretLei: 0, unit: 'Kg', addedAt: Date.now(), modifiedAt: null };
     catalog.unshift(newProd);
     await db_upsertCatalogItem(newProd);
     render();
@@ -2249,15 +2275,16 @@ function generateMenuPDF() {
     let cardsHTML = '';
     meniuriActive.forEach((r, idx) => {
         const ingFiltrate = r.ingrediente.filter(i => i.idProd);
-        const ingRows = ingFiltrate.map(ing => {
-            const p = catalog.find(x => x.id === ing.idProd);
-            if (!p) return '';
-            return `
-            <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
-                <span style="font-size:12px;font-weight:600;color:#e2e8f0;">${p.nume}</span>
-                <span style="font-size:11px;font-weight:900;color:#c084fc;white-space:nowrap;margin-left:8px;">${+ing.qty.toFixed(3)} <span style="color:#a855f7;font-size:9px;text-transform:uppercase;">${p.unit}</span></span>
-            </div>`;
-        }).join('');
+const ingRows = ingFiltrate.map(ing => {
+    const p = catalog.find(x => x.id === ing.idProd);
+    if (!p) return '';
+    const su = smartUnit(ing.qty, p.unit);
+    return `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+        <span style="font-size:12px;font-weight:600;color:#e2e8f0;">${p.nume}</span>
+        <span style="font-size:11px;font-weight:900;color:#c084fc;white-space:nowrap;margin-left:8px;">${su.val} <span style="color:#a855f7;font-size:9px;text-transform:uppercase;">${su.unit}</span></span>
+    </div>`;
+}).join('');
         const orePerP = (r.ore / nrPers).toFixed(1);
 
         cardsHTML += `
