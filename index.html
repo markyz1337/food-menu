@@ -594,7 +594,9 @@
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
             <circle cx="12" cy="7" r="4"></circle>
         </svg>
-        <input type="tel" id="fridge-num-persoane-input" value="1" inputmode="numeric"
+<input type="tel" id="fridge-num-persoane-input" value="1" inputmode="numeric"
+       onfocus="this.select()"
+
 onblur="if(!this.value||this.value==='0')this.value='1'; db_saveFridgeNumPersoane(this.value); renderFridge();"
                oninput="let v=this.value.replace(/[^1-9]/g,''); if(v){this.value=v;this.blur();}"
                maxlength="1"
