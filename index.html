@@ -564,23 +564,51 @@
 
     <!-- TAB FRIGIDER -->
     <div id="page-fridge" class="hidden space-y-4">
-        <div class="flex justify-between items-center px-1 mb-2">
-            <div>
-                <p class="text-[9px] font-black text-emerald-400 uppercase tracking-[3px]">Stoc disponibil</p>
-            </div>
-            <button onclick="openFridgePicker()" class="flex items-center gap-2 px-4 py-2 bg-emerald-500/15 border border-emerald-500/30 rounded-full text-emerald-400 text-[10px] font-black uppercase tracking-widest active:scale-95 transition-all">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                Adaugă
-            </button>
-        </div>
+<div class="flex justify-between items-center px-1 mb-2">
+    <div>
+        <p class="text-[9px] font-black text-emerald-400 uppercase tracking-[3px]">Stoc disponibil</p>
+    </div>
+    <div class="flex items-center gap-2">
+        <button onclick="generateFridgePDF()"
+                class="flex items-center gap-2 px-4 py-2 bg-purple-500/15 border border-purple-500/30 rounded-full text-purple-400 text-[10px] font-black uppercase tracking-widest active:scale-95 transition-all">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="12" y1="18" x2="12" y2="12"></line>
+                <line x1="9" y1="15" x2="15" y2="15"></line>
+            </svg>
+            PDF
+        </button>
+        <button onclick="openFridgePicker()" class="flex items-center gap-2 px-4 py-2 bg-emerald-500/15 border border-emerald-500/30 rounded-full text-emerald-400 text-[10px] font-black uppercase tracking-widest active:scale-95 transition-all">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Adaugă
+        </button>
+    </div>
+    </div>
 
-        <div class="fridge-search-wrap">
-            <input type="text" id="fridge-stock-search"
-                   placeholder="Caută în stoc..."
-                   onfocus="this.select()"
-                   oninput="onFridgeStockSearch(this.value)">
-            <span id="fridge-stock-clear" class="fridge-search-clear" onclick="clearFridgeSearch()">✕</span>
-        </div>
+
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:0;">
+    <div onclick="document.getElementById('fridge-num-persoane-input').focus()"
+         style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.25);border-radius:14px;cursor:pointer;flex-shrink:0;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+        </svg>
+        <input type="tel" id="fridge-num-persoane-input" value="1" inputmode="numeric"
+               onfocus="this.value=''" onblur="if(!this.value||this.value==='0')this.value='1'; renderFridge();"
+               oninput="let v=this.value.replace(/[^1-9]/g,''); if(v){this.value=v;this.blur();}"
+               maxlength="1"
+               style="background:transparent;border:none;color:#10b981;font-weight:800;font-size:15px;width:15px;text-align:center;outline:none;">
+    </div>
+    <div class="fridge-search-wrap" style="flex:1;">
+        <input type="text" id="fridge-stock-search"
+               placeholder="Caută în stoc..."
+               onfocus="this.select()"
+               oninput="onFridgeStockSearch(this.value)">
+        <span id="fridge-stock-clear" class="fridge-search-clear" onclick="clearFridgeSearch()">✕</span>
+    </div>
+</div>
+
 
         <div id="fridge-products-list" class="mb-2"></div>
 
@@ -2428,6 +2456,217 @@ ${cardsHTML}
 
 
 
+function generateFridgePDF() {
+    const nrPers = parseInt(document.getElementById('fridge-num-persoane-input').value) || 1;
+
+    if (frigider.length === 0) {
+        alert('Frigidul e gol! Adaugă produse mai întâi.');
+        return;
+    }
+
+    const now = new Date();
+    const fmt = d => `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()}`;
+    const dateStr = fmt(now);
+
+    // Stoc frigider HTML
+    const sortedFridge = frigider.slice().sort((a, b) => {
+        const tsA = Math.max(a.modifiedAt || 0, a.addedAt || 0);
+        const tsB = Math.max(b.modifiedAt || 0, b.addedAt || 0);
+        return tsB - tsA;
+    });
+
+    let stocRows = sortedFridge.map(item => {
+        const prod = catalog.find(p => p.id === item.id);
+        if (!prod) return '';
+        const su = smartUnit(item.qty, prod.unit);
+        return `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+            <span style="font-size:12px;font-weight:700;color:#e2e8f0;">${prod.nume}</span>
+            <div style="display:flex;align-items:baseline;gap:4px;">
+                <span style="font-size:13px;font-weight:900;color:#10b981;">${su.val}</span>
+                <span style="font-size:9px;font-weight:900;color:rgba(16,185,129,0.6);text-transform:uppercase;">${su.unit}</span>
+            </div>
+        </div>`;
+    }).join('');
+
+    // Carduri meniuri disponibile/indisponibile
+    const tempNrPers = nrPers;
+    const savedInput = document.getElementById('num-persoane-input').value;
+    document.getElementById('num-persoane-input').value = tempNrPers;
+    const { available, unavailable } = computeFridgeResults();
+    document.getElementById('num-persoane-input').value = savedInput;
+
+    let availableCardsHTML = '';
+    available.forEach((res, idx) => {
+        const r = res.reteta;
+        const ingRows = res.ingredienteComplet.map(ing => {
+            const su_av = smartUnit(ing.available, ing.unit);
+            const su_nec = smartUnit(ing.qty, ing.unit);
+            const color = ing.ok ? '#10b981' : ing.available > 0 ? '#f59e0b' : '#ef4444';
+            const bg = ing.ok ? 'rgba(16,185,129,0.08)' : ing.available > 0 ? 'rgba(245,158,11,0.08)' : 'rgba(239,68,68,0.08)';
+            const border = ing.ok ? 'rgba(16,185,129,0.2)' : ing.available > 0 ? 'rgba(245,158,11,0.2)' : 'rgba(239,68,68,0.2)';
+            return `
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+                <span style="font-size:11px;font-weight:600;color:#e2e8f0;">${ing.nume}</span>
+                <span style="font-size:9px;font-weight:900;color:${color};background:${bg};border:1px solid ${border};border-radius:6px;padding:2px 6px;white-space:nowrap;">
+                    ${su_av.val} ${su_av.unit.toUpperCase()} → ${su_nec.val} ${su_nec.unit.toUpperCase()}
+                </span>
+            </div>`;
+        }).join('');
+
+        availableCardsHTML += `
+        <div style="background:linear-gradient(to right,rgba(16,185,129,0.08) 0%,rgba(255,255,255,0.02) 40%);border:1px solid rgba(255,255,255,0.08);border-left:4px solid #10b981;border-radius:20px;padding:16px;margin-bottom:14px;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                <span style="font-size:8px;font-weight:900;color:#10b981;background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.3);border-radius:6px;padding:2px 7px;text-transform:uppercase;display:inline-flex;align-items:center;justify-content:center;line-height:1;">#${idx+1}</span>
+                <span style="font-size:15px;font-weight:800;color:#ffffff;letter-spacing:-0.5px;">${r.nume}</span>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;text-align:center;margin-bottom:10px;">
+                <div style="height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+                    <p style="font-size:7px;font-weight:900;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin:0 0 4px 0;">Ore × masă</p>
+                    <p style="font-size:15px;font-weight:800;color:#ffffff;margin:0;line-height:1;">${res.orePer1}</p>
+                </div>
+                <div style="height:52px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.25);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;">
+                    <p style="font-size:7px;font-weight:900;color:#10b981;text-transform:uppercase;letter-spacing:1px;margin:0;">Preț / porție</p>
+                    <div style="display:flex;align-items:baseline;gap:3px;">
+                        <p style="font-size:16px;font-weight:900;color:#ffffff;margin:0;line-height:1;">${res.costPer1Portie.toFixed(2)}</p>
+                        <p style="font-size:8px;font-weight:900;color:#10b981;margin:0;">LEI</p>
+                    </div>
+                </div>
+                <div style="height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+                    <p style="font-size:7px;font-weight:900;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin:0 0 4px 0;">Ingrediente</p>
+                    <p style="font-size:15px;font-weight:800;color:#ffffff;margin:0;line-height:1;">${res.nrIngrediente}</p>
+                </div>
+            </div>
+            <div style="background:rgba(16,185,129,0.04);border:1px solid rgba(16,185,129,0.12);border-radius:12px;padding:10px 12px;">
+                <p style="font-size:7px;font-weight:900;color:#10b981;text-transform:uppercase;letter-spacing:2px;margin:0 0 6px 0;">Ingrediente (1 porție)</p>
+                ${ingRows}
+            </div>
+        </div>`;
+    });
+
+    let unavailableCardsHTML = '';
+    unavailable.forEach((res, idx) => {
+        const r = res.reteta;
+        const lipsescTotal = res.missingFor1Portie.length;
+        const areInFrigider = res.nrIngrediente - lipsescTotal;
+
+        const ingRows = res.ingredienteComplet.map(ing => {
+            const su_av = smartUnit(ing.available, ing.unit);
+            const su_nec = smartUnit(ing.qty, ing.unit);
+            const color = ing.ok ? '#10b981' : ing.available > 0 ? '#f59e0b' : '#ef4444';
+            const bg = ing.ok ? 'rgba(16,185,129,0.08)' : ing.available > 0 ? 'rgba(245,158,11,0.08)' : 'rgba(239,68,68,0.08)';
+            const border = ing.ok ? 'rgba(16,185,129,0.2)' : ing.available > 0 ? 'rgba(245,158,11,0.2)' : 'rgba(239,68,68,0.2)';
+            return `
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+                <span style="font-size:11px;font-weight:600;color:${ing.ok ? '#e2e8f0' : '#fca5a5'};">${ing.nume}</span>
+                <span style="font-size:9px;font-weight:900;color:${color};background:${bg};border:1px solid ${border};border-radius:6px;padding:2px 6px;white-space:nowrap;">
+                    ${su_av.val} ${su_av.unit.toUpperCase()} → ${su_nec.val} ${su_nec.unit.toUpperCase()}
+                </span>
+            </div>`;
+        }).join('');
+
+        unavailableCardsHTML += `
+        <div style="background:linear-gradient(to right,rgba(239,68,68,0.06) 0%,rgba(255,255,255,0.02) 40%);border:1px solid rgba(255,255,255,0.08);border-left:4px solid rgba(239,68,68,0.6);border-radius:20px;padding:16px;margin-bottom:14px;opacity:0.88;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                <span style="font-size:8px;font-weight:900;color:#ef4444;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);border-radius:6px;padding:2px 7px;text-transform:uppercase;display:inline-flex;align-items:center;justify-content:center;line-height:1;">#${idx+1}</span>
+                <span style="font-size:15px;font-weight:800;color:rgba(255,255,255,0.65);letter-spacing:-0.5px;">${r.nume}</span>
+            </div>
+            <div style="display:flex;gap:6px;margin-bottom:8px;">
+                <span style="font-size:8px;font-weight:900;color:#9ca3af;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:2px 8px;">${areInFrigider}/${res.nrIngrediente} în frigider</span>
+                <span style="font-size:8px;font-weight:900;color:#ef4444;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:6px;padding:2px 8px;">lipsesc ${lipsescTotal}</span>
+                ${res.totalCostLipsa > 0 ? `<span style="font-size:8px;font-weight:900;color:#ef4444;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:6px;padding:2px 8px;">${res.totalCostLipsa.toFixed(2)} LEI de cumpărat</span>` : ''}
+            </div>
+            <div style="background:rgba(239,68,68,0.04);border:1px solid rgba(239,68,68,0.1);border-radius:12px;padding:10px 12px;">
+                <p style="font-size:7px;font-weight:900;color:#ef4444;text-transform:uppercase;letter-spacing:2px;margin:0 0 6px 0;">Ingrediente necesare (1 porție)</p>
+                ${ingRows}
+            </div>
+        </div>`;
+    });
+
+    const htmlContent = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>* { margin:0; padding:0; box-sizing:border-box; } body { font-family:'Plus Jakarta Sans',sans-serif; background:#020205; color:#fff; padding:24px 16px 48px; width:430px; }</style>
+</head>
+<body>
+<div style="margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid rgba(255,255,255,0.08);">
+    <h1 style="font-size:26px;font-weight:800;letter-spacing:-1px;color:#fff;">❄️ Frigider</h1>
+    <p style="font-size:9px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:3px;margin-top:3px;">Stoc & Meniuri Posibile</p>
+</div>
+
+<div style="display:flex;gap:8px;margin-bottom:20px;align-items:stretch;">
+    <div style="flex:1;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);border-radius:14px;padding:12px;text-align:center;">
+        <p style="font-size:6px;font-weight:900;color:#6b7280;text-transform:uppercase;letter-spacing:2px;margin-bottom:4px;">Produse în stoc</p>
+        <p style="font-size:22px;font-weight:900;color:#fff;line-height:1;">${frigider.length}</p>
+        <p style="font-size:8px;font-weight:900;color:#10b981;margin-top:2px;">produse</p>
+    </div>
+    <div style="flex:1;background:rgba(16,185,129,0.05);border:1px solid rgba(16,185,129,0.15);border-radius:14px;padding:12px;text-align:center;">
+        <p style="font-size:6px;font-weight:900;color:#6b7280;text-transform:uppercase;letter-spacing:2px;margin-bottom:4px;">Meniuri disponibile</p>
+        <p style="font-size:22px;font-weight:900;color:#10b981;line-height:1;">${available.length}</p>
+        <p style="font-size:8px;font-weight:900;color:rgba(16,185,129,0.6);margin-top:2px;">din ${available.length + unavailable.length} total</p>
+    </div>
+    <div style="flex:1;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:12px;text-align:center;">
+        <p style="font-size:6px;font-weight:900;color:#6b7280;text-transform:uppercase;letter-spacing:2px;margin-bottom:4px;">${nrPers} pers · ${dateStr}</p>
+        <p style="font-size:22px;font-weight:900;color:#ef4444;line-height:1;">${unavailable.length}</p>
+        <p style="font-size:8px;font-weight:900;color:rgba(239,68,68,0.6);margin-top:2px;">meniuri incomplete</p>
+    </div>
+</div>
+
+<!-- STOC FRIGIDER -->
+<div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.07);border-radius:18px;padding:14px 16px;margin-bottom:20px;">
+    <p style="font-size:8px;font-weight:900;color:#10b981;text-transform:uppercase;letter-spacing:3px;margin-bottom:10px;">Stoc curent frigider</p>
+    ${stocRows}
+</div>
+
+${available.length > 0 ? `
+<p style="font-size:8px;font-weight:900;color:#10b981;text-transform:uppercase;letter-spacing:3px;margin-bottom:10px;">✅ Disponibile (${available.length})</p>
+${availableCardsHTML}` : ''}
+
+${unavailable.length > 0 ? `
+<div style="height:1px;background:linear-gradient(to right,transparent,rgba(255,255,255,0.1),transparent);margin:16px 0;"></div>
+<p style="font-size:8px;font-weight:900;color:#ef4444;text-transform:uppercase;letter-spacing:3px;margin-bottom:10px;">⚠️ Ingrediente insuficiente (${unavailable.length})</p>
+${unavailableCardsHTML}` : ''}
+
+<div style="text-align:center;padding-top:16px;border-top:1px solid rgba(255,255,255,0.06);">
+    <p style="font-size:8px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:2px;">GastroGlass · Frigider · ${dateStr}</p>
+</div>
+</body>
+</html>`;
+
+    const iframe = document.createElement('iframe');
+    iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:430px;height:1px;border:none;visibility:hidden;';
+    document.body.appendChild(iframe);
+
+    iframe.onload = async function() {
+        try {
+            const iDoc = iframe.contentDocument;
+            await iDoc.fonts.ready;
+            await new Promise(r => setTimeout(r, 600));
+            const body = iDoc.body;
+            const fullHeight = body.scrollHeight;
+            const canvas = await html2canvas(body, {
+                backgroundColor: '#020205', scale: 2,
+                width: 430, height: fullHeight,
+                windowWidth: 430, windowHeight: fullHeight,
+                scrollX: 0, scrollY: 0, useCORS: true, logging: false
+            });
+            const imgData = canvas.toDataURL('image/png');
+            const pxToMm = 0.2646;
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [430 * pxToMm, fullHeight * pxToMm] });
+            doc.addImage(imgData, 'PNG', 0, 0, 430 * pxToMm, fullHeight * pxToMm);
+            doc.save(`frigider-${dateStr.replace(/\./g,'-')}.pdf`);
+        } catch(err) {
+            console.error('Eroare PDF frigider:', err);
+            alert('Eroare la generare.');
+        } finally {
+            document.body.removeChild(iframe);
+        }
+    };
+    iframe.srcdoc = htmlContent;
+}
 
 
 
