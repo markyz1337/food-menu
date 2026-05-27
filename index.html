@@ -1633,7 +1633,12 @@ function computeFridgeResults() {
 
     const available = results
         .filter(r => r.canMake1Portie)
-        .sort((a, b) => b.orePer1 - a.orePer1);
+        .sort((a, b) => {
+            const leiOraA = a.orePer1 > 0 ? a.costPer1Portie / a.orePer1 : Infinity;
+            const leiOraB = b.orePer1 > 0 ? b.costPer1Portie / b.orePer1 : Infinity;
+            return leiOraA - leiOraB;
+        });
+
 
     const unavailable = results
         .filter(r => !r.canMake1Portie)
