@@ -1315,15 +1315,19 @@ function clearCatalogSearch() {
 // ============================================================
 
 async function confirmInlineInput(rIdx, type, iIdx, inputEl) {
+    const nrPers = parseInt(document.getElementById('num-persoane-input').value) || 1;
+
     let finalVal = parseFloat(String(inputEl.value).replace(',', '.')) || 0;
     if ((type === 'portii' || type === 'ore') && finalVal < 1) finalVal = 1;
     if (type === 'ingQty' && finalVal < 0) finalVal = 0;
 
     let changed = false;
-    if (type === 'ore') {
-        changed = retete[rIdx].ore !== Math.round(finalVal);
-        retete[rIdx].ore = Math.round(finalVal);
+if (type === 'ore') {
+        const valSalvat = Math.round(finalVal * nrPers);
+        changed = retete[rIdx].ore !== valSalvat;
+        retete[rIdx].ore = valSalvat;
         inputEl.value = Math.round(finalVal);
+
     } else if (type === 'portii') {
         changed = retete[rIdx].portii !== Math.round(finalVal);
         retete[rIdx].portii = Math.round(finalVal);
@@ -1715,9 +1719,8 @@ ${(su => su.val)(smartUnit(ing.available, ing.unit))} ${(su => su.unit)(smartUni
                             <p class="text-sm font-black text-emerald-400 leading-tight">${res.orePer1}h</p>
                         </div>
                         <div class="flex-1 bg-white/5 rounded-xl p-2 text-center border border-white/5">
-<p class="text-[7px] font-black text-gray-500 uppercase tracking-widest">LEI/zi</p>
-<p class="text-sm font-black text-purple-400 leading-tight">${res.orePer1 > 0 ? ((res.costPer1Portie / res.orePer1) * 12).toFixed(2) : '∞'}</p>
-
+                            <p class="text-[7px] font-black text-gray-500 uppercase tracking-widest">LEI/oră</p>
+                            <p class="text-sm font-black text-purple-400 leading-tight">${res.leiPerOra === Infinity ? '∞' : res.leiPerOra.toFixed(2)}</p>
                         </div>
                         <div class="flex-1 bg-white/5 rounded-xl p-2 text-center border border-white/5">
                             <p class="text-[7px] font-black text-gray-500 uppercase tracking-widest">Ingrediente</p>
@@ -1790,9 +1793,8 @@ ${(su => su.val)(smartUnit(ing.available, ing.unit))} ${(su => su.unit)(smartUni
                             <p class="text-sm font-black text-red-400/80 leading-tight">${res.orePer1}h</p>
                         </div>
                         <div class="flex-1 bg-white/5 rounded-xl p-2 text-center border border-white/5">
-<p class="text-[7px] font-black text-gray-500 uppercase tracking-widest">LEI lipsă/zi</p>
-<p class="text-sm font-black text-red-400 leading-tight">${res.orePer1 > 0 && res.totalCostLipsa > 0 ? ((res.totalCostLipsa / res.orePer1) * 12).toFixed(2) : '∞'}</p>
-
+                            <p class="text-[7px] font-black text-gray-500 uppercase tracking-widest">LEI lipsă/oră</p>
+                            <p class="text-sm font-black text-red-400 leading-tight">${res.leiLipsaPerOra === Infinity ? '∞' : res.leiLipsaPerOra.toFixed(2)}</p>
                         </div>
                         <div class="flex-1 bg-white/5 rounded-xl p-2 text-center border border-white/5">
                             <p class="text-[7px] font-black text-gray-500 uppercase tracking-widest">Lipsesc</p>
@@ -2136,10 +2138,11 @@ function render() {
             const p = catalog.find(x => x.id === ing.idProd);
             if (p) costLeiMasa += p.pretLei * ing.qty;
         });
-        r.costLeiCalculat = costLeiMasa * r.portii;
-        r.totalOreCalculat = r.ore * r.portii;
-        r.eficienta = r.costLeiCalculat > 0 ? r.totalOreCalculat / r.costLeiCalculat : 0;
-        if (r.selectat) { tLei += r.costLeiCalculat; tOre += r.totalOreCalculat; }
+r.costLeiCalculat = costLeiMasa;
+r.totalOreCalculat = r.ore * r.portii;
+r.eficienta = r.costLeiCalculat > 0 ? r.ore / r.costLeiCalculat : 0;
+
+        if (r.selectat) { tLei += r.costLeiCalculat * r.portii; tOre += r.totalOreCalculat; }
     });
 
     const reteteFiltrate = retete
@@ -2222,36 +2225,30 @@ function render() {
 
                 <div class="recipe-stats-footer grid grid-cols-3 gap-2 pt-3 items-center text-center">
                     <div class="flex flex-col items-center">
-                        <p class="text-[7px] font-black text-gray-500 uppercase tracking-widest leading-none mb-1">Ore × masă</p>
-                        <div class="ore-wrap">
-                            <input id="inline-input-${rIdx}-ore"
-                                   type="number"
-                                   inputmode="numeric"
-                                   min="1" step="1"
-                                   value="${reteta.ore}"
-                                   ${isUnlocked ? '' : 'readonly'}
-                                   onfocus="this.select()"
-                                   onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}"
-                                   onblur="confirmInlineInput(${rIdx},'ore',null,this)"
-                                   class="w-10 text-center text-xl font-black text-white leading-none bg-transparent outline-none border-none ${isUnlocked ? '' : 'ore-locked'}"
-                                   style="-moz-appearance:textfield;-webkit-appearance:none;">
-                        </div>
-                        ${nrPers > 1 ? `
-                        <div class="mt-1 flex items-center justify-center opacity-90">
-                            <span class="text-[9px] font-extrabold text-purple-400" style="line-height: 1;">${nrPers}</span>
-                            <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#c084fc" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="margin: 0 2px;">
-                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                                <circle cx="12" cy="7" r="4"></circle>
-                            </svg>
-                            <span class="text-white font-bold text-[9px]" style="line-height: 1;">${(reteta.ore / nrPers).toFixed(1)}h</span>
-                        </div>` : ''}
+<p class="text-[7px] font-black text-gray-500 uppercase tracking-widest leading-none mb-1">Ore × masă</p>
+<div class="ore-wrap flex items-center justify-center gap-1">
+
+            <input id="inline-input-${rIdx}-ore"
+                   type="number"
+                   inputmode="numeric"
+                   min="1" step="1"
+                   value="${Math.round(reteta.ore / nrPers)}"
+                   ${isUnlocked ? '' : 'readonly'}
+                   onfocus="this.select()"
+                   onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}"
+                   onblur="confirmInlineInput(${rIdx},'ore',null,this)"
+                   class="w-8 text-center text-xl font-black text-white leading-none bg-transparent outline-none border-none ${isUnlocked ? '' : 'ore-locked'}"
+                   style="-moz-appearance:textfield;-webkit-appearance:none;">
+<span class="text-[10px] font-black text-gray-500" style="margin-left:-6px;">h</span>
+
+        </div>
+
                     </div>
 
                     <div class="bg-purple-500/10 py-1.5 rounded-xl border border-purple-500/20">
-<p class="text-[7px] font-black text-emerald-400 uppercase tracking-widest">LEI / ZI</p>
-<p class="text-lg font-black text-white leading-none">${(reteta.ore > 0 ? (reteta.costLeiCalculat / reteta.portii / (reteta.ore / nrPers)) * 12 : 0).toFixed(2)}</p>
-<p class="text-[9px] font-black text-purple-400 leading-none">LEI</p>
-
+                        <p class="text-[7px] font-black text-emerald-400 uppercase tracking-widest">Preț Total</p>
+                        <p class="text-lg font-black text-white leading-none">${reteta.costLeiCalculat.toFixed(2)}</p>
+                        <p class="text-[9px] font-black text-purple-400 leading-none">LEI</p>
                     </div>
 
                     <div class="flex flex-col items-center">
