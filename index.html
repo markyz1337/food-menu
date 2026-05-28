@@ -553,11 +553,6 @@
         <input type="text" id="fridge-picker-search" oninput="renderFridgePickerOptions()" placeholder="Caută produs..." class="search-pill w-full">
     </div>
     <div id="fridge-product-options"></div>
-    <div class="absolute bottom-8 left-0 w-full px-6 pointer-events-none">
-        <button onclick="closeSheets()" class="pointer-events-auto w-full py-4 bg-emerald-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-2xl shadow-emerald-500/40">
-            Gata / Închide
-        </button>
-    </div>
 </div>
 
 <div class="orb"></div>
@@ -1423,9 +1418,10 @@ function renderFridgePickerOptions() {
     const container = document.getElementById('fridge-product-options');
     const searchVal = normalizeText(document.getElementById('fridge-picker-search').value);
     container.innerHTML = '';
-    catalog
-        .filter(p => normalizeText(p.nume).includes(searchVal))
-        .sort((a, b) => a.nume.localeCompare(b.nume))
+catalog
+    .filter(p => normalizeText(p.nume).includes(searchVal) && !frigider.find(f => f.id === p.id))
+    .sort((a, b) => a.nume.localeCompare(b.nume))
+
         .forEach(prod => {
             const inFridge = frigider.find(f => f.id === prod.id);
             container.innerHTML += `
