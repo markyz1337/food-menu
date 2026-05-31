@@ -472,10 +472,117 @@
             animation: fadeInScale 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
             opacity: 1;
         }
+
+        /* ============================================================
+           PRODUCT MENUS MODAL
+           ============================================================ */
+        #product-menus-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 3000;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            padding: 0;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.25s ease;
+        }
+        #product-menus-modal.active {
+            pointer-events: auto;
+            opacity: 1;
+        }
+        #product-menus-modal .modal-backdrop {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(4px);
+        }
+        #product-menus-modal .modal-panel {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 440px;
+            background: rgba(10,10,16,0.98);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 28px 28px 0 0;
+            padding: 24px 20px 40px;
+            transform: translateY(30px);
+            transition: transform 0.3s cubic-bezier(0.22,1,0.36,1);
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+        #product-menus-modal.active .modal-panel {
+            transform: translateY(0);
+        }
+        .modal-menu-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 12px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 14px;
+            margin-bottom: 8px;
+        }
+        .modal-menu-row.selected-menu {
+            background: rgba(192,132,252,0.08);
+            border-color: rgba(192,132,252,0.2);
+        }
+
+        /* ============================================================
+           UNUSED PRODUCTS SECTION
+           ============================================================ */
+        .unused-section-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 24px 0 12px;
+        }
+        .unused-section-title {
+            font-size: 9px;
+            font-weight: 900;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: rgba(239,68,68,0.7);
+            white-space: nowrap;
+        }
+        .unused-section-line {
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(to right, rgba(239,68,68,0.3), transparent);
+        }
+        .catalog-unused-card {
+            background: rgba(239,68,68,0.03);
+            border: 1px solid rgba(239,68,68,0.12);
+            border-radius: 20px;
+            padding: 14px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            opacity: 0.75;
+        }
+        .catalog-unused-card:last-child { margin-bottom: 0; }
     </style>
 </head>
 
 <body class="pb-44">
+
+<!-- PRODUCT MENUS MODAL -->
+<div id="product-menus-modal">
+    <div class="modal-backdrop" onclick="closeProductMenusModal()"></div>
+    <div class="modal-panel">
+        <div class="flex items-center justify-between mb-4">
+            <div>
+                <h3 id="modal-prod-name" class="text-lg font-black tracking-tighter text-white"></h3>
+                <p id="modal-prod-price" class="text-[9px] font-bold text-purple-400 uppercase tracking-[2px]"></p>
+            </div>
+            <button onclick="closeProductMenusModal()" class="w-9 h-9 flex items-center justify-center bg-white/5 rounded-full text-white font-bold text-sm">✕</button>
+        </div>
+        <div id="modal-menus-list"></div>
+    </div>
+</div>
 
 <!-- 1. SHEET LISTA CUMPĂRĂTURI -->
 <div id="shopping-sheet" class="bottom-sheet full overflow-hidden" style="position: fixed;">
@@ -553,11 +660,6 @@
         <input type="text" id="fridge-picker-search" oninput="renderFridgePickerOptions()" placeholder="Caută produs..." class="search-pill w-full">
     </div>
     <div id="fridge-product-options"></div>
-    <div class="absolute bottom-8 left-0 w-full px-6 pointer-events-none">
-        <button onclick="closeSheets()" class="pointer-events-auto w-full py-4 bg-emerald-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-2xl shadow-emerald-500/40">
-            Gata / Închide
-        </button>
-    </div>
 </div>
 
 <div class="orb"></div>
@@ -908,7 +1010,7 @@ function toggleFridgeDeduct() {
         btn.classList.remove('active');
         if (info) info.style.display = 'none';
     }
-    render(); // ← adaugă această linie
+    render();
     buildShoppingListContent();
 }
 
@@ -1005,7 +1107,6 @@ function buildShoppingListContent() {
     const summaryCount = document.getElementById('shopping-summary-count');
     listContent.innerHTML = '';
 
-    // Agregare cantități totale necesare din rețete
     let cumparaturi = {};
     let detaliiCalcul = {};
 
@@ -1030,12 +1131,10 @@ function buildShoppingListContent() {
         }
     });
 
-    // Construim lista de iteme cu sau fără scădere din frigider
     const sortableItems = Object.keys(cumparaturi).map(id => {
         const produs = catalog.find(p => p.id === id);
         const totalQtyNecesara = cumparaturi[id];
 
-        // Calculăm cantitatea din frigider dacă toggleul e activ
         let qtyInFridge = 0;
         let qtyDeAdaugat = totalQtyNecesara;
         let fullyCovered = false;
@@ -1059,11 +1158,8 @@ function buildShoppingListContent() {
         };
     });
 
-    // Sortare: acoperit complet → ultimul; confirmat → penultim; restul după unitate/cantitate
     sortableItems.sort((a, b) => {
-        // Acoperite complet (fridgeDeduct activ) merg la final
         if (a.fullyCovered !== b.fullyCovered) return a.fullyCovered ? 1 : -1;
-        // Confirmate merg după cele neconfirmate
         if (a.confirmat !== b.confirmat) return a.confirmat ? 1 : -1;
 
         const unitA = (a.unitDisplay || '').toLowerCase().replace(/[^a-z]/g, '');
@@ -1078,15 +1174,12 @@ function buildShoppingListContent() {
         return nA.localeCompare(nB);
     });
 
-    // Items care mai trebuie cumpărate (qty > 0 sau fridge deduct inactiv)
     const visibleItems = sortableItems.filter(i => !i.fullyCovered);
-    // Items acoperite complet de frigider
     const coveredItems = sortableItems.filter(i => i.fullyCovered);
 
     const totalItems = visibleItems.length;
     const confirmedCount = visibleItems.filter(i => i.confirmat).length;
 
-    // Rezumat
     const totalProduse = sortableItems.length;
     const acoperite = coveredItems.length;
     let summaryText = `${totalProduse} PRODUSE UNICE`;
@@ -1101,16 +1194,13 @@ function buildShoppingListContent() {
         return;
     }
 
-    // Render items de cumpărat
     visibleItems.forEach(item => {
         const pReal = catalog.find(x => x.id === item.id);
         if (!pReal) return;
 
-        // Cantitatea afișată: dacă fridge deduct e activ, arătăm ce mai trebuie cumpărat
         const qtyAfisata = fridgeDeductActive ? item.qtyDeAdaugat : item.totalQtyNecesara;
         const pretTotalLei = pReal.pretLei * qtyAfisata;
 
-        // Text dialog cu detalii calcul
         let textDialog = `PRODUS: ${pReal.nume}\n----------------------------\n\n` +
             item.calcule.join('\n\n') +
             `\n\n----------------------------\nTOTAL NECESAR: ${Number(item.totalQtyNecesara.toFixed(3))} ${item.unitDisplay}`;
@@ -1124,7 +1214,6 @@ function buildShoppingListContent() {
         const numeEscaped = pReal.nume.replace(/'/g, "\\'").replace(/`/g, '\\`');
         const isConfirmed = item.confirmat;
 
-        // Determinăm clasa border a cardului
         let cardBorderClass;
         if (isConfirmed) {
             cardBorderClass = 'shopping-card-confirmed';
@@ -1140,7 +1229,6 @@ function buildShoppingListContent() {
             : `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 01-8 0"></path></svg>`;
         const btnText = isConfirmed ? 'În coș ✓ (apasă pentru anulare)' : 'Adaugă în coș';
 
-        // Badge frigider dacă e cazul
         const fridgeBadgeHTML = (fridgeDeductActive && item.qtyInFridge > 0)
             ? (() => {
                 const su = smartUnit(item.qtyInFridge, item.unitDisplay);
@@ -1183,7 +1271,6 @@ function buildShoppingListContent() {
             </div>`;
     });
 
-    // Render items acoperite complet de frigider (secțiune separată)
     if (fridgeDeductActive && coveredItems.length > 0) {
         listContent.innerHTML += `
             <div class="flex items-center gap-3 my-4">
@@ -1322,7 +1409,7 @@ async function confirmInlineInput(rIdx, type, iIdx, inputEl) {
     if (type === 'ingQty' && finalVal < 0) finalVal = 0;
 
     let changed = false;
-if (type === 'ore') {
+    if (type === 'ore') {
         const valSalvat = Math.round(finalVal * nrPers);
         changed = retete[rIdx].ore !== valSalvat;
         retete[rIdx].ore = valSalvat;
@@ -1379,6 +1466,91 @@ function openAuchan(numeProdus) {
 }
 
 // ============================================================
+// PRODUCT MENUS MODAL
+// ============================================================
+
+function showProductMenus(prodId) {
+    const prod = catalog.find(p => p.id === prodId);
+    if (!prod) return;
+
+    const modal = document.getElementById('product-menus-modal');
+    const nameEl = document.getElementById('modal-prod-name');
+    const priceEl = document.getElementById('modal-prod-price');
+    const listEl = document.getElementById('modal-menus-list');
+
+    nameEl.textContent = prod.nume;
+    priceEl.textContent = `${prod.pretLei.toFixed(2)} LEI / ${prod.unit}`;
+
+    // Găsim toate meniurile care conțin produsul
+    const meniuriCuProdus = retete.filter(r =>
+        r.ingrediente.some(ing => ing.idProd === prodId)
+    );
+
+    if (meniuriCuProdus.length === 0) {
+        listEl.innerHTML = `
+            <div style="text-align:center;padding:20px 0;">
+                <p style="font-size:28px;margin-bottom:8px;">🌵</p>
+                <p class="text-[11px] font-black text-gray-500 uppercase tracking-widest">Produsul nu apare în niciun meniu</p>
+            </div>`;
+    } else {
+        listEl.innerHTML = `
+            <p class="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-3">
+                Apare în ${meniuriCuProdus.length} ${meniuriCuProdus.length === 1 ? 'meniu' : 'meniuri'}
+            </p>`;
+
+        meniuriCuProdus.forEach(r => {
+            const ing = r.ingrediente.find(i => i.idProd === prodId);
+            const su = smartUnit(ing ? ing.qty : 0, prod.unit);
+            const isSelected = r.selectat;
+            const costIng = prod.pretLei * (ing ? ing.qty : 0);
+
+            listEl.innerHTML += `
+                <div class="modal-menu-row ${isSelected ? 'selected-menu' : ''}">
+                    <div class="flex items-center gap-3 min-w-0 flex-grow">
+                        <div class="w-2 h-2 rounded-full flex-shrink-0 ${isSelected ? 'bg-purple-400' : 'bg-gray-600'}"></div>
+                        <div class="min-w-0">
+                            <p class="font-bold text-white text-sm truncate">${r.nume}</p>
+                            <p class="text-[9px] font-bold text-gray-500 uppercase tracking-wide">
+                                ${r.portii} mese · ${Math.round(r.ore / (parseInt(document.getElementById('num-persoane-input').value)||1))}h
+                            </p>
+                        </div>
+                    </div>
+                    <div class="text-right flex-shrink-0 ml-3">
+                        <p class="text-sm font-black ${isSelected ? 'text-purple-300' : 'text-gray-400'}">${su.val} <span class="text-[9px] font-bold text-gray-500 uppercase">${su.unit}</span></p>
+                        <p class="text-[9px] font-bold text-gray-600">${costIng.toFixed(2)} LEI</p>
+                    </div>
+                </div>`;
+        });
+
+        // Total utilizat în meniurile selectate
+        const meniuriActive = meniuriCuProdus.filter(r => r.selectat);
+        if (meniuriActive.length > 0) {
+            const totalQty = meniuriActive.reduce((sum, r) => {
+                const ing = r.ingrediente.find(i => i.idProd === prodId);
+                return sum + (ing ? ing.qty * r.portii : 0);
+            }, 0);
+            const suTotal = smartUnit(totalQty, prod.unit);
+            const totalCost = prod.pretLei * totalQty;
+
+            listEl.innerHTML += `
+                <div class="mt-3 p-3 bg-purple-500/8 border border-purple-500/20 rounded-xl flex justify-between items-center">
+                    <div>
+                        <p class="text-[8px] font-black text-purple-400 uppercase tracking-widest">Total în plan activ</p>
+                        <p class="text-xs font-black text-white">${suTotal.val} ${suTotal.unit}</p>
+                    </div>
+                    <p class="text-base font-black text-purple-300">${totalCost.toFixed(2)} <span class="text-[9px] font-bold text-purple-500">LEI</span></p>
+                </div>`;
+        }
+    }
+
+    modal.classList.add('active');
+}
+
+function closeProductMenusModal() {
+    document.getElementById('product-menus-modal').classList.remove('active');
+}
+
+// ============================================================
 // FRIGIDER -- SUPABASE
 // ============================================================
 
@@ -1424,7 +1596,7 @@ function renderFridgePickerOptions() {
     const searchVal = normalizeText(document.getElementById('fridge-picker-search').value);
     container.innerHTML = '';
     catalog
-        .filter(p => normalizeText(p.nume).includes(searchVal))
+        .filter(p => normalizeText(p.nume).includes(searchVal) && !frigider.find(f => f.id === p.id))
         .sort((a, b) => a.nume.localeCompare(b.nume))
         .forEach(prod => {
             const inFridge = frigider.find(f => f.id === prod.id);
@@ -1642,7 +1814,6 @@ function computeFridgeResults() {
             const leiOraB = b.orePer1 > 0 ? b.costPer1Portie / b.orePer1 : Infinity;
             return leiOraA - leiOraB;
         });
-
 
     const unavailable = results
         .filter(r => !r.canMake1Portie)
@@ -1885,7 +2056,6 @@ async function db_loadNumPersoane() {
     if (data) document.getElementById('num-persoane-input').value = data.valoare;
 }
 
-
 async function db_saveFridgeNumPersoane(val) {
     if (!USE_SUPABASE) return;
     await supabaseClient.from('setari').upsert({ id: 'fridge_num_persoane', valoare: val.toString() });
@@ -1896,9 +2066,6 @@ async function db_loadFridgeNumPersoane() {
     const { data } = await supabaseClient.from('setari').select('valoare').eq('id', 'fridge_num_persoane').single();
     if (data) document.getElementById('fridge-num-persoane-input').value = data.valoare;
 }
-
-
-
 
 async function db_loadCatalog() {
     if (!USE_SUPABASE) return;
@@ -2053,7 +2220,6 @@ function clearSearch() {
     input.value = ""; updateSearch(""); input.blur();
 }
 
-
 function switchTab(tab) {
     if (currentTab === tab) return;
     scrollPositions[currentTab] = window.scrollY;
@@ -2104,8 +2270,6 @@ function switchTab(tab) {
     setTimeout(() => window.scrollTo({ top: scrollPositions[tab] || 0, behavior: 'smooth' }), 5);
 }
 
-
-
 function smartUnit(qty, unit) {
     if (!unit) return { val: qty, unit: unit };
     const u = unit.toLowerCase().trim();
@@ -2123,7 +2287,6 @@ function smartUnit(qty, unit) {
 // RENDER PRINCIPAL
 // ============================================================
 
-
 function render() {
     const list = document.getElementById('recipes-list');
     if (!list) return;
@@ -2138,9 +2301,9 @@ function render() {
             const p = catalog.find(x => x.id === ing.idProd);
             if (p) costLeiMasa += p.pretLei * ing.qty;
         });
-r.costLeiCalculat = costLeiMasa;
-r.totalOreCalculat = r.ore * r.portii;
-r.eficienta = r.costLeiCalculat > 0 ? r.ore / r.costLeiCalculat : 0;
+        r.costLeiCalculat = costLeiMasa;
+        r.totalOreCalculat = r.ore * r.portii;
+        r.eficienta = r.costLeiCalculat > 0 ? r.ore / r.costLeiCalculat : 0;
 
         if (r.selectat) { tLei += r.costLeiCalculat * r.portii; tOre += r.totalOreCalculat; }
     });
@@ -2225,24 +2388,21 @@ r.eficienta = r.costLeiCalculat > 0 ? r.ore / r.costLeiCalculat : 0;
 
                 <div class="recipe-stats-footer grid grid-cols-3 gap-2 pt-3 items-center text-center">
                     <div class="flex flex-col items-center">
-<p class="text-[7px] font-black text-gray-500 uppercase tracking-widest leading-none mb-1">Ore × masă</p>
-<div class="ore-wrap flex items-center justify-center gap-1">
-
-            <input id="inline-input-${rIdx}-ore"
-                   type="number"
-                   inputmode="numeric"
-                   min="1" step="1"
-                   value="${Math.round(reteta.ore / nrPers)}"
-                   ${isUnlocked ? '' : 'readonly'}
-                   onfocus="this.select()"
-                   onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}"
-                   onblur="confirmInlineInput(${rIdx},'ore',null,this)"
-                   class="w-8 text-center text-xl font-black text-white leading-none bg-transparent outline-none border-none ${isUnlocked ? '' : 'ore-locked'}"
-                   style="-moz-appearance:textfield;-webkit-appearance:none;">
-<span class="text-[10px] font-black text-gray-500" style="margin-left:-6px;">h</span>
-
-        </div>
-
+                        <p class="text-[7px] font-black text-gray-500 uppercase tracking-widest leading-none mb-1">Ore × masă</p>
+                        <div class="ore-wrap flex items-center justify-center gap-1">
+                            <input id="inline-input-${rIdx}-ore"
+                                   type="number"
+                                   inputmode="numeric"
+                                   min="1" step="1"
+                                   value="${Math.round(reteta.ore / nrPers)}"
+                                   ${isUnlocked ? '' : 'readonly'}
+                                   onfocus="this.select()"
+                                   onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}"
+                                   onblur="confirmInlineInput(${rIdx},'ore',null,this)"
+                                   class="w-8 text-center text-xl font-black text-white leading-none bg-transparent outline-none border-none ${isUnlocked ? '' : 'ore-locked'}"
+                                   style="-moz-appearance:textfield;-webkit-appearance:none;">
+                            <span class="text-[10px] font-black text-gray-500" style="margin-left:-6px;">h</span>
+                        </div>
                     </div>
 
                     <div class="bg-purple-500/10 py-1.5 rounded-xl border border-purple-500/20">
@@ -2274,7 +2434,6 @@ r.eficienta = r.costLeiCalculat > 0 ? r.ore / r.costLeiCalculat : 0;
     const tOreAutonomie = tOre / nrPers;
     const zileAutonomie = tOreAutonomie / orePerZi;
 
-    // Calcul HUD cu/fără frigider
     let tLeiHud = tLei;
     if (fridgeDeductActive) {
         tLeiHud = 0;
@@ -2332,6 +2491,10 @@ r.eficienta = r.costLeiCalculat > 0 ? r.ore / r.costLeiCalculat : 0;
 }
 
 
+// ============================================================
+// RENDER CATALOG  (cu modal preț + secțiune nefolosite)
+// ============================================================
+
 function renderCatalog() {
     const cat = document.getElementById('catalog-list');
     if (!cat) return;
@@ -2339,29 +2502,70 @@ function renderCatalog() {
     cat.innerHTML = '';
     const textLockCls = isUnlocked ? '' : 'pointer-events-none';
 
+    // Construim setul de ID-uri folosite în ORICE meniu (nu doar cele selectate)
+    const usedInAnyMenu = new Set();
+    retete.forEach(r => {
+        r.ingrediente.forEach(ing => {
+            if (ing.idProd) usedInAnyMenu.add(ing.idProd);
+        });
+    });
+
     const sortedCatalog = catalog
         .filter(p => normalizeText(p.nume).includes(catSearch))
         .sort((a, b) => a.pretLei - b.pretLei);
 
-    sortedCatalog.forEach((prod) => {
-        const cIdx = catalog.findIndex(x => x.id === prod.id);
+    // --- Produse folosite în meniuri ---
+    const produseFolosite = sortedCatalog.filter(p => usedInAnyMenu.has(p.id));
+    // --- Produse nefolosite ---
+    const produseNefolosite = sortedCatalog.filter(p => !usedInAnyMenu.has(p.id));
+
+    function buildCatalogCard(prod, cIdx, isUnused) {
         const numeEscJS = prod.nume.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-        cat.innerHTML += `
-            <div id="catalog-item-${prod.id}" class="glass-card p-5 flex justify-between items-center">
-                <div class="flex-grow">
+
+        // Câte meniuri conțin produsul (pentru badge)
+        const meniuriCount = retete.filter(r =>
+            r.ingrediente.some(ing => ing.idProd === prod.id)
+        ).length;
+        const meniuriActive = retete.filter(r =>
+            r.selectat && r.ingrediente.some(ing => ing.idProd === prod.id)
+        ).length;
+
+        // Badge meniuri (vizibil mereu, inclusiv când e blocat)
+        const menusBadge = meniuriCount > 0
+            ? `<span class="text-[8px] font-black px-2 py-0.5 rounded-md border ${meniuriActive > 0 ? 'text-purple-300 bg-purple-500/10 border-purple-500/20' : 'text-gray-500 bg-white/5 border-white/10'} cursor-pointer active:scale-95 transition-transform select-none"
+                    onclick="showProductMenus('${prod.id}')">
+                    ${meniuriActive > 0 ? '●' : '○'} ${meniuriCount} ${meniuriCount === 1 ? 'meniu' : 'meniuri'}
+               </span>`
+            : '';
+
+        // Preț — când e blocat, click deschide modalul
+        const pretClickAttr = !isUnlocked
+            ? `onclick="showProductMenus('${prod.id}')" style="cursor:pointer;" title="Apasă pentru a vedea meniurile"`
+            : '';
+
+        const cardClass = isUnused
+            ? 'catalog-unused-card'
+            : 'glass-card p-5 flex justify-between items-center';
+
+        return `
+            <div id="catalog-item-${prod.id}" class="${cardClass}">
+                <div class="flex-grow min-w-0">
                     ${isUnlocked ? `
                     <input class="font-bold text-base block text-white bg-transparent outline-none border-none w-full"
                            value="${prod.nume}"
                            onchange="updateCatalogField(${cIdx}, 'nume', this.value)">` : `
-                    <span onclick="openAuchan('${numeEscJS}')" class="font-bold text-base block text-white cursor-pointer active:opacity-70 transition-opacity">${prod.nume}</span>`}
-                    ${(prod.modifiedAt || prod.addedAt) ? `<span class="${prod.modifiedAt ? 'date-badge modified' : 'date-badge'}">${prod.modifiedAt ? '✎' : '＋'}${formatDateCompact(prod.modifiedAt || prod.addedAt)}</span>` : ''}
+                    <span onclick="openAuchan('${numeEscJS}')" class="font-bold text-base block ${isUnused ? 'text-white/50' : 'text-white'} cursor-pointer active:opacity-70 transition-opacity">${prod.nume}</span>`}
+                    <div class="flex items-center gap-2 mt-0.5 flex-wrap">
+                        ${(prod.modifiedAt || prod.addedAt) ? `<span class="${prod.modifiedAt ? 'date-badge modified' : 'date-badge'}">${prod.modifiedAt ? '✎' : '＋'}${formatDateCompact(prod.modifiedAt || prod.addedAt)}</span>` : ''}
+                        ${menusBadge}
+                    </div>
                 </div>
                 <div class="flex items-center gap-2">
-                    <div class="bg-white/5 px-3 py-2 rounded-xl flex flex-col items-center border border-white/5" style="min-width:fit-content;">
+                    <div class="bg-white/5 px-3 py-2 rounded-xl flex flex-col items-center border border-white/5 ${!isUnlocked ? 'cursor-pointer active:bg-white/10 transition-all' : ''}" style="min-width:fit-content;" ${pretClickAttr}>
                         <input type="number" step="0.01"
                                inputmode="decimal"
-                               class="text-center font-black text-emerald-400 bg-transparent outline-none border-none ${isUnlocked ? '' : 'pointer-events-none'}"
-                               value="${prod.pretLei}" ${isUnlocked ? '' : 'readonly'}
+                               class="text-center font-black ${isUnused ? 'text-gray-500' : 'text-emerald-400'} bg-transparent outline-none border-none ${isUnlocked ? '' : 'pointer-events-none'}"
+                               value="${prod.pretLei}" ${isUnlocked ? '' : 'readonly tabindex="-1"'}
                                onfocus="this.select()"
                                onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}"
                                onblur="updateCatalogFieldAndScroll('${prod.id}', ${cIdx}, 'pretLei', parseFloat(this.value) || 0)"
@@ -2385,7 +2589,37 @@ function renderCatalog() {
                     <button onclick="confirmDeleteCatalogItem(${cIdx})" class="w-8 h-8 flex items-center justify-center bg-red-500/10 text-red-500 border border-red-500/20 rounded-full">✕</button>` : ''}
                 </div>
             </div>`;
+    }
+
+    // Render produse folosite
+    produseFolosite.forEach(prod => {
+        const cIdx = catalog.findIndex(x => x.id === prod.id);
+        cat.innerHTML += buildCatalogCard(prod, cIdx, false);
     });
+
+    // Render secțiune produse nefolosite
+    if (produseNefolosite.length > 0) {
+        cat.innerHTML += `
+            <div class="unused-section-header">
+                <div class="unused-section-line"></div>
+                <span class="unused-section-title">🚫 Nefolosite în meniuri (${produseNefolosite.length})</span>
+                <div class="unused-section-line" style="background: linear-gradient(to left, rgba(239,68,68,0.3), transparent);"></div>
+            </div>
+            <p class="text-[9px] font-bold text-gray-600 uppercase tracking-widest mb-3 px-1">Aceste produse nu apar în niciun meniu</p>`;
+
+        produseNefolosite.forEach(prod => {
+            const cIdx = catalog.findIndex(x => x.id === prod.id);
+            cat.innerHTML += buildCatalogCard(prod, cIdx, true);
+        });
+    } else if (sortedCatalog.length > 0 && !catSearch) {
+        // Dacă nu există produse nefolosite, arătăm un mesaj pozitiv (doar fără search activ)
+        cat.innerHTML += `
+            <div class="unused-section-header">
+                <div class="unused-section-line" style="background: linear-gradient(to right, rgba(16,185,129,0.3), transparent);"></div>
+                <span class="text-[9px] font-black text-emerald-500 uppercase tracking-widest whitespace-nowrap">✅ Toate produsele sunt folosite</span>
+                <div class="unused-section-line" style="background: linear-gradient(to left, rgba(16,185,129,0.3), transparent);"></div>
+            </div>`;
+    }
 
     if (lastEditedCatalogId) {
         const idToScroll = lastEditedCatalogId;
@@ -2432,7 +2666,6 @@ async function confirmDeleteCatalogItem(idx) {
     render();
 }
 
-
 async function resetConfirmari() {
     shoppingConfirmari = {};
     if (!USE_SUPABASE) return;
@@ -2442,8 +2675,6 @@ async function resetConfirmari() {
         console.error('Eroare reset confirmari:', e);
     }
 }
-
-
 
 async function toggleSelectReteta(rIdx, checked) {
     retete[rIdx].selectat = checked;
@@ -2536,7 +2767,6 @@ async function selectProduct(id) {
     closeSheets();
     render();
 }
-
 
 function closeSheets() {
     document.querySelectorAll('.bottom-sheet').forEach(s => s.classList.remove('active'));
@@ -2901,7 +3131,6 @@ ${unavailable.length > 0 ? `<div style="height:1px;background:linear-gradient(to
 }
 
 
-
 // ============================================================
 // INIT
 // ============================================================
@@ -2918,12 +3147,12 @@ window.onload = async function () {
     await db_loadFridgeNumPersoane();
     await db_loadFrigider();
     await db_loadConfirmari();
-// Activează toggle frigider la start
-const btn = document.getElementById('fridge-deduct-toggle');
-const info = document.getElementById('fridge-deduct-info');
-if (btn) btn.classList.add('active');
-if (info) info.style.display = 'block';
 
+    // Activează toggle frigider la start
+    const btn = document.getElementById('fridge-deduct-toggle');
+    const info = document.getElementById('fridge-deduct-info');
+    if (btn) btn.classList.add('active');
+    if (info) info.style.display = 'block';
 
     render();
     document.body.classList.add('app-ready');
