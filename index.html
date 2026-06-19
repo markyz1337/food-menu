@@ -2449,9 +2449,10 @@ async function exportTableCSV(tableName) {
     if (!USE_SUPABASE) { alert('Supabase dezactivat'); return; }
     const { data, error } = await supabaseClient.from(tableName).select('*');
     if (error) { alert(`Eroare export ${tableName}: ${error.message}`); return; }
-    const csvContent = (data && data.length > 0) ? rowsToCSV(data) : '';
-    downloadTextFile(`${tableName}_${todayDateStr()}.csv`, csvContent);
+    if (!data || data.length === 0) { alert(`Tabela "${tableName}" e goală.`); return; }
+    downloadTextFile(`${tableName}_${todayDateStr()}.csv`, rowsToCSV(data));
 }
+
 
 
 async function exportAllTablesCSV() {
