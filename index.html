@@ -531,8 +531,45 @@
         }
 
         /* ============================================================
+           BACKUP MODAL
+           ============================================================ */
+        #backup-modal {
+            position: fixed; inset: 0; z-index: 3100;
+            display: flex; align-items: flex-end; justify-content: center;
+            padding: 0; pointer-events: none; opacity: 0;
+            transition: opacity 0.25s ease;
+        }
+        #backup-modal.active { pointer-events: auto; opacity: 1; }
+        #backup-modal .modal-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); }
+        #backup-modal .modal-panel {
+            position: relative; z-index: 1; width: 100%; max-width: 440px;
+            background: rgba(10,10,16,0.98); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 28px 28px 0 0; padding: 24px 20px 40px;
+            transform: translateY(30px);
+            transition: transform 0.3s cubic-bezier(0.22,1,0.36,1);
+            max-height: 80vh; overflow-y: auto;
+        }
+        #backup-modal.active .modal-panel { transform: translateY(0); }
+        .backup-table-row {
+            background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 16px; padding: 14px 16px; margin-bottom: 10px;
+        }
+        .backup-table-name { font-size: 13px; font-weight: 800; color: #fff; margin-bottom: 2px; }
+        .backup-table-sub { font-size: 9px; font-weight: 700; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 10px; }
+        .backup-actions { display: flex; gap: 8px; }
+        .backup-btn {
+            flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
+            padding: 10px; border-radius: 12px; font-size: 10px; font-weight: 900;
+            text-transform: uppercase; letter-spacing: 1px; cursor: pointer; transition: all 0.2s;
+        }
+        .backup-btn-export { background: rgba(192,132,252,0.12); border: 1px solid rgba(192,132,252,0.3); color: #d8b4fe; width: 100%; }
+        .backup-btn-export:active { background: rgba(192,132,252,0.25); transform: scale(0.97); }
+
+
+        /* ============================================================
            UNUSED PRODUCTS SECTION
            ============================================================ */
+
         .unused-section-header {
             display: flex;
             align-items: center;
@@ -584,7 +621,53 @@
     </div>
 </div>
 
+<!-- BACKUP MODAL -->
+<div id="backup-modal">
+    <div class="modal-backdrop" onclick="closeBackupModal()"></div>
+    <div class="modal-panel">
+        <div class="flex items-center justify-between mb-4">
+            <div>
+                <h3 class="text-lg font-black tracking-tighter text-white">BACKUP DATE</h3>
+                <p class="text-[9px] font-bold text-purple-400 uppercase tracking-[2px]">Export / Import CSV Supabase</p>
+            </div>
+            <button onclick="closeBackupModal()" class="w-9 h-9 flex items-center justify-center bg-white/5 rounded-full text-white font-bold text-sm">✕</button>
+        </div>
+        <div id="backup-tables-list">
+            <div class="backup-table-row">
+                <p class="backup-table-name">📙 Catalog produse</p>
+                <p class="backup-table-sub">tabela: catalog</p>
+                <button class="backup-btn backup-btn-export" onclick="exportTableCSV('catalog')">⬇ Descarcă CSV</button>
+            </div>
+            <div class="backup-table-row">
+                <p class="backup-table-name">🍽️ Rețete / Meniuri</p>
+                <p class="backup-table-sub">tabela: retete</p>
+                <button class="backup-btn backup-btn-export" onclick="exportTableCSV('retete')">⬇ Descarcă CSV</button>
+            </div>
+            <div class="backup-table-row">
+                <p class="backup-table-name">❄️ Frigider</p>
+                <p class="backup-table-sub">tabela: frigider</p>
+                <button class="backup-btn backup-btn-export" onclick="exportTableCSV('frigider')">⬇ Descarcă CSV</button>
+            </div>
+            <div class="backup-table-row">
+                <p class="backup-table-name">⚙️ Setări</p>
+                <p class="backup-table-sub">tabela: setari</p>
+                <button class="backup-btn backup-btn-export" onclick="exportTableCSV('setari')">⬇ Descarcă CSV</button>
+            </div>
+            <div class="backup-table-row">
+                <p class="backup-table-name">🛒 Confirmări coș</p>
+                <p class="backup-table-sub">tabela: shopping_confirmari</p>
+                <button class="backup-btn backup-btn-export" onclick="exportTableCSV('shopping_confirmari')">⬇ Descarcă CSV</button>
+            </div>
+            <div class="backup-table-row" style="background:rgba(192,132,252,0.04);border-color:rgba(192,132,252,0.15);">
+                <button class="backup-btn backup-btn-export" onclick="exportAllTablesCSV()">⬇ Descarcă TOATE (5 fișiere)</button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
 <!-- 1. SHEET LISTA CUMPĂRĂTURI -->
+
 <div id="shopping-sheet" class="bottom-sheet full overflow-hidden" style="position: fixed;">
     <div class="p-6 border-b border-white/10 bg-black/50" style="flex-shrink: 0;">
         <div class="flex justify-between items-start mb-3">
@@ -668,7 +751,8 @@
 <header class="mb-10 pt-4">
     <div class="flex items-center justify-between">
         <div>
-            <h1 id="view-title" class="text-4xl font-extrabold tracking-tighter">Planificator</h1>
+            <h1 id="view-title" class="text-4xl font-extrabold tracking-tighter" onclick="openBackupModal()" style="cursor:pointer;">Planificator</h1>
+
             <p id="view-subtitle" class="text-[10px] font-bold text-gray-500 tracking-[3px] uppercase mt-1">Configurator Mese</p>
         </div>
         <div class="flex items-center gap-2">
@@ -2282,10 +2366,107 @@ function smartUnit(qty, unit) {
     return { val: +qty.toFixed(qty < 10 ? 3 : qty < 100 ? 2 : 1), unit: unit };
 }
 
+// ============================================================
+// BACKUP — EXPORT / IMPORT CSV (1:1 cu Supabase)
+// ============================================================
+
+function openBackupModal() {
+    document.getElementById('backup-modal').classList.add('active');
+}
+function closeBackupModal() {
+    document.getElementById('backup-modal').classList.remove('active');
+}
+
+function todayDateStr() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+// fiecare celulă e JSON.stringify(valoare) -> păstrează exact tipul (text/numar/bool/null/json)
+function csvEscape(field) {
+    const str = String(field);
+    if (/[",\n\r]/.test(str)) return '"' + str.replace(/"/g, '""') + '"';
+    return str;
+}
+
+function rowsToCSV(rows) {
+    if (!rows || rows.length === 0) return '';
+    const headers = Object.keys(rows[0]);
+    const lines = [headers.join(',')];
+    rows.forEach(row => {
+        lines.push(headers.map(h => csvEscape(JSON.stringify(row[h] === undefined ? null : row[h]))).join(','));
+    });
+    return lines.join('\n');
+}
+
+function parseCSV(text) {
+    const rows = []; let row = []; let field = ''; let inQuotes = false;
+    for (let i = 0; i < text.length; i++) {
+        const c = text[i];
+        if (inQuotes) {
+            if (c === '"') {
+                if (text[i+1] === '"') { field += '"'; i++; } else { inQuotes = false; }
+            } else field += c;
+        } else {
+            if (c === '"') inQuotes = true;
+            else if (c === ',') { row.push(field); field = ''; }
+            else if (c === '\n') { row.push(field); rows.push(row); row = []; field = ''; }
+            else if (c === '\r') { /* skip */ }
+            else field += c;
+        }
+    }
+    if (field.length > 0 || row.length > 0) { row.push(field); rows.push(row); }
+    return rows;
+}
+
+function csvToObjects(text) {
+    const rows = parseCSV(text);
+    if (rows.length === 0) return [];
+    const headers = rows[0];
+    const out = [];
+    for (let i = 1; i < rows.length; i++) {
+        if (rows[i].length === 1 && rows[i][0] === '') continue;
+        const obj = {};
+        headers.forEach((h, idx) => {
+            const raw = rows[i][idx];
+            try { obj[h] = JSON.parse(raw); } catch (e) { obj[h] = raw; }
+        });
+        out.push(obj);
+    }
+    return out;
+}
+
+function downloadTextFile(filename, content) {
+    const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+async function exportTableCSV(tableName) {
+    if (!USE_SUPABASE) { alert('Supabase dezactivat'); return; }
+    const { data, error } = await supabaseClient.from(tableName).select('*');
+    if (error) { alert(`Eroare export ${tableName}: ${error.message}`); return; }
+    if (!data || data.length === 0) { alert(`Tabela "${tableName}" e goală.`); return; }
+    downloadTextFile(`${tableName}_${todayDateStr()}.csv`, rowsToCSV(data));
+}
+
+async function exportAllTablesCSV() {
+    const tables = ['catalog', 'retete', 'frigider', 'setari', 'shopping_confirmari'];
+    for (const t of tables) {
+        await exportTableCSV(t);
+        await new Promise(r => setTimeout(r, 400));
+    }
+}
+
+
 
 // ============================================================
 // RENDER PRINCIPAL
 // ============================================================
+
 
 function render() {
     const list = document.getElementById('recipes-list');
