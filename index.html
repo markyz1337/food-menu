@@ -635,28 +635,28 @@
         <div id="backup-tables-list">
             <div class="backup-table-row">
                 <p class="backup-table-name">📙 Catalog produse</p>
-                <p class="backup-table-sub">tabela: catalog</p>
-                <button class="backup-btn backup-btn-export" onclick="exportTableCSV('catalog')">⬇ Descarcă CSV</button>
+                <p class="backup-table-sub">tabela: foodmenu_catalog</p>
+                <button class="backup-btn backup-btn-export" onclick="exportTableCSV('foodmenu_catalog')">⬇ Descarcă CSV</button>
             </div>
             <div class="backup-table-row">
                 <p class="backup-table-name">🍽️ Rețete / Meniuri</p>
-                <p class="backup-table-sub">tabela: retete</p>
-                <button class="backup-btn backup-btn-export" onclick="exportTableCSV('retete')">⬇ Descarcă CSV</button>
+                <p class="backup-table-sub">tabela: foodmenu_retete</p>
+                <button class="backup-btn backup-btn-export" onclick="exportTableCSV('foodmenu_retete')">⬇ Descarcă CSV</button>
             </div>
             <div class="backup-table-row">
                 <p class="backup-table-name">❄️ Frigider</p>
-                <p class="backup-table-sub">tabela: frigider</p>
-                <button class="backup-btn backup-btn-export" onclick="exportTableCSV('frigider')">⬇ Descarcă CSV</button>
+                <p class="backup-table-sub">tabela: foodmenu_frigider</p>
+                <button class="backup-btn backup-btn-export" onclick="exportTableCSV('foodmenu_frigider')">⬇ Descarcă CSV</button>
             </div>
             <div class="backup-table-row">
                 <p class="backup-table-name">⚙️ Setări</p>
-                <p class="backup-table-sub">tabela: setari</p>
-                <button class="backup-btn backup-btn-export" onclick="exportTableCSV('setari')">⬇ Descarcă CSV</button>
+                <p class="backup-table-sub">tabela: foodmenu_setari</p>
+                <button class="backup-btn backup-btn-export" onclick="exportTableCSV('foodmenu_setari')">⬇ Descarcă CSV</button>
             </div>
             <div class="backup-table-row">
                 <p class="backup-table-name">🛒 Confirmări coș</p>
-                <p class="backup-table-sub">tabela: shopping_confirmari</p>
-                <button class="backup-btn backup-btn-export" onclick="exportTableCSV('shopping_confirmari')">⬇ Descarcă CSV</button>
+                <p class="backup-table-sub">tabela: foodmenu_shopping_confirmari</p>
+                <button class="backup-btn backup-btn-export" onclick="exportTableCSV('foodmenu_shopping_confirmari')">⬇ Descarcă CSV</button>
             </div>
             <div class="backup-table-row" style="background:rgba(192,132,252,0.04);border-color:rgba(192,132,252,0.15);">
                 <button class="backup-btn backup-btn-export" onclick="exportAllTablesCSV()">⬇ Descarcă TOATE (5 fișiere)</button>
@@ -1111,7 +1111,7 @@ let shoppingConfirmari = {};
 async function db_loadConfirmari() {
     if (!USE_SUPABASE) return;
     try {
-        const { data, error } = await supabaseClient.from('shopping_confirmari').select('*');
+        const { data, error } = await supabaseClient.from('foodmenu_shopping_confirmari').select('*');
         if (error) { console.error('Eroare confirmari:', error); return; }
         shoppingConfirmari = {};
         (data || []).forEach(r => {
@@ -1125,7 +1125,7 @@ async function db_loadConfirmari() {
 async function db_upsertConfirmare(prodId, confirmat) {
     if (!USE_SUPABASE) return;
     try {
-        await supabaseClient.from('shopping_confirmari').upsert({
+        await supabaseClient.from('foodmenu_shopping_confirmari').upsert({
             prod_id: prodId,
             confirmat: confirmat,
             updated_at: new Date().toISOString()
@@ -1640,7 +1640,7 @@ function closeProductMenusModal() {
 
 async function db_loadFrigider() {
     if (!USE_SUPABASE) return;
-    const { data, error } = await supabaseClient.from('frigider').select('*');
+    const { data, error } = await supabaseClient.from('foodmenu_frigider').select('*');
     if (error) { console.error('Eroare frigider:', error); return; }
     frigider = (data || []).map(r => ({
         id: r.id,
@@ -1652,7 +1652,7 @@ async function db_loadFrigider() {
 
 async function db_upsertFrigiderItem(item) {
     if (!USE_SUPABASE) return;
-    await supabaseClient.from('frigider').upsert({
+    await supabaseClient.from('foodmenu_frigider').upsert({
         id: item.id,
         qty: item.qty,
         addedAt: item.addedAt,
@@ -1662,7 +1662,7 @@ async function db_upsertFrigiderItem(item) {
 
 async function db_deleteFrigiderItem(id) {
     if (!USE_SUPABASE) return;
-    await supabaseClient.from('frigider').delete().eq('id', id);
+    await supabaseClient.from('foodmenu_frigider').delete().eq('id', id);
 }
 
 // ============================================================
@@ -2131,65 +2131,65 @@ async function toggleSelectAll() {
 
 async function db_saveNumPersoane(val) {
     if (!USE_SUPABASE) return;
-    await supabaseClient.from('setari').upsert({ id: 'num_persoane', valoare: val.toString() });
+    await supabaseClient.from('foodmenu_setari').upsert({ id: 'num_persoane', valoare: val.toString() });
 }
 
 async function db_loadNumPersoane() {
     if (!USE_SUPABASE) return;
-    const { data } = await supabaseClient.from('setari').select('valoare').eq('id', 'num_persoane').single();
+    const { data } = await supabaseClient.from('foodmenu_setari').select('valoare').eq('id', 'num_persoane').single();
     if (data) document.getElementById('num-persoane-input').value = data.valoare;
 }
 
 async function db_saveFridgeNumPersoane(val) {
     if (!USE_SUPABASE) return;
-    await supabaseClient.from('setari').upsert({ id: 'fridge_num_persoane', valoare: val.toString() });
+    await supabaseClient.from('foodmenu_setari').upsert({ id: 'fridge_num_persoane', valoare: val.toString() });
 }
 
 async function db_loadFridgeNumPersoane() {
     if (!USE_SUPABASE) return;
-    const { data } = await supabaseClient.from('setari').select('valoare').eq('id', 'fridge_num_persoane').single();
+    const { data } = await supabaseClient.from('foodmenu_setari').select('valoare').eq('id', 'fridge_num_persoane').single();
     if (data) document.getElementById('fridge-num-persoane-input').value = data.valoare;
 }
 
 async function db_loadCatalog() {
     if (!USE_SUPABASE) return;
-    const { data, error } = await supabaseClient.from('catalog').select('*');
+    const { data, error } = await supabaseClient.from('foodmenu_catalog').select('*');
     if (error) { console.error('Eroare catalog:', error); return; }
     catalog = data.map(r => ({ id: r.id, nume: r.nume, pretLei: parseFloat(r.pretLei), unit: r.unit, addedAt: r.addedAt || r.added_at || null, modifiedAt: r.modifiedAt || r.modified_at || null }));
 }
 
 async function db_upsertCatalogItem(prod) {
     if (!USE_SUPABASE) return;
-    await supabaseClient.from('catalog').upsert({ id: prod.id, nume: prod.nume, pretLei: prod.pretLei, unit: prod.unit, addedAt: prod.addedAt || Date.now(), modifiedAt: Date.now() });
+    await supabaseClient.from('foodmenu_catalog').upsert({ id: prod.id, nume: prod.nume, pretLei: prod.pretLei, unit: prod.unit, addedAt: prod.addedAt || Date.now(), modifiedAt: Date.now() });
 }
 
 async function db_loadRetete() {
     if (!USE_SUPABASE) return;
-    const { data, error } = await supabaseClient.from('retete').select('*');
+    const { data, error } = await supabaseClient.from('foodmenu_retete').select('*');
     if (error) { console.error('Eroare retete:', error); return; }
     retete = data.map(r => ({ id: r.id, nume: r.nume, ore: r.ore, portii: r.portii, tags: r.tags || '', selectat: r.selectat, ingrediente: r.ingrediente || [] }));
 }
 
 async function db_deleteCatalogItem(id) {
     if (!USE_SUPABASE) return;
-    await supabaseClient.from('catalog').delete().eq('id', id);
+    await supabaseClient.from('foodmenu_catalog').delete().eq('id', id);
 }
 
 async function db_upsertReteta(reteta) {
     if (!USE_SUPABASE) return;
     const payload = { nume: reteta.nume, ore: reteta.ore, portii: reteta.portii, tags: reteta.tags || '', selectat: reteta.selectat, ingrediente: reteta.ingrediente };
     if (typeof reteta.id === 'number' && reteta.id > 1000000000) {
-        const { data, error } = await supabaseClient.from('retete').insert(payload).select().single();
+        const { data, error } = await supabaseClient.from('foodmenu_retete').insert(payload).select().single();
         if (error) { console.error('Eroare inserare rețetă:', error); return; }
         reteta.id = data.id;
     } else {
-        await supabaseClient.from('retete').update(payload).eq('id', reteta.id);
+        await supabaseClient.from('foodmenu_retete').update(payload).eq('id', reteta.id);
     }
 }
 
 async function db_deleteReteta(id) {
     if (!USE_SUPABASE) return;
-    await supabaseClient.from('retete').delete().eq('id', id);
+    await supabaseClient.from('foodmenu_retete').delete().eq('id', id);
 }
 
 // ============================================================
@@ -2456,7 +2456,7 @@ async function exportTableCSV(tableName) {
 
 
 async function exportAllTablesCSV() {
-    const tables = ['catalog', 'retete', 'frigider', 'setari', 'shopping_confirmari'];
+    const tables = ['foodmenu_catalog', 'foodmenu_retete', 'foodmenu_frigider', 'foodmenu_setari', 'foodmenu_shopping_confirmari'];
     for (const t of tables) {
         await exportTableCSV(t);
         await new Promise(r => setTimeout(r, 400));
@@ -2853,7 +2853,7 @@ async function resetConfirmari() {
     shoppingConfirmari = {};
     if (!USE_SUPABASE) return;
     try {
-        await supabaseClient.from('shopping_confirmari').delete().neq('prod_id', '');
+        await supabaseClient.from('foodmenu_shopping_confirmari').delete().neq('prod_id', '');
     } catch (e) {
         console.error('Eroare reset confirmari:', e);
     }
