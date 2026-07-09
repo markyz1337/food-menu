@@ -1065,7 +1065,30 @@ const SUPABASE_URL = 'https://fndjrfieitieqzafhyzz.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_bHDKjiKAVHqW199ICw7i2g_O3olYMAr';
 const supabaseClient = USE_SUPABASE ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
+// ============================================================
+// SUPABASE KEEP-ALIVE (previne conexiune "rece" după inactivitate)
+// ============================================================
+let supabaseKeepAliveInterval = null;
+
+async function supabaseHeartbeat() {
+    if (!USE_SUPABASE || document.hidden) return;
+    try {
+        await supabaseClient.from('foodmenu_setari').select('id').limit(1);
+    } catch (e) {
+        console.warn('Heartbeat Supabase eșuat:', e);
+    }
+}
+
+function startSupabaseKeepAlive() {
+    if (!USE_SUPABASE || supabaseKeepAliveInterval) return;
+    supabaseKeepAliveInterval = setInterval(supabaseHeartbeat, 10000);
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) supabaseHeartbeat();
+    });
+}
+
 let searchTerm = "";
+
 let isUnlocked = false;
 let scrollPositions = { home: 0, catalog: 0, fridge: 0 };
 let currentTab = 'home';
@@ -3339,7 +3362,9 @@ window.onload = async function () {
 
     render();
     document.body.classList.add('app-ready');
+    startSupabaseKeepAlive();
 };
+
 
 </script>
 </body>
