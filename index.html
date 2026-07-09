@@ -2140,13 +2140,14 @@ async function toggleSelectAll() {
     if (retete.length === 0) return;
     const allSel = retete.every(r => r.selectat);
     retete.forEach(r => r.selectat = !allSel);
-    await resetConfirmari();
     render();
+    await resetConfirmari();
     if (USE_SUPABASE) {
         try { await Promise.all(retete.map(r => db_upsertReteta(r))); }
         catch (err) { console.error("Eroare salvare stare globală:", err); }
     }
 }
+
 
 // ============================================================
 // SUPABASE LAYER
@@ -2884,10 +2885,11 @@ async function resetConfirmari() {
 
 async function toggleSelectReteta(rIdx, checked) {
     retete[rIdx].selectat = checked;
+    render();
     await db_upsertReteta(retete[rIdx]);
     await resetConfirmari();
-    render();
 }
+
 
 async function updateRetetaField(rIdx, field, value) {
     retete[rIdx][field] = value;
