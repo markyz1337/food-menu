@@ -16,8 +16,10 @@
         #view-title { color: #ffffff !important; text-shadow: 0 4px 12px rgba(0,0,0,0.5); display: block; opacity: 1; }
         .orb { position: fixed; width: 500px; height: 500px; background: radial-gradient(circle, rgba(192, 132, 252, 0.1) 0%, transparent 70%); z-index: -1; filter: blur(80px); animation: float 20s infinite alternate; }
         @keyframes float { from { transform: translate(-10%, -10%); } to { transform: translate(30%, 20%); } }
-        .num-key, .nav-btn, button, .glass-card { touch-action: manipulation; }
-        .glass-card { background: var(--glass); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); border: 1px solid var(--glass-border); border-radius: 27px; transition: box-shadow 0.3s ease, border-color 0.3s ease, transform 0.3s ease, opacity 0.3s ease; }
+.num-key, .nav-btn, button, .glass-card, input[type="checkbox"] { touch-action: manipulation; }
+
+.glass-card { background: var(--glass); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); border: 1px solid var(--glass-border); border-radius: 27px; transition: box-shadow 0.12s ease, border-color 0.12s ease, transform 0.12s ease, opacity 0.12s ease; }
+
         .glass-card:not(.inactive):not(.no-glow) { border-left: 0px solid rgba(192, 132, 252, 0.7); box-shadow: inset 12px 0 18px -6px rgba(192, 132, 252, 0.40), inset 4px 0 4px -2px rgba(192, 132, 252, 0.60), -6px 0 20px -4px rgba(192, 132, 252, 0.25); }
         .inactive { opacity: 1; transform: scale(0.99); filter: grayscale(0.2); }
         .glass-card.inactive .recipe-header { opacity: 1 !important; filter: none !important; }
